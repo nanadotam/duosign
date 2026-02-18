@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useTheme } from "@/shared/hooks/useTheme";
@@ -24,11 +25,9 @@ export default function NavigationBar() {
     <>
       <nav className="h-[54px] flex items-center justify-between px-5 bg-[var(--nav-bg)] border-b border-border shadow-[0_1px_0_rgba(255,255,255,0.04),0_2px_10px_rgba(0,0,0,0.12)] sticky top-0 z-[100] backdrop-blur-[12px] transition-all duration-250">
         {/* Logo */}
-        <Link href="/translate" className="flex items-center gap-2 select-none no-underline">
-          <div className="w-[7px] h-[7px] rounded-full bg-accent shadow-[0_0_8px_var(--accent)] transition-all duration-250" />
-          <span className="font-serif text-[21px] text-text-1 tracking-tight transition-colors duration-250">
-            DuoSign
-          </span>
+        <Link href="/translate" className="flex items-center gap-[6px] select-none no-underline">
+          <Image src="/logos/DuoSign_logomark.svg" alt="DuoSign" width={24} height={24} className="logo-adaptive transition-all duration-250" />
+          <Image src="/logos/DuoSign_textmark.svg" alt="DuoSign" width={80} height={18} className="logo-adaptive transition-all duration-250 hidden sm:block" />
         </Link>
 
         {/* Desktop nav tabs */}
@@ -92,7 +91,7 @@ export default function NavigationBar() {
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDrawerOpen(false)} />
           <div className="absolute top-0 right-0 w-[280px] h-full bg-surface border-l border-border shadow-raised flex flex-col p-5 gap-4 animate-[toast-in_0.2s_ease]">
             <div className="flex justify-between items-center mb-4">
-              <span className="font-serif text-lg text-text-1">DuoSign</span>
+              <Image src="/logos/DuoSign_logo.svg" alt="DuoSign" width={120} height={28} className="logo-adaptive" />
               <button
                 onClick={() => setDrawerOpen(false)}
                 className="w-8 h-8 rounded-btn border border-border bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer"

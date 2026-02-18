@@ -64,7 +64,7 @@
   font-size: 16px;
 }
 .l-nav-logo-text {
-  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-family: var(--font-instrument-serif), 'Instrument Serif', serif;
   font-size: 18px; font-weight: 600;
   color: var(--white); letter-spacing: -.01em;
 }
@@ -113,13 +113,13 @@
   backdrop-filter: blur(10px);
 }
 .l-hero-wordmark {
-  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-family: var(--font-instrument-serif), 'Instrument Serif', serif;
   font-size: clamp(38px, 7vw, 72px);
   font-weight: 700; color: var(--white);
   letter-spacing: -.03em; line-height: 1;
 }
 .l-hero-headline {
-  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-family: var(--font-instrument-serif), 'Instrument Serif', serif;
   font-size: clamp(26px, 4.5vw, 50px);
   font-weight: 400; font-style: italic;
   color: var(--white); max-width: 680px;
@@ -203,7 +203,7 @@
   background: var(--blue); opacity: .4;
 }
 .l-section-title {
-  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-family: var(--font-instrument-serif), 'Instrument Serif', serif;
   font-size: clamp(30px, 4vw, 48px);
   font-weight: 700; color: #111;
   line-height: 1.1; letter-spacing: -.025em;
@@ -229,7 +229,7 @@
 }
 .l-step-cell:hover { background: #EDE8DF; }
 .l-step-num {
-  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-family: var(--font-instrument-serif), 'Instrument Serif', serif;
   font-size: 48px; font-weight: 700;
   color: var(--blue); opacity: .15;
   line-height: 1; margin-bottom: 18px;
@@ -243,7 +243,7 @@
 }
 .l-step-icon svg { width: 20px; height: 20px; color: #fff; }
 .l-step-name {
-  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-family: var(--font-instrument-serif), 'Instrument Serif', serif;
   font-size: 21px; font-weight: 700;
   color: #111; margin-bottom: 10px; letter-spacing: -.01em;
 }
@@ -280,7 +280,7 @@
 .l-demo-sub { color: var(--white-70) !important; margin-bottom: 32px !important; }
 .l-stat-row { display: flex; gap: 32px; flex-wrap: wrap; }
 .l-stat-num {
-  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-family: var(--font-instrument-serif), 'Instrument Serif', serif;
   font-size: 32px; font-weight: 700;
   color: var(--white); letter-spacing: -.03em; line-height: 1;
 }
@@ -444,7 +444,7 @@
 .l-feat-icon.orange { background: rgba(240,78,31,0.08); border-color: rgba(240,78,31,0.18); }
 .l-feat-icon.orange svg { color: var(--orange); }
 .l-feat-name {
-  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-family: var(--font-instrument-serif), 'Instrument Serif', serif;
   font-size: 19px; font-weight: 700;
   color: #111; margin-bottom: 10px; letter-spacing: -.01em;
 }
@@ -471,7 +471,7 @@
 }
 .l-stat-cell:last-child { border-right: none; }
 .l-stat-cell-num {
-  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-family: var(--font-instrument-serif), 'Instrument Serif', serif;
   font-size: 42px; font-weight: 700;
   color: var(--white); line-height: 1; letter-spacing: -.03em;
 }
@@ -497,7 +497,7 @@
 }
 .l-cta-inner { max-width: 640px; margin: 0 auto; position: relative; z-index: 1; }
 .l-cta-title {
-  font-family: var(--font-playfair), 'Playfair Display', serif;
+  font-family: var(--font-instrument-serif), 'Instrument Serif', serif;
   font-size: clamp(32px, 5vw, 56px);
   font-weight: 700; color: var(--white);
   line-height: 1.1; letter-spacing: -.03em; margin-bottom: 20px;

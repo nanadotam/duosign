@@ -2,6 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import Link from "next/link";
+import Image from "next/image";
 import Input from "@/shared/ui/Input";
 import Button from "@/shared/ui/Button";
 import NavigationBar from "@/widgets/navigation-bar/NavigationBar";
@@ -27,8 +28,7 @@ export default function LoginPage() {
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-[7px] h-[7px] rounded-full bg-accent shadow-[0_0_8px_var(--accent)]" />
-              <span className="font-serif text-2xl text-text-1">DuoSign</span>
+              <Image src="/logos/DuoSign_logo.svg" alt="DuoSign" width={140} height={32} className="logo-adaptive" />
             </div>
             <h1 className="text-xl font-semibold text-text-1 mb-1">Welcome back</h1>
             <p className="text-sm text-text-2">Sign in to your account</p>

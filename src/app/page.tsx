@@ -122,8 +122,8 @@ export default function LandingPage() {
       {/* NAV */}
       <nav className="l-nav">
         <Link href="/" className="l-nav-logo">
-          <div className="l-nav-logo-mark">🤟</div>
-          <span className="l-nav-logo-text">DuoSign</span>
+          <img src="/logos/DuoSign_logomark.svg" alt="DuoSign" className="logo-white" style={{ width: 28, height: 28 }} />
+          <img src="/logos/DuoSign_textmark.svg" alt="DuoSign" className="l-nav-logo-text logo-white" style={{ width: 90, height: 22 }} />
         </Link>
         <div className="l-nav-links">
           <a href="#how" className="l-nav-link">How it works</a>
@@ -138,8 +138,7 @@ export default function LandingPage() {
       <section className="l-hero">
         <div className="l-hero-glow" />
         <div className="l-hero-logo-wrap">
-          <div className="l-hero-logo-mark">LOGO</div>
-          <div className="l-hero-wordmark">DuoSign</div>
+          <img src="/logos/DuoSign_logo.svg" alt="DuoSign" className="logo-white" style={{ width: 280, height: 'auto' }} />
         </div>
         <h1 className="l-hero-headline">
           Translate text into accurate<br />sign language animations.
@@ -372,7 +371,7 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer className="l-footer" id="contact">
         <div className="l-footer-left">
-          <div className="l-footer-mark" />
+          <img src="/logos/DuoSign_logomark.svg" alt="DuoSign" className="logo-white" style={{ width: 18, height: 18, opacity: 0.5 }} />
           <span className="l-footer-copy">© 2025 DuoSign. Built at Ashesi University.</span>
         </div>
         <div className="l-footer-links">

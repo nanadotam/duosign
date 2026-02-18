@@ -130,6 +130,17 @@ body {
     color 0.25s;
 }
 
+/* Logo color utilities */
+.logo-white {
+  filter: brightness(0) invert(1);
+}
+[data-theme="dark"] .logo-adaptive {
+  filter: brightness(0) invert(1);
+}
+[data-theme="light"] .logo-adaptive {
+  filter: none;
+}
+
 /* ═══════════════════════════════════════
    SCROLLBAR
 ═══════════════════════════════════════ */

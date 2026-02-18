@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Serif_Display, DM_Sans, JetBrains_Mono, Playfair_Display, Instrument_Sans } from "next/font/google";
+import { DM_Serif_Display, DM_Sans, JetBrains_Mono, Instrument_Serif, Instrument_Sans } from "next/font/google";
 import { ThemeScript } from "@/shared/ui/ThemeScript";
 import "./globals.css";
 
@@ -22,9 +22,10 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-const playfair = Playfair_Display({
+const instrumentSerif = Instrument_Serif({
+  weight: "400",
   subsets: ["latin"],
-  variable: "--font-playfair",
+  variable: "--font-instrument-serif",
   display: "swap",
 });
 
@@ -48,7 +49,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${dmSerif.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${playfair.variable} ${instrumentSans.variable}`}
+      className={`${dmSerif.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${instrumentSans.variable}`}
     >
       <head>
         <ThemeScript />
