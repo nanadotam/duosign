@@ -24,6 +24,7 @@ export default function VoiceRecordingPane({ onDone, onTranslate, onClose }: Voi
   const barsRef = useRef<HTMLDivElement>(null);
   const waveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const typeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasAutoStarted = useRef(false);
 
   // Initialize bars
   useEffect(() => {
@@ -85,6 +86,15 @@ export default function VoiceRecordingPane({ onDone, onTranslate, onClose }: Voi
     if (isRecording) stopRecording();
     else startRecording();
   }, [isRecording, startRecording, stopRecording]);
+
+  // Auto-start recording on mount
+  useEffect(() => {
+    if (!hasAutoStarted.current) {
+      hasAutoStarted.current = true;
+      // Small delay so bars DOM is ready
+      setTimeout(() => startRecording(), 150);
+    }
+  }, [startRecording]);
 
   useEffect(() => {
     return () => {
