@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import "./landing.css";
 
 const GLOSS: Record<string, string | null> = {
@@ -122,8 +123,8 @@ export default function LandingPage() {
       {/* NAV */}
       <nav className="l-nav">
         <Link href="/" className="l-nav-logo">
-          <img src="/logos/DuoSign_logomark.svg" alt="DuoSign" className="logo-white" style={{ width: 28, height: 28 }} />
-          <img src="/logos/DuoSign_textmark.svg" alt="DuoSign" className="l-nav-logo-text logo-white" style={{ width: 90, height: 22 }} />
+          <Image src="/logos/DuoSign_logomark.svg" alt="DuoSign" className="logo-white" width={28} height={28} />
+          <Image src="/logos/DuoSign_textmark.svg" alt="DuoSign" className="l-nav-logo-text logo-white" width={90} height={22} />
         </Link>
         <div className="l-nav-links">
           <a href="#how" className="l-nav-link">How it works</a>
@@ -138,7 +139,7 @@ export default function LandingPage() {
       <section className="l-hero">
         <div className="l-hero-glow" />
         <div className="l-hero-logo-wrap">
-          <img src="/logos/DuoSign_logo.svg" alt="DuoSign" className="logo-white" style={{ width: 280, height: 'auto' }} />
+          <Image src="/logos/DuoSign_logo.svg" alt="DuoSign" className="logo-white" width={280} height={86} style={{ height: 'auto' }} />
         </div>
         <h1 className="l-hero-headline">
           Translate text into accurate<br />sign language animations.
@@ -371,7 +372,7 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer className="l-footer" id="contact">
         <div className="l-footer-left">
-          <img src="/logos/DuoSign_logomark.svg" alt="DuoSign" className="logo-white" style={{ width: 18, height: 18, opacity: 0.5 }} />
+          <Image src="/logos/DuoSign_logomark.svg" alt="DuoSign" className="logo-white" width={18} height={18} style={{ opacity: 0.5 }}  />
           <span className="l-footer-copy">© 2025 DuoSign. Built at Ashesi University.</span>
         </div>
         <div className="l-footer-links">
