@@ -153,8 +153,13 @@ export default function VoiceRecordingPane({ onDone, onTranslate, onClose }: Voi
             "w-9 h-9 rounded-full border flex items-center justify-center cursor-pointer transition-all duration-150",
             isRecording
               ? "border-[color-mix(in_srgb,var(--error)_60%,var(--accent-dim))] bg-gradient-to-b from-[#F87171] to-[#DC4545] text-white animate-[mic-ring_1.4s_ease-in-out_infinite]"
-              : "border-accent-dim bg-gradient-to-b from-accent-btn-top to-accent-dim text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_3px_10px_color-mix(in_srgb,var(--accent)_30%,transparent)] hover:brightness-110 hover:shadow-[0_0_12px_var(--accent)] active:shadow-inset-press active:scale-[0.94]",
+              : "text-white hover:brightness-110 hover:shadow-[0_0_12px_var(--accent)] active:scale-[0.94]",
           ].join(" ")}
+          style={isRecording ? undefined : {
+            background: "linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%)",
+            border: "1px solid var(--accent-dim)",
+            boxShadow: "0 1px 0 rgba(255,255,255,0.18) inset, 0 3px 10px color-mix(in srgb, var(--accent) 30%, transparent)",
+          }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
@@ -173,7 +178,12 @@ export default function VoiceRecordingPane({ onDone, onTranslate, onClose }: Voi
             </button>
             <button
               onClick={() => onTranslate(transcript)}
-              className="px-4 py-1.5 rounded-btn border border-accent-dim bg-gradient-to-b from-accent-btn-top to-accent-dim text-white font-sans text-[12.5px] font-semibold cursor-pointer shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_3px_10px_color-mix(in_srgb,var(--accent)_30%,transparent)] transition-all hover:brightness-110 active:shadow-inset-press active:translate-y-px active:brightness-[0.93]"
+              className="px-4 py-1.5 rounded-btn text-white font-sans text-[12.5px] font-semibold cursor-pointer transition-all hover:brightness-110 active:translate-y-px active:brightness-[0.93]"
+              style={{
+                background: "linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%)",
+                border: "1px solid var(--accent-dim)",
+                boxShadow: "0 1px 0 rgba(255,255,255,0.18) inset, 0 3px 10px color-mix(in srgb, var(--accent) 30%, transparent)",
+              }}
             >
               → Translate
             </button>

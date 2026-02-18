@@ -138,7 +138,12 @@ export default function AvatarPanel({
           {/* Play/Pause */}
           <button
             onClick={onTogglePlay}
-            className="w-9 h-9 rounded-full border border-accent-dim bg-gradient-to-b from-accent-btn-top to-accent-dim text-white flex items-center justify-center cursor-pointer shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_3px_10px_color-mix(in_srgb,var(--accent)_30%,transparent)] transition-all duration-120 hover:brightness-110 active:shadow-inset-press active:brightness-[0.92] active:scale-[0.94]"
+            className="w-9 h-9 rounded-full text-white flex items-center justify-center cursor-pointer transition-all duration-120 hover:brightness-110 active:brightness-[0.92] active:scale-[0.94]"
+            style={{
+              background: "linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%)",
+              border: "1px solid var(--accent-dim)",
+              boxShadow: "0 1px 0 rgba(255,255,255,0.18) inset, 0 3px 10px color-mix(in srgb, var(--accent) 30%, transparent)",
+            }}
           >
             {playbackState === "playing" ? (
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">

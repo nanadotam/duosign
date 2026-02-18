@@ -3,18 +3,15 @@
 import { useState, useEffect, useCallback } from "react";
 
 export function useTheme() {
-  const [isDark, setIsDark] = useState(() => {
-    // Read from DOM (set by ThemeScript before hydration)
-    if (typeof document !== "undefined") {
-      return document.documentElement.getAttribute("data-theme") !== "light";
-    }
-    return true;
-  });
+  // Always default to dark on server; ThemeScript sets the actual data-theme before hydration
+  const [isDark, setIsDark] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Sync with actual DOM attribute on mount
+    // Sync with actual DOM attribute set by ThemeScript
     const current = document.documentElement.getAttribute("data-theme");
     setIsDark(current !== "light");
+    setMounted(true);
   }, []);
 
   const toggle = useCallback(() => {
@@ -26,5 +23,5 @@ export function useTheme() {
     });
   }, []);
 
-  return { isDark, toggle };
+  return { isDark, toggle, mounted };
 }

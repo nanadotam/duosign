@@ -1,6 +1,6 @@
 "use client";
 
-import { ButtonHTMLAttributes, forwardRef } from "react";
+import { ButtonHTMLAttributes, forwardRef, CSSProperties } from "react";
 
 type Variant = "primary" | "ghost" | "destructive";
 type Size = "sm" | "md" | "lg";
@@ -11,14 +11,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
 }
 
-const variantStyles: Record<Variant, string> = {
+const variantClasses: Record<Variant, string> = {
   primary: [
-    "border border-accent-dim",
-    "bg-gradient-to-b from-accent-btn-top to-accent-dim",
     "text-white font-semibold",
-    "shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_3px_10px_color-mix(in_srgb,var(--accent)_35%,transparent)]",
     "hover:brightness-110",
-    "active:translate-y-px active:shadow-inset-press active:brightness-[0.93]",
+    "active:translate-y-px active:brightness-[0.93]",
   ].join(" "),
   ghost: [
     "border border-border-hi",
@@ -29,13 +26,29 @@ const variantStyles: Record<Variant, string> = {
     "active:shadow-inset-press active:translate-y-px",
   ].join(" "),
   destructive: [
-    "border border-error/40",
-    "bg-gradient-to-b from-error to-[#c52020]",
     "text-white font-semibold",
-    "shadow-[0_1px_0_rgba(255,255,255,0.15)_inset,0_3px_10px_rgba(248,113,113,0.3)]",
     "hover:brightness-110",
-    "active:translate-y-px active:shadow-inset-press active:brightness-[0.93]",
+    "active:translate-y-px active:brightness-[0.93]",
   ].join(" "),
+};
+
+/* Inline styles for gradients — Tailwind cannot parse raw CSS vars in gradient stops */
+const variantInlineStyles: Record<Variant, CSSProperties> = {
+  primary: {
+    background: "linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%)",
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "var(--accent-dim)",
+    boxShadow: "0 1px 0 rgba(255,255,255,0.18) inset, 0 3px 10px color-mix(in srgb, var(--accent) 35%, transparent)",
+  },
+  ghost: {},
+  destructive: {
+    background: "linear-gradient(180deg, #F87171 0%, #c52020 100%)",
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "rgba(248,113,113,0.4)",
+    boxShadow: "0 1px 0 rgba(255,255,255,0.15) inset, 0 3px 10px rgba(248,113,113,0.3)",
+  },
 };
 
 const sizeStyles: Record<Size, string> = {
@@ -45,7 +58,7 @@ const sizeStyles: Record<Size, string> = {
 };
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = "primary", size = "md", isLoading, className = "", children, disabled, ...props }, ref) => {
+  ({ variant = "primary", size = "md", isLoading, className = "", style, children, disabled, ...props }, ref) => {
     return (
       <button
         ref={ref}
@@ -54,10 +67,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           "inline-flex items-center justify-center transition-all duration-120 cursor-pointer select-none",
           "disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none",
           "font-sans",
-          variantStyles[variant],
+          variantClasses[variant],
           sizeStyles[size],
           className,
         ].join(" ")}
+        style={{ ...variantInlineStyles[variant], ...style }}
         {...props}
       >
         {isLoading && (
@@ -74,3 +88,4 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = "Button";
 export default Button;
+

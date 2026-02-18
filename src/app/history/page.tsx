@@ -37,19 +37,26 @@ const TYPE_FILTERS = [
   { key: "api", label: "API Request", color: "var(--warn)", count: 3 },
 ];
 
+const ICON_COLORS = {
+  typed: "var(--accent)",
+  voiced: "var(--teal)",
+  api: "var(--warn)",
+} as const;
+
 function TypeIcon({ type }: { type: "typed" | "voiced" | "api" }) {
+  const color = ICON_COLORS[type];
   if (type === "typed") return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[15px] h-[15px]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15, color }}>
       <path d="M4 6h16M4 12h16M4 18h7" />
     </svg>
   );
   if (type === "voiced") return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[15px] h-[15px]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15, color }}>
       <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" />
     </svg>
   );
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[15px] h-[15px]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15, color }}>
       <rect x="2" y="4" width="20" height="16" rx="2" /><path d="M7 9l3 3-3 3M13 15h4" />
     </svg>
   );
@@ -273,10 +280,7 @@ export default function HistoryPage() {
                             {/* Top row */}
                             <div className="flex items-start gap-3 px-3.5 py-[13px]">
                               {/* Type icon */}
-                              <div className={[
-                                "w-9 h-9 rounded-btn flex-shrink-0 bg-surface-3 border border-border flex items-center justify-center shadow-inset transition-colors",
-                                entry.type === "typed" ? "[&>svg]:text-accent" : entry.type === "voiced" ? "[&>svg]:text-teal" : "[&>svg]:text-[var(--warn)]",
-                              ].join(" ")}>
+                              <div className="w-9 h-9 rounded-btn flex-shrink-0 bg-surface-3 border border-border flex items-center justify-center shadow-inset transition-colors">
                                 <TypeIcon type={entry.type} />
                               </div>
 
@@ -327,7 +331,12 @@ export default function HistoryPage() {
                                   {/* Replay */}
                                   <button
                                     onClick={(e) => e.stopPropagation()}
-                                    className="flex items-center gap-[5px] px-[11px] py-[5px] rounded-[7px] border border-accent-dim bg-gradient-to-b from-accent-btn-top to-accent-dim text-white font-sans text-[12px] font-medium cursor-pointer shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,0_2px_8px_color-mix(in_srgb,var(--accent)_30%,transparent)] transition-all hover:brightness-110 active:shadow-inset-press active:translate-y-px active:brightness-[0.93]"
+                                    className="flex items-center gap-[5px] px-[11px] py-[5px] rounded-[7px] text-white font-sans text-[12px] font-medium cursor-pointer transition-all hover:brightness-110 active:translate-y-px active:brightness-[0.93]"
+                                    style={{
+                                      background: "linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%)",
+                                      border: "1px solid var(--accent-dim)",
+                                      boxShadow: "0 1px 0 rgba(255,255,255,0.18) inset, 0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent)",
+                                    }}
                                   >
                                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
                                     Replay

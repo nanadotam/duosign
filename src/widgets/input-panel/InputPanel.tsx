@@ -119,7 +119,12 @@ export default function InputPanel({
           <button
             onClick={onTranslate}
             disabled={isTranslating || !inputText.trim()}
-            className="flex items-center gap-2 px-5 py-2 rounded-btn border border-accent-dim bg-gradient-to-b from-accent-btn-top to-accent-dim text-white font-sans text-[13.5px] font-semibold cursor-pointer tracking-[0.01em] shadow-[0_1px_0_rgba(255,255,255,0.2)_inset,0_4px_14px_color-mix(in_srgb,var(--accent)_35%,transparent)] transition-all duration-120 hover:brightness-110 active:translate-y-px active:brightness-[0.93] active:shadow-inset-press disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
+            className="flex items-center gap-2 px-5 py-2 rounded-btn text-white font-sans text-[13.5px] font-semibold cursor-pointer tracking-[0.01em] transition-all duration-120 hover:brightness-110 active:translate-y-px active:brightness-[0.93] disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
+            style={{
+              background: "linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%)",
+              border: "1px solid var(--accent-dim)",
+              boxShadow: "0 1px 0 rgba(255,255,255,0.2) inset, 0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent)",
+            }}
           >
             {isTranslating ? (
               <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
