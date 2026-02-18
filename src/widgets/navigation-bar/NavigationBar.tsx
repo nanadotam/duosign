@@ -23,15 +23,15 @@ export default function NavigationBar() {
 
   return (
     <>
-      <nav className="h-[54px] flex items-center justify-between px-5 bg-[var(--nav-bg)] border-b border-border shadow-[0_1px_0_rgba(255,255,255,0.04),0_2px_10px_rgba(0,0,0,0.12)] sticky top-0 z-[100] backdrop-blur-[12px] transition-all duration-250">
+      <nav className="h-[54px] flex items-center justify-between px-5 bg-[var(--nav-bg)] border-b border-border shadow-[0_1px_0_rgba(255,255,255,0.04),0_2px_10px_rgba(0,0,0,0.12)] sticky top-0 z-[100] backdrop-blur-[12px] transition-all duration-250 relative">
         {/* Logo */}
         <Link href="/translate" className="flex items-center gap-[6px] select-none no-underline">
           <Image src="/logos/DuoSign_logomark.svg" alt="DuoSign" width={24} height={24} className="logo-adaptive transition-all duration-250" />
           <Image src="/logos/DuoSign_textmark.svg" alt="DuoSign" width={80} height={18} className="logo-adaptive transition-all duration-250 hidden sm:block" />
         </Link>
 
-        {/* Desktop nav tabs */}
-        <div className="hidden md:block">
+        {/* Desktop nav tabs — absolutely centered */}
+        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2">
           <SegmentedControl
             options={NAV_ITEMS.map((i) => i.label)}
             value={activeTab}
