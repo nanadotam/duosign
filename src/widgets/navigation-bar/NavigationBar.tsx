@@ -10,6 +10,7 @@ import Button from "@/shared/ui/Button";
 const NAV_ITEMS = [
   { label: "Translate", href: "/translate" },
   { label: "History", href: "/history" },
+  { label: "Settings", href: "/settings" },
 ];
 
 export default function NavigationBar() {

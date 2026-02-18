@@ -3,15 +3,18 @@
 import { useState, useEffect, useCallback } from "react";
 
 export function useTheme() {
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(() => {
+    // Read from DOM (set by ThemeScript before hydration)
+    if (typeof document !== "undefined") {
+      return document.documentElement.getAttribute("data-theme") !== "light";
+    }
+    return true;
+  });
 
   useEffect(() => {
-    const stored = localStorage.getItem("duosign-theme");
-    if (stored) {
-      const dark = stored === "dark";
-      setIsDark(dark);
-      document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
-    }
+    // Sync with actual DOM attribute on mount
+    const current = document.documentElement.getAttribute("data-theme");
+    setIsDark(current !== "light");
   }, []);
 
   const toggle = useCallback(() => {

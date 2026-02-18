@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DuoSign — Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+/* ═══════════════════════════════════════
+   THEME TOKENS — exact match to app
+═══════════════════════════════════════ */
+[data-theme="dark"] {
+  --bg:           #0D0E13;
+  --surface:      #14161D;
+  --surface-2:    #1B1D26;
+  --surface-3:    #22252F;
+  --border:       #2A2D3A;
+  --border-hi:    #363A4E;
+  --text-1:       #EDF0FF;
+  --text-2:       #8B94B8;
+  --text-3:       #4E5570;
+  --accent:       #5B8EF0;
+  --accent-dim:   #3B6BD0;
+  --accent-glow:  rgba(91,142,240,0.16);
+  --accent-btn-top: #6B9CF2;
+  --teal:         #2DD4BF;
+  --success:      #4ADE80;
+  --error:        #F87171;
+  --warn:         #FBBF24;
+
+  --inset:        inset 0 2px 5px rgba(0,0,0,0.55), inset 0 1px 2px rgba(0,0,0,0.35);
+  --inset-press:  inset 0 3px 8px rgba(0,0,0,0.7), inset 0 1px 3px rgba(0,0,0,0.5);
+  --raised:       0 1px 0 rgba(255,255,255,0.055), 0 4px 14px rgba(0,0,0,0.45);
+  --raised-sm:    0 1px 0 rgba(255,255,255,0.045), 0 2px 6px rgba(0,0,0,0.3);
+  --raised-press: 0 0px 0 rgba(255,255,255,0.02), 0 1px 3px rgba(0,0,0,0.5);
+
+  --nav-bg:       rgba(20,22,29,0.92);
+  --banner-bg:    linear-gradient(90deg,rgba(91,142,240,0.07),rgba(45,212,191,0.05));
+  --banner-border:rgba(91,142,240,0.18);
+  --grid-line:    rgba(42,45,58,0.45);
+  --grid-fade:    radial-gradient(ellipse 85% 85% at 50% 50%, black 20%, transparent 75%);
+}
+
+[data-theme="light"] {
+  --bg:           #EBEBEB;
+  --surface:      #F3F3F3;
+  --surface-2:    #ECECEC;
+  --surface-3:    #E3E3E3;
+  --border:       #D4D4D4;
+  --border-hi:    #C0C0C0;
+  --text-1:       #1A1C28;
+  --text-2:       #5A6080;
+  --text-3:       #9BA3C0;
+  --accent:       #3B6BD0;
+  --accent-dim:   #2A55B8;
+  --accent-glow:  rgba(59,107,208,0.14);
+  --accent-btn-top:#5580E0;
+  --teal:         #0D9488;
+  --success:      #16A34A;
+  --error:        #DC2626;
+  --warn:         #D97706;
+
+  --inset:        inset 0 2px 4px rgba(0,0,0,0.10), inset 0 1px 2px rgba(0,0,0,0.07);
+  --inset-press:  inset 0 3px 7px rgba(0,0,0,0.18), inset 0 1px 3px rgba(0,0,0,0.12);
+  --raised:       0 1px 0 rgba(255,255,255,0.9), 0 4px 14px rgba(0,0,0,0.10);
+  --raised-sm:    0 1px 0 rgba(255,255,255,0.85), 0 2px 6px rgba(0,0,0,0.08);
+  --raised-press: 0 0px 0 rgba(255,255,255,0.5), 0 1px 2px rgba(0,0,0,0.12);
+
+  --nav-bg:       rgba(243,243,243,0.94);
+  --banner-bg:    linear-gradient(90deg,rgba(59,107,208,0.06),rgba(13,148,136,0.04));
+  --banner-border:rgba(59,107,208,0.15);
+  --grid-line:    rgba(180,185,210,0.5);
+  --grid-fade:    radial-gradient(ellipse 85% 85% at 50% 50%, black 20%, transparent 75%);
+}
+
+/* ═══════════════════════════════════════
+   BASE
+═══════════════════════════════════════ */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { transition: background .25s, color .25s; }
+body {
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: background .25s, color .25s;
+}
+
+/* ═══════════════════════════════════════
+   NAV — exact copy from app
+═══════════════════════════════════════ */
+nav {
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 2px 10px rgba(0,0,0,0.12);
+  position: sticky; top:0; z-index:100;
+  backdrop-filter: blur(12px);
+  transition: background .25s, border-color .25s;
+}
+.logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: 21px;
+  color: var(--text-1);
+  letter-spacing: -.2px;
+  display: flex; align-items: center; gap: 9px;
+  user-select: none;
+  text-decoration: none;
+  transition: color .25s;
+}
+.logo-pip {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  transition: background .25s, box-shadow .25s;
+}
+.nav-tabs {
+  display: flex; gap: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  box-shadow: var(--inset);
+  transition: background .25s, border-color .25s;
+}
+.nav-tab {
+  padding: 5px 16px; border-radius: 7px;
+  font-size: 13px; font-weight: 500;
+  color: var(--text-3); cursor: pointer;
+  transition: all .12s;
+  border: 1px solid transparent;
+  user-select: none;
+  text-decoration: none;
+}
+.nav-tab:hover { color: var(--text-2); }
+.nav-tab.active {
+  background: var(--surface);
+  border-color: var(--border-hi);
+  color: var(--text-1);
+  box-shadow: var(--raised-sm);
+}
+.nav-tab:active { box-shadow: var(--inset-press) !important; transform: translateY(1px); }
+.nav-right { display: flex; align-items: center; gap: 8px; }
+.theme-toggle {
+  width: 34px; height: 34px; border-radius: 9px;
+  border: 1px solid var(--border-hi);
+  background: var(--surface-2);
+  color: var(--text-2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--raised-sm);
+  transition: all .12s;
+}
+.theme-toggle:hover { color: var(--text-1); }
+.theme-toggle:active { box-shadow: var(--inset-press); transform: translateY(1px); }
+.theme-toggle svg { width: 15px; height: 15px; }
+.btn-ghost {
+  padding: 6px 15px; border-radius: 8px;
+  border: 1px solid var(--border-hi);
+  background: transparent;
+  color: var(--text-2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  box-shadow: var(--raised-sm);
+  transition: all .12s;
+}
+.btn-ghost:hover { color: var(--text-1); background: var(--surface-2); }
+.btn-ghost:active { box-shadow: var(--inset-press); transform: translateY(1px); }
+.btn-primary {
+  padding: 6px 16px; border-radius: 8px;
+  border: 1px solid var(--accent-dim);
+  background: linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 3px 10px color-mix(in srgb,var(--accent) 35%,transparent);
+  transition: all .12s;
+}
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-primary:active { transform: translateY(1px); box-shadow: var(--inset-press); filter: brightness(.93); }
+
+/* ═══════════════════════════════════════
+   SHELL LAYOUT
+═══════════════════════════════════════ */
+.shell {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+}
+
+/* ═══════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════ */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 18px 0 40px;
+  position: sticky;
+  top: 54px;
+  height: calc(100vh - 54px);
+  overflow-y: auto;
+  transition: background .25s, border-color .25s;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+
+.sb-section {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 0 16px;
+  margin: 18px 0 5px;
+  transition: color .25s;
+}
+.sb-section:first-child { margin-top: 0; }
+
+.sb-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all .12s;
+  text-decoration: none;
+  user-select: none;
+}
+.sb-item:hover { color: var(--text-1); background: var(--surface-2); }
+.sb-item.active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-left-color: var(--accent);
+}
+.sb-item svg { width: 14px; height: 14px; flex-shrink: 0; opacity: .7; }
+.sb-item.active svg { opacity: 1; }
+.sb-badge {
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  background: color-mix(in srgb, var(--teal) 14%, transparent);
+  color: var(--teal);
+  border: 1px solid color-mix(in srgb, var(--teal) 25%, transparent);
+}
+
+/* ═══════════════════════════════════════
+   MAIN CONTENT
+═══════════════════════════════════════ */
+.main {
+  padding: 28px 32px 100px;
+  max-width: 780px;
+  overflow-y: auto;
+}
+
+.page-head { margin-bottom: 24px; }
+.page-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex; align-items: center; gap: 8px;
+  transition: color .25s;
+}
+.page-eyebrow::after { content:''; display:inline-block; width:20px; height:1px; background:var(--border-hi); }
+.page-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 26px;
+  color: var(--text-1);
+  letter-spacing: -.02em;
+  transition: color .25s;
+}
+.page-sub { font-size: 13px; color: var(--text-3); margin-top: 5px; transition: color .25s; }
+
+/* ═══════════════════════════════════════
+   SETTINGS CARD — uses panel pattern
+═══════════════════════════════════════ */
+.scard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--raised), inset 0 1px 0 rgba(255,255,255,0.045);
+  overflow: hidden;
+  margin-bottom: 18px;
+  transition: background .25s, border-color .25s, box-shadow .25s;
+}
+.scard-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 16px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  transition: background .25s, border-color .25s;
+}
+.scard-tag {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: .09em; text-transform: uppercase;
+  color: var(--text-3);
+  transition: color .25s;
+}
+.scard-pip {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--border-hi);
+  flex-shrink: 0;
+  transition: background .25s;
+}
+.scard-body { padding: 0 16px; }
+
+/* SETTING ROW */
+.srow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+  transition: border-color .25s;
+}
+.srow:last-child { border-bottom: none; }
+.srow-stack {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+.srow-info { flex: 1; min-width: 0; }
+.srow-label { font-size: 13.5px; font-weight: 500; color: var(--text-1); transition: color .25s; }
+.srow-desc { font-size: 12px; color: var(--text-3); margin-top: 3px; line-height: 1.5; transition: color .25s; }
+.srow-ctrl { flex-shrink: 0; }
+
+/* TOGGLE */
+.tog {
+  width: 40px; height: 22px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-hi);
+  cursor: pointer;
+  position: relative;
+  transition: background .18s, border-color .18s;
+  box-shadow: var(--inset);
+  outline: none;
+}
+.tog.on {
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface-3));
+  border-color: var(--accent-dim);
+  box-shadow: var(--inset), 0 0 0 1px color-mix(in srgb,var(--accent) 25%,transparent);
+}
+.tog::after {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--text-3);
+  top: 2px; left: 2px;
+  transition: transform .18s cubic-bezier(.34,1.56,.64,1), background .18s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.4);
+}
+.tog.on::after { transform: translateX(18px); background: var(--accent); }
+
+/* SELECT */
+.sselect {
+  padding: 5px 28px 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-hi);
+  background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234E5570' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 9px center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-1);
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  min-width: 150px;
+  box-shadow: var(--raised-sm);
+  transition: border-color .15s, background .25s, color .25s;
+}
+.sselect:focus { border-color: color-mix(in srgb,var(--accent) 60%,transparent); box-shadow: var(--raised-sm), 0 0 0 3px var(--accent-glow); }
+
+/* RANGE */
+.range-wrap { display: flex; align-items: center; gap: 9px; }
+.srange {
+  -webkit-appearance: none;
+  width: 110px; height: 4px;
+  border-radius: 4px;
+  background: var(--surface-3);
+  outline: none;
+  cursor: pointer;
+  box-shadow: var(--inset);
+}
+.srange::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--accent-btn-top), var(--accent-dim));
+  cursor: pointer;
+  border: 2px solid var(--surface);
+  box-shadow: 0 1px 4px rgba(0,0,0,.45), 0 0 0 1px var(--accent-dim);
+}
+.range-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  min-width: 30px;
+  text-align: right;
+}
+
+/* AVATAR SWATCH GRID */
+.av-grid-pick { display: flex; gap: 8px; flex-wrap: wrap; }
+.av-swatch {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  border: 1px solid var(--border-hi);
+  background: var(--surface-2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  transition: all .12s;
+  box-shadow: var(--raised-sm);
+  position: relative;
+}
+.av-swatch:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--raised); }
+.av-swatch.active {
+  border-color: var(--accent);
+  box-shadow: var(--raised-sm), 0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent);
+}
+.av-swatch.active::after {
+  content: '✓';
+  position: absolute;
+  bottom: 2px; right: 4px;
+  font-size: 8px; font-weight: 700;
+  color: var(--accent);
+  font-family: 'DM Sans', sans-serif;
+}
+.av-add {
+  border-style: dashed;
+  font-size: 18px;
+  color: var(--text-3);
+  background: transparent;
+}
+.av-add:hover { color: var(--text-2); border-color: var(--border-hi); transform: none; }
+
+/* COLOR DOTS */
+.col-dots { display: flex; gap: 7px; align-items: center; }
+.col-dot {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all .12s;
+  box-shadow: var(--raised-sm);
+  position: relative;
+}
+.col-dot:hover { transform: scale(1.2); }
+.col-dot.active {
+  border-color: var(--text-1);
+  box-shadow: var(--raised-sm), 0 0 0 1px var(--border-hi);
+}
+.col-dot.active::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.55);
+}
+
+/* MONO INPUT */
+.sinput {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-hi);
+  background: var(--surface-3);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  color: var(--text-1);
+  width: 210px;
+  outline: none;
+  box-shadow: var(--inset);
+  transition: border-color .15s, background .25s, color .25s;
+}
+.sinput:focus { border-color: color-mix(in srgb,var(--accent) 60%,transparent); box-shadow: var(--inset), 0 0 0 3px var(--accent-glow); }
+.sinput::placeholder { color: var(--text-3); }
+
+/* SEG CONTROL */
+.seg {
+  display: flex;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: 7px; padding: 2px;
+  box-shadow: var(--inset);
+  transition: background .25s, border-color .25s;
+}
+.seg-opt {
+  padding: 4px 13px; border-radius: 5px;
+  font-size: 12px; font-weight: 500;
+  color: var(--text-3); cursor: pointer;
+  transition: all .1s;
+  border: 1px solid transparent;
+  user-select: none;
+}
+.seg-opt:hover { color: var(--text-2); }
+.seg-opt.on {
+  background: var(--surface);
+  border-color: var(--border-hi);
+  color: var(--text-1);
+  box-shadow: var(--raised-sm);
+}
+.seg-opt:active { box-shadow: var(--inset-press) !important; transform: translateY(1px); }
+
+/* MONO CHIP */
+.mono-chip {
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  font-size: 11px; color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+  box-shadow: var(--inset);
+  line-height: 1.4;
+  transition: background .25s, border-color .25s;
+}
+
+/* DANGER */
+.scard.danger { border-color: color-mix(in srgb, var(--error) 25%, var(--border)); }
+.scard.danger .scard-head { background: color-mix(in srgb, var(--error) 5%, var(--surface-2)); }
+.scard.danger .scard-pip { background: var(--error); box-shadow: 0 0 6px var(--error); }
+.scard.danger .scard-tag { color: var(--error); }
+.danger-label { font-size: 13.5px; font-weight: 500; color: var(--error); transition: color .25s; }
+.danger-desc { font-size: 12px; color: var(--text-3); margin-top: 3px; }
+.btn-danger {
+  padding: 5px 14px; border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--error) 35%, transparent);
+  background: color-mix(in srgb, var(--error) 10%, var(--surface-2));
+  color: var(--error);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px; font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--raised-sm);
+  transition: all .12s; white-space: nowrap;
+}
+.btn-danger:hover { background: color-mix(in srgb, var(--error) 16%, var(--surface-2)); }
+.btn-danger:active { box-shadow: var(--inset-press); transform: translateY(1px); }
+
+/* SAVE BAR */
+.save-bar {
+  position: fixed;
+  bottom: 0; left: 220px; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 11px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 50;
+  transform: translateY(100%);
+  transition: transform .3s cubic-bezier(.34,1.26,.64,1), background .25s, border-color .25s;
+  box-shadow: 0 -4px 20px rgba(0,0,0,.25);
+}
+.save-bar.visible { transform: translateY(0); }
+.save-hint {
+  font-size: 12.5px; color: var(--text-3);
+  display: flex; align-items: center; gap: 7px;
+  transition: color .25s;
+}
+.save-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--warn);
+  box-shadow: 0 0 6px var(--warn);
+  animation: blink 1.2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:.3} }
+.save-actions { display: flex; gap: 8px; }
+.btn-save {
+  padding: 7px 22px; border-radius: 8px;
+  border: 1px solid var(--accent-dim);
+  background: linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 3px 10px color-mix(in srgb,var(--accent) 35%,transparent);
+  transition: all .12s;
+}
+.btn-save:hover { filter: brightness(1.08); }
+.btn-save:active { box-shadow: var(--inset-press); transform: translateY(1px); filter: brightness(.93); }
+.btn-discard {
+  padding: 7px 16px; border-radius: 8px;
+  border: 1px solid var(--border-hi);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  box-shadow: var(--raised-sm);
+  transition: all .12s;
+}
+.btn-discard:hover { color: var(--text-1); background: var(--surface-3); }
+.btn-discard:active { box-shadow: var(--inset-press); transform: translateY(1px); }
+
+/* ═══════════════════════════════════════
+   VOICE BOTTOM SHEET
+═══════════════════════════════════════ */
+.sheet-overlay {
+  position: fixed; inset: 0;
+  background: rgba(7, 8, 14, 0.7);
+  z-index: 200;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s ease;
+  backdrop-filter: blur(4px);
+}
+.sheet-overlay.open { opacity: 1; pointer-events: all; }
+
+.voice-sheet {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 201;
+  background: var(--surface);
+  border-top: 1px solid var(--border-hi);
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -8px 48px rgba(0,0,0,.55), 0 -1px 0 rgba(255,255,255,0.04);
+  transform: translateY(100%);
+  transition: transform .42s cubic-bezier(.34,1.16,.64,1), background .25s, border-color .25s;
+}
+.voice-sheet.open { transform: translateY(0); }
+
+.vs-inner {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 24px 32px;
+}
+
+/* drag handle */
+.vs-handle {
+  width: 36px; height: 3px;
+  border-radius: 2px;
+  background: var(--border-hi);
+  margin: 12px auto 18px;
+  transition: background .25s;
+}
+
+/* header row */
+.vs-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.vs-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  color: var(--text-1);
+  letter-spacing: -.01em;
+  transition: color .25s;
+}
+.vs-status {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+  box-shadow: var(--inset);
+  transition: all .2s;
+}
+.vs-status .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border-hi); transition: all .2s; }
+.vs-status.live {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 8%, var(--surface-3));
+  border-color: color-mix(in srgb, var(--success) 30%, transparent);
+}
+.vs-status.live .dot {
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+  animation: blink 1s infinite;
+}
+.vs-close {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  border: 1px solid var(--border-hi);
+  background: var(--surface-2);
+  color: var(--text-3);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--raised-sm);
+  transition: all .12s;
+}
+.vs-close:hover { color: var(--text-1); background: var(--surface-3); }
+.vs-close:active { box-shadow: var(--inset-press); transform: translateY(1px); }
+.vs-close svg { width: 12px; height: 12px; }
+
+/* waveform */
+.vs-wave {
+  height: 64px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--inset);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5px;
+  padding: 0 16px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  transition: background .25s, border-color .25s;
+}
+.w-bar {
+  width: 2.5px;
+  border-radius: 2px;
+  background: var(--border-hi);
+  min-height: 3px;
+  transition: height .08s ease, background .1s;
+}
+.w-bar.live { background: var(--accent); }
+
+/* transcript */
+.vs-transcript {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  min-height: 50px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  color: var(--text-1);
+  line-height: 1.6;
+  box-shadow: var(--inset);
+  position: relative;
+  transition: background .25s, border-color .25s, box-shadow .15s;
+}
+.vs-transcript.focused {
+  border-color: color-mix(in srgb,var(--accent) 50%,transparent);
+  box-shadow: var(--inset), 0 0 0 3px var(--accent-glow);
+}
+.vs-placeholder { color: var(--text-3); font-size: 13.5px; font-style: italic; }
+.vs-cursor {
+  display: inline-block;
+  width: 2px; height: 16px;
+  background: var(--accent);
+  vertical-align: middle;
+  margin-left: 2px;
+  opacity: 0;
+  animation: cur-blink .8s step-end infinite;
+}
+.vs-cursor.show { opacity: 1; }
+@keyframes cur-blink { 0%,100%{opacity:1}50%{opacity:0} }
+
+/* controls row */
+.vs-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 0;
+}
+.vs-ctrl {
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 1px solid var(--border-hi);
+  background: var(--surface-2);
+  color: var(--text-2);
+  box-shadow: var(--raised-sm);
+  transition: all .12s;
+}
+.vs-ctrl:hover { color: var(--text-1); background: var(--surface-3); }
+.vs-ctrl:active { box-shadow: var(--inset-press); transform: scale(.94); }
+.vs-ctrl.sm { width: 42px; height: 42px; }
+.vs-ctrl.sm svg { width: 16px; height: 16px; }
+
+.vs-mic {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-dim);
+  background: linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255,255,255,.2) inset, 0 4px 18px color-mix(in srgb,var(--accent) 35%,transparent);
+  transition: all .15s;
+}
+.vs-mic svg { width: 24px; height: 24px; }
+.vs-mic:hover { filter: brightness(1.1); }
+.vs-mic:active { box-shadow: var(--inset-press); filter: brightness(.92); transform: scale(.95); }
+.vs-mic.live {
+  border-color: color-mix(in srgb, var(--error) 60%, var(--accent-dim));
+  background: linear-gradient(180deg, #F87171 0%, #DC4545 100%);
+  box-shadow: 0 1px 0 rgba(255,255,255,.2) inset, 0 0 0 0 rgba(248,113,113,0.5);
+  animation: mic-pulse 1.4s ease-in-out infinite;
+}
+@keyframes mic-pulse {
+  0%  { box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 0 0 0 rgba(248,113,113,0.5); }
+  70% { box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 0 0 18px rgba(248,113,113,0); }
+  100%{ box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 0 0 0 rgba(248,113,113,0); }
+}
+
+/* gloss preview inside sheet */
+.vs-divider { height: 1px; background: var(--border); margin: 16px 0; transition: background .25s; }
+.vs-gloss-row {
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+}
+.vs-gloss-lbl {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+  margin-right: 2px;
+  transition: color .25s;
+}
+.vs-chip {
+  flex-shrink: 0;
+  padding: 4px 11px; border-radius: 999px;
+  border: 1px solid var(--border-hi);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 11px; font-weight: 600;
+  letter-spacing: .05em;
+  font-family: 'JetBrains Mono', monospace;
+  box-shadow: var(--raised-sm);
+  opacity: 0; transform: translateY(5px);
+  animation: chip-in .22s ease forwards;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.vs-chip.on {
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface-2));
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb,var(--accent) 25%,transparent), var(--raised-sm);
+}
+@keyframes chip-in { to { opacity:1; transform:translateY(0); } }
+
+/* confirm row */
+.vs-confirm {
+  display: flex; gap: 8px;
+  margin-top: 16px;
+}
+.vs-confirm-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 9px;
+  border: 1px solid var(--accent-dim);
+  background: linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px; font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255,255,255,.2) inset, 0 3px 12px color-mix(in srgb,var(--accent) 30%,transparent);
+  transition: all .12s;
+  letter-spacing: .01em;
+}
+.vs-confirm-btn:hover { filter: brightness(1.08); }
+.vs-confirm-btn:active { box-shadow: var(--inset-press); transform: translateY(1px); filter: brightness(.93); }
+.vs-rerecord {
+  padding: 10px 18px;
+  border-radius: 9px;
+  border: 1px solid var(--border-hi);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px; font-weight: 500;
+  cursor: pointer;
+  box-shadow: var(--raised-sm);
+  transition: all .12s;
+}
+.vs-rerecord:hover { color: var(--text-1); background: var(--surface-3); }
+.vs-rerecord:active { box-shadow: var(--inset-press); transform: translateY(1px); }
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+
+</style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-pip"></div>
+    DuoSign
+  </a>
+  <div class="nav-tabs">
+    <a href="#" class="nav-tab">Translate</a>
+    <a href="#" class="nav-tab">History</a>
+    <a href="#" class="nav-tab active">Settings</a>
+  </div>
+  <div class="nav-right">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+      <svg id="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="iconSun" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+    <button class="btn-ghost" onclick="openSheet()">
+      <svg style="width:13px;height:13px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      Voice
+    </button>
+    <button class="btn-primary">Sign Up Free</button>
+  </div>
+</nav>
+
+<!-- ══ SHELL ══ -->
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-section">Account</div>
+    <a href="#" class="sb-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile
+    </a>
+    <a href="#" class="sb-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Preferences
+    </a>
+    <a href="#" class="sb-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Avatar
+    </a>
+    <a href="#" class="sb-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+      Accessibility
+    </a>
+
+    <div class="sb-section">Translation</div>
+    <a href="#" class="sb-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      NLP Engine
+    </a>
+    <a href="#" class="sb-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      Voice Input
+    </a>
+
+    <div class="sb-section">Developer</div>
+    <a href="#" class="sb-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+      API Keys
+      <span class="sb-badge">NEW</span>
+    </a>
+    <a href="#" class="sb-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Webhooks
+    </a>
+
+    <div class="sb-section" style="margin-top:14px">Support</div>
+    <a href="#" class="sb-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Help & Docs
+    </a>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <div class="page-head">
+      <div class="page-eyebrow">Settings</div>
+      <h1 class="page-title">Preferences</h1>
+      <p class="page-sub">Customize how DuoSign translates, looks, and behaves.</p>
+    </div>
+
+    <!-- AVATAR -->
+    <div class="scard">
+      <div class="scard-head">
+        <div class="scard-tag"><div class="scard-pip"></div>3D Avatar</div>
+        <div class="mono-chip">appearance</div>
+      </div>
+      <div class="scard-body">
+        <div class="srow srow-stack">
+          <div class="srow-info">
+            <div class="srow-label">Skin Tone</div>
+            <div class="srow-desc">Choose the avatar's skin tone for comfortable representation</div>
+          </div>
+          <div class="av-grid-pick">
+            <div class="av-swatch active" style="background:linear-gradient(135deg,#FFDBB4,#E8A87C)" onclick="pickSwatch(this)">👤</div>
+            <div class="av-swatch" style="background:linear-gradient(135deg,#C68642,#A0522D)" onclick="pickSwatch(this)">👤</div>
+            <div class="av-swatch" style="background:linear-gradient(135deg,#8D5524,#5C3317)" onclick="pickSwatch(this)">👤</div>
+            <div class="av-swatch" style="background:linear-gradient(135deg,#FFE0B2,#FFCC80)" onclick="pickSwatch(this)">👤</div>
+            <div class="av-swatch" style="background:linear-gradient(135deg,#D0D0D0,#A8A8A8)" onclick="pickSwatch(this)">👤</div>
+            <div class="av-swatch av-add">+</div>
+          </div>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Avatar Style</div>
+            <div class="srow-desc">Realistic or stylized character rendering</div>
+          </div>
+          <div class="seg">
+            <div class="seg-opt" onclick="setSeg(this)">Realistic</div>
+            <div class="seg-opt on" onclick="setSeg(this)">Stylized</div>
+            <div class="seg-opt" onclick="setSeg(this)">Minimal</div>
+          </div>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Accent Color</div>
+            <div class="srow-desc">Highlight color used in avatar animations</div>
+          </div>
+          <div class="col-dots">
+            <div class="col-dot active" style="background:#5B8EF0" onclick="pickColor(this)"></div>
+            <div class="col-dot" style="background:#2DD4BF" onclick="pickColor(this)"></div>
+            <div class="col-dot" style="background:#4ADE80" onclick="pickColor(this)"></div>
+            <div class="col-dot" style="background:#A78BFA" onclick="pickColor(this)"></div>
+            <div class="col-dot" style="background:#FB923C" onclick="pickColor(this)"></div>
+          </div>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Background</div>
+            <div class="srow-desc">Scene backdrop behind the signing avatar</div>
+          </div>
+          <select class="sselect" onchange="dirty()">
+            <option selected>Transparent</option>
+            <option>Grid (Dark)</option>
+            <option>Grid (Light)</option>
+            <option>Gradient Blue</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSLATION -->
+    <div class="scard">
+      <div class="scard-head">
+        <div class="scard-tag"><div class="scard-pip"></div>Translation</div>
+        <div class="mono-chip">engine</div>
+      </div>
+      <div class="scard-body">
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Translation Engine</div>
+            <div class="srow-desc">Rule-based handles 75–85% of phrases in under 50ms. LLM fallback covers edge cases.</div>
+          </div>
+          <select class="sselect" onchange="dirty()">
+            <option selected>Hybrid (Rule + LLM)</option>
+            <option>Rule-based only</option>
+            <option>LLM only</option>
+          </select>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Animation Speed</div>
+            <div class="srow-desc">Playback speed for signing animations</div>
+          </div>
+          <div class="range-wrap">
+            <input type="range" class="srange" min="50" max="200" value="100" oninput="updSpeed(this)">
+            <span class="range-val" id="speedVal">1.0×</span>
+          </div>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Show Gloss Strip</div>
+            <div class="srow-desc">Display ASL gloss tokens above the avatar panel</div>
+          </div>
+          <button class="tog on" onclick="tog(this)"></button>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Auto-translate on Paste</div>
+            <div class="srow-desc">Instantly translate when text is pasted into the input</div>
+          </div>
+          <button class="tog on" onclick="tog(this)"></button>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Loop Animations</div>
+            <div class="srow-desc">Automatically replay the signing sequence after completion</div>
+          </div>
+          <button class="tog" onclick="tog(this)"></button>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Fingerspelling Fallback</div>
+            <div class="srow-desc">Use fingerspelling when a sign is not in the lexicon</div>
+          </div>
+          <button class="tog on" onclick="tog(this)"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VOICE INPUT -->
+    <div class="scard">
+      <div class="scard-head">
+        <div class="scard-tag"><div class="scard-pip"></div>Voice Input</div>
+        <button class="btn-ghost" style="font-size:12px;padding:4px 12px" onclick="openSheet()">
+          <svg style="width:11px;height:11px;vertical-align:-1px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          Test mic
+        </button>
+      </div>
+      <div class="scard-body">
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Default Microphone</div>
+            <div class="srow-desc">Input device used for voice translation</div>
+          </div>
+          <select class="sselect" onchange="dirty()">
+            <option selected>System Default</option>
+            <option>Built-in Microphone</option>
+            <option>External Mic</option>
+          </select>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Recognition Language</div>
+            <div class="srow-desc">Language used for speech-to-text</div>
+          </div>
+          <select class="sselect" onchange="dirty()">
+            <option selected>English (US)</option>
+            <option>English (UK)</option>
+            <option>English (AU)</option>
+          </select>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Noise Suppression</div>
+            <div class="srow-desc">Filter background noise during voice input</div>
+          </div>
+          <button class="tog on" onclick="tog(this)"></button>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Auto-send after silence</div>
+            <div class="srow-desc">Automatically translate after 1.5s of silence detected</div>
+          </div>
+          <button class="tog" onclick="tog(this)"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACCESSIBILITY -->
+    <div class="scard">
+      <div class="scard-head">
+        <div class="scard-tag"><div class="scard-pip"></div>Accessibility</div>
+        <div class="mono-chip">display</div>
+      </div>
+      <div class="scard-body">
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Caption Size</div>
+            <div class="srow-desc">Font size for gloss and transcript captions</div>
+          </div>
+          <select class="sselect" onchange="dirty()">
+            <option>Small</option>
+            <option selected>Medium</option>
+            <option>Large</option>
+            <option>Extra Large</option>
+          </select>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">High Contrast Mode</div>
+            <div class="srow-desc">Increase contrast ratios for better visibility</div>
+          </div>
+          <button class="tog" onclick="tog(this)"></button>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Reduce Motion</div>
+            <div class="srow-desc">Minimize UI animations (does not affect signing playback)</div>
+          </div>
+          <button class="tog" onclick="tog(this)"></button>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Keyboard Shortcuts</div>
+            <div class="srow-desc">Space to start/stop voice — Enter to translate</div>
+          </div>
+          <button class="tog on" onclick="tog(this)"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- API KEYS -->
+    <div class="scard">
+      <div class="scard-head">
+        <div class="scard-tag"><div class="scard-pip"></div>API Access</div>
+        <div class="mono-chip">developer</div>
+      </div>
+      <div class="scard-body">
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Production Key</div>
+            <div class="srow-desc">Use in your production app — keep this secret</div>
+          </div>
+          <input type="password" class="sinput" value="ds_live_••••••••••••••••" oninput="dirty()">
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Test Key</div>
+            <div class="srow-desc">Development only — rate limited to 100 req/day</div>
+          </div>
+          <input type="password" class="sinput" value="ds_test_••••••••••••••••" oninput="dirty()">
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Webhook Endpoint</div>
+            <div class="srow-desc">URL to receive translation lifecycle events</div>
+          </div>
+          <input type="text" class="sinput" placeholder="https://your-app.com/hook" oninput="dirty()">
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="scard">
+      <div class="scard-head">
+        <div class="scard-tag"><div class="scard-pip"></div>Notifications</div>
+        <div class="mono-chip">alerts</div>
+      </div>
+      <div class="scard-body">
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">New Gloss Updates</div>
+            <div class="srow-desc">When new signs are added to the WLASL lexicon</div>
+          </div>
+          <button class="tog on" onclick="tog(this)"></button>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">API Usage Alerts</div>
+            <div class="srow-desc">Notify when approaching rate limits</div>
+          </div>
+          <button class="tog on" onclick="tog(this)"></button>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="srow-label">Product Updates</div>
+            <div class="srow-desc">Feature announcements and release notes</div>
+          </div>
+          <button class="tog" onclick="tog(this)"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DANGER ZONE -->
+    <div class="scard danger">
+      <div class="scard-head">
+        <div class="scard-tag"><div class="scard-pip"></div>Danger Zone</div>
+        <div class="mono-chip">irreversible</div>
+      </div>
+      <div class="scard-body">
+        <div class="srow">
+          <div class="srow-info">
+            <div class="danger-label">Clear Translation History</div>
+            <div class="danger-desc">Permanently removes all saved translations</div>
+          </div>
+          <button class="btn-danger">Clear History</button>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="danger-label">Revoke All API Keys</div>
+            <div class="danger-desc">Immediately invalidates all active keys</div>
+          </div>
+          <button class="btn-danger">Revoke Keys</button>
+        </div>
+        <div class="srow">
+          <div class="srow-info">
+            <div class="danger-label">Delete Account</div>
+            <div class="danger-desc">Permanently deletes your account and all associated data</div>
+          </div>
+          <button class="btn-danger">Delete Account</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div><!-- /shell -->
+
+<!-- SAVE BAR -->
+<div class="save-bar" id="saveBar">
+  <div class="save-hint">
+    <span class="save-dot"></span>
+    Unsaved changes
+  </div>
+  <div class="save-actions">
+    <button class="btn-discard" onclick="discard()">Discard</button>
+    <button class="btn-save" onclick="save()">Save Changes</button>
+  </div>
+</div>
+
+<!-- ══ VOICE SHEET ══ -->
+<div class="sheet-overlay" id="overlay" onclick="closeSheet()"></div>
+
+<div class="voice-sheet" id="voiceSheet">
+  <div class="vs-inner">
+    <div class="vs-handle"></div>
+
+    <div class="vs-header">
+      <div>
+        <div class="vs-title">Voice Input</div>
+        <div class="vs-status" id="vsStatus"><span class="dot"></span><span id="vsStatusTxt">Ready</span></div>
+      </div>
+      <button class="vs-close" onclick="closeSheet()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- waveform -->
+    <div class="vs-wave" id="vsWave"></div>
+
+    <!-- transcript -->
+    <div class="vs-transcript" id="vsTx">
+      <span class="vs-placeholder" id="vsPlaceholder">Press the mic to start speaking…</span>
+      <span id="vsTxText" style="display:none"></span>
+      <span class="vs-cursor" id="vsCursor"></span>
+    </div>
+
+    <!-- controls -->
+    <div class="vs-controls">
+      <button class="vs-ctrl sm" title="Keyboard input" onclick="void(0)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 9h10M7 12h5M7 15h10"/></svg>
+      </button>
+      <button class="vs-mic" id="vsMicBtn" onclick="toggleMic()">
+        <svg id="vsMicIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      </button>
+      <button class="vs-ctrl sm" title="Clear" onclick="clearVoice()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
+    </div>
+
+    <!-- gloss + confirm (hidden until speech) -->
+    <div id="vsGlossSection" style="display:none">
+      <div class="vs-divider"></div>
+      <div class="vs-gloss-row" id="vsGlossRow"></div>
+      <div class="vs-confirm">
+        <button class="vs-confirm-btn" onclick="confirmAndClose()">
+          <svg style="width:13px;height:13px;vertical-align:-2px;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          Translate
+        </button>
+        <button class="vs-rerecord" onclick="clearVoice()">Re-record</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ══ THEME ══ */
+let isDark = true;
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('iconMoon').style.display = isDark ? 'block' : 'none';
+  document.getElementById('iconSun').style.display  = isDark ? 'none' : 'block';
+}
+
+/* ══ SETTINGS ══ */
+let hasChanges = false;
+function dirty() {
+  if (!hasChanges) { hasChanges = true; document.getElementById('saveBar').classList.add('visible'); }
+}
+function discard() { hasChanges = false; document.getElementById('saveBar').classList.remove('visible'); }
+function save() {
+  const b = document.querySelector('.btn-save');
+  const orig = b.textContent;
+  b.textContent = '✓ Saved';
+  b.style.background = 'linear-gradient(180deg,#5FD080,#22A84A)';
+  setTimeout(() => { b.textContent = orig; b.style.background = ''; discard(); }, 1800);
+}
+function tog(btn) { btn.classList.toggle('on'); dirty(); }
+function setSeg(el) {
+  el.closest('.seg').querySelectorAll('.seg-opt').forEach(o => o.classList.remove('on'));
+  el.classList.add('on'); dirty();
+}
+function pickSwatch(el) {
+  el.closest('.av-grid-pick').querySelectorAll('.av-swatch:not(.av-add)').forEach(s => s.classList.remove('active'));
+  el.classList.add('active'); dirty();
+}
+function pickColor(el) {
+  el.closest('.col-dots').querySelectorAll('.col-dot').forEach(d => d.classList.remove('active'));
+  el.classList.add('active'); dirty();
+}
+function updSpeed(r) {
+  document.getElementById('speedVal').textContent = (r.value / 100).toFixed(1) + '×'; dirty();
+}
+
+/* ══ VOICE SHEET ══ */
+const overlay   = document.getElementById('overlay');
+const sheet     = document.getElementById('voiceSheet');
+const vsStatus  = document.getElementById('vsStatus');
+const vsStatusTxt = document.getElementById('vsStatusTxt');
+const vsPlaceholder = document.getElementById('vsPlaceholder');
+const vsTxText  = document.getElementById('vsTxText');
+const vsCursor  = document.getElementById('vsCursor');
+const vsTx      = document.getElementById('vsTx');
+const glossSection = document.getElementById('vsGlossSection');
+const vsGlossRow= document.getElementById('vsGlossRow');
+const vsMicBtn  = document.getElementById('vsMicBtn');
+
+function openSheet() {
+  overlay.classList.add('open');
+  sheet.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeSheet() {
+  overlay.classList.remove('open');
+  sheet.classList.remove('open');
+  document.body.style.overflow = '';
+  if (micLive) stopListening();
+}
+function confirmAndClose() { closeSheet(); }
+
+/* waveform bars */
+const vsWave = document.getElementById('vsWave');
+const BARS = 52;
+const wBars = [];
+for (let i = 0; i < BARS; i++) {
+  const b = document.createElement('div');
+  b.className = 'w-bar';
+  vsWave.appendChild(b);
+  wBars.push(b);
+}
+let waveTimer = null, micLive = false;
+function startWave() {
+  const mid = BARS / 2;
+  waveTimer = setInterval(() => {
+    wBars.forEach((b, i) => {
+      const dist = Math.abs(i - mid) / mid;
+      const h = micLive ? Math.max(3, Math.round((1 - dist * .35) * Math.random() * 48)) : 3;
+      b.style.height = h + 'px';
+      b.classList.toggle('live', micLive);
+    });
+  }, 85);
+}
+function stopWave() {
+  clearInterval(waveTimer);
+  wBars.forEach(b => { b.style.height = '3px'; b.classList.remove('live'); });
+}
+
+/* speech simulation */
+const PHRASES = [
+  'Hello, how are you doing today?',
+  'I need some help please.',
+  'What is your name?',
+  'Nice to meet you.',
+  'Thank you very much.',
+  'Can you help me understand this?',
+];
+let typeTimer = null, chipCycle = null;
+
+function startListening() {
+  micLive = true;
+  vsMicBtn.classList.add('live');
+  vsPlaceholder.style.display = 'none';
+  vsTxText.style.display = 'inline';
+  vsTxText.textContent = '';
+  vsCursor.classList.add('show');
+  vsTx.classList.add('focused');
+  vsStatus.classList.add('live');
+  vsStatusTxt.textContent = 'Listening…';
+  glossSection.style.display = 'none';
+  startWave();
+
+  const phrase = PHRASES[Math.floor(Math.random() * PHRASES.length)];
+  let idx = 0;
+  clearInterval(typeTimer);
+  setTimeout(() => {
+    typeTimer = setInterval(() => {
+      if (idx < phrase.length) {
+        vsTxText.textContent += phrase[idx++];
+      } else {
+        clearInterval(typeTimer);
+        stopListening(phrase);
+      }
+    }, 60 + Math.random() * 45);
+  }, 500 + Math.random() * 400);
+}
+
+function stopListening(final) {
+  micLive = false;
+  vsMicBtn.classList.remove('live');
+  stopWave();
+  vsCursor.classList.remove('show');
+  vsTx.classList.remove('focused');
+  vsStatus.classList.remove('live');
+  vsStatusTxt.textContent = 'Done';
+  const text = final || vsTxText.textContent;
+  if (text.trim()) showGloss(text);
+}
+
+function toggleMic() {
+  if (micLive) { clearInterval(typeTimer); stopListening(); }
+  else startListening();
+}
+
+function clearVoice() {
+  clearInterval(typeTimer);
+  if (micLive) stopListening();
+  vsTxText.textContent = '';
+  vsTxText.style.display = 'none';
+  vsPlaceholder.style.display = 'inline';
+  vsCursor.classList.remove('show');
+  vsTx.classList.remove('focused');
+  glossSection.style.display = 'none';
+  vsStatus.classList.remove('live');
+  vsStatusTxt.textContent = 'Ready';
+}
+
+/* gloss */
+const GLOSS_MAP = {hello:'HELLO',hi:'HI',how:'HOW',are:null,you:'YOU',i:'ME',
+  what:'WHAT',your:'YOUR',name:'NAME',is:null,nice:'NICE',meet:'MEET',
+  thank:'THANK',very:'VERY',much:'MUCH',today:'TODAY',help:'HELP',
+  need:'NEED',please:'PLEASE',good:'GOOD',can:'CAN',understand:'UNDERSTAND'};
+const STOPS = new Set(['a','an','the','to','for','with','and','of','in','at','by','it','some','this']);
+
+function toGloss(txt) {
+  const words = txt.toLowerCase().replace(/[^a-z\s]/g,'').split(/\s+/).filter(Boolean);
+  const out = [];
+  words.forEach(w => {
+    if (GLOSS_MAP[w] != null) out.push(GLOSS_MAP[w]);
+    else if (!STOPS.has(w) && w.length > 1) out.push(w.toUpperCase());
+  });
+  if (txt.includes('?')) out.push('Q');
+  return out.slice(0, 10);
+}
+
+function showGloss(txt) {
+  const glosses = toGloss(txt);
+  vsGlossRow.innerHTML = '<span class="vs-gloss-lbl">Gloss</span>';
+  glosses.forEach((g, i) => {
+    const c = document.createElement('span');
+    c.className = 'vs-chip' + (i === 0 ? ' on' : '');
+    c.textContent = g;
+    c.style.animationDelay = (i * .065) + 's';
+    vsGlossRow.appendChild(c);
+  });
+  glossSection.style.display = 'block';
+  clearInterval(chipCycle);
+  let idx = 0;
+  chipCycle = setInterval(() => {
+    document.querySelectorAll('.vs-chip').forEach((c, i) => c.classList.toggle('on', i === idx));
+    idx = (idx + 1) % glosses.length;
+  }, 700);
+}
+
+/* keyboard shortcuts */
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && sheet.classList.contains('open') && !['INPUT','TEXTAREA'].includes(e.target.tagName)) {
+    e.preventDefault(); toggleMic();
+  }
+  if (e.code === 'Escape') closeSheet();
+});
+</script>
+</body>
+</html>

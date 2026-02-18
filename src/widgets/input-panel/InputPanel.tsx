@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { MAX_INPUT_LENGTH } from "@/shared/constants";
 import GlossChip from "@/shared/ui/GlossChip";
+import VoiceRecordingPane from "@/features/translate-text/ui/VoiceRecordingPane";
 import type { GlossToken } from "@/entities/gloss/types";
 
 interface InputPanelProps {
@@ -15,6 +17,8 @@ interface InputPanelProps {
   onTranslate: () => void;
   onClear: () => void;
   onChipClick?: (index: number) => void;
+  onVoiceDone?: (text: string) => void;
+  onVoiceTranslate?: (text: string) => void;
 }
 
 export default function InputPanel({
@@ -28,7 +32,11 @@ export default function InputPanel({
   onTranslate,
   onClear,
   onChipClick,
+  onVoiceDone,
+  onVoiceTranslate,
 }: InputPanelProps) {
+  const [micActive, setMicActive] = useState(false);
+
   return (
     <div className="bg-surface border border-border rounded-panel shadow-[var(--raised),inset_0_1px_0_rgba(255,255,255,0.045)] flex flex-col overflow-hidden transition-all duration-250">
       {/* Panel Header */}
@@ -64,53 +72,70 @@ export default function InputPanel({
         />
       </div>
 
-      {/* Controls Row */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-t border-border transition-colors duration-250">
-        <div className="flex gap-[7px]">
-          {/* Mic button */}
-          <button className="w-[37px] h-[37px] rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:translate-y-px">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-              <line x1="12" y1="19" x2="12" y2="23" />
-              <line x1="8" y1="23" x2="16" y2="23" />
-            </svg>
-          </button>
-          {/* Clear button */}
+      {/* Controls Row — swaps with VoiceRecordingPane when mic is active */}
+      {micActive ? (
+        <VoiceRecordingPane
+          onDone={(text) => {
+            onVoiceDone?.(text);
+            setMicActive(false);
+          }}
+          onTranslate={(text) => {
+            onVoiceTranslate?.(text);
+            setMicActive(false);
+          }}
+          onClose={() => setMicActive(false)}
+        />
+      ) : (
+        <div className="flex items-center justify-between px-4 py-2.5 border-t border-border transition-colors duration-250">
+          <div className="flex gap-[7px]">
+            {/* Mic button — blue glow */}
+            <button
+              onClick={() => setMicActive(true)}
+              className="w-[37px] h-[37px] rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-accent hover:border-accent/40 hover:shadow-[var(--raised-sm),0_0_12px_var(--accent-glow)] active:shadow-inset-press active:translate-y-px"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="23" />
+                <line x1="8" y1="23" x2="16" y2="23" />
+              </svg>
+            </button>
+            {/* Clear button — red glow */}
+            <button
+              onClick={onClear}
+              className="w-[37px] h-[37px] rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-error hover:border-error/40 hover:shadow-[var(--raised-sm),0_0_12px_rgba(248,113,113,0.25)] active:shadow-inset-press active:translate-y-px"
+              title="Clear input"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14H6L5 6" />
+                <path d="M10 11v6" /><path d="M14 11v6" />
+                <path d="M9 6V4h6v2" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Translate button */}
           <button
-            onClick={onClear}
-            className="w-[37px] h-[37px] rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:translate-y-px"
-            title="Clear input"
+            onClick={onTranslate}
+            disabled={isTranslating || !inputText.trim()}
+            className="flex items-center gap-2 px-5 py-2 rounded-btn border border-accent-dim bg-gradient-to-b from-accent-btn-top to-accent-dim text-white font-sans text-[13.5px] font-semibold cursor-pointer tracking-[0.01em] shadow-[0_1px_0_rgba(255,255,255,0.2)_inset,0_4px_14px_color-mix(in_srgb,var(--accent)_35%,transparent)] transition-all duration-120 hover:brightness-110 active:translate-y-px active:brightness-[0.93] active:shadow-inset-press disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6l-1 14H6L5 6" />
-              <path d="M10 11v6" /><path d="M14 11v6" />
-              <path d="M9 6V4h6v2" />
-            </svg>
+            {isTranslating ? (
+              <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+                <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            )}
+            Translate
           </button>
         </div>
-
-        {/* Translate button */}
-        <button
-          onClick={onTranslate}
-          disabled={isTranslating || !inputText.trim()}
-          className="flex items-center gap-2 px-5 py-2 rounded-btn border border-accent-dim bg-gradient-to-b from-accent-btn-top to-accent-dim text-white font-sans text-[13.5px] font-semibold cursor-pointer tracking-[0.01em] shadow-[0_1px_0_rgba(255,255,255,0.2)_inset,0_4px_14px_color-mix(in_srgb,var(--accent)_35%,transparent)] transition-all duration-120 hover:brightness-110 active:translate-y-px active:brightness-[0.93] active:shadow-inset-press disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
-        >
-          {isTranslating ? (
-            <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
-              <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
-            </svg>
-          ) : (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12" />
-              <polyline points="12 5 19 12 12 19" />
-            </svg>
-          )}
-          Translate
-        </button>
-      </div>
+      )}
 
       {/* Gloss Strip */}
       <div className="px-4 py-3 border-t border-border transition-colors duration-250">
