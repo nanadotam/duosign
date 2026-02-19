@@ -22,8 +22,19 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """You are an expert English-to-ASL Gloss translator for the DuoSign system.
 
+## Your Process
+Before translating, UNDERSTAND what the speaker means — not just their words.
+1. Identify figurative language, idioms, and implied meaning.
+2. Simplify to the core message the speaker is communicating.
+3. Express that meaning in ASL gloss following the rules below.
+
+For example: "I will be stepping out for a bit to catch some air. I am at wits end with her"
+- The speaker means: I need to go outside briefly. She is frustrating me greatly.
+- ASL gloss: I NEED LEAVE SHORT-TIME. OUTSIDE BREATHE. SHE FRUSTRATE ME VERY
+
 ## ASL Gloss Rules
 - Output ALL CAPS, one word per sign, separated by spaces.
+- Use period to separate distinct clauses/sentences.
 - Remove articles (a, an, the), prepositions, and auxiliary verbs.
 - Use base verb forms: "searching" → SEARCH, "went" → GO.
 - Word order is TIME + LOCATION + SUBJECT + OBJECT + VERB + NEGATION.
@@ -33,7 +44,8 @@ SYSTEM_PROMPT = """You are an expert English-to-ASL Gloss translator for the Duo
 - Adjectives come AFTER the noun: "big cat" → CAT BIG.
 - Plurals: add + after the word: "cats" → CAT+.
 - Numbers come AFTER the noun: "three dogs" → DOG THREE.
-- Translate idioms by MEANING, not word-by-word.
+- Translate idioms and figurative speech by MEANING, not word-by-word.
+- Strip conversational fluff ("I just wanted to", "thanks, noted", "you know").
 - Only use signs from the provided vocabulary list. If a word is not available, fingerspell it as hyphenated letters: XYLOPHONE → X-Y-L-O-P-H-O-N-E.
 
 ## Examples
@@ -41,24 +53,26 @@ English: "I am searching for a doctor" → ASL: I DOCTOR SEARCH
 English: "Tomorrow I will go to school" → ASL: TOMORROW I SCHOOL GO
 English: "She doesn't like pizza" → ASL: SHE PIZZA LIKE NOT
 English: "Where is the bathroom?" → ASL: BATHROOM WHERE
-English: "The cats are sleeping on the bed" → ASL: CAT+ BED SLEEP
 English: "It's raining cats and dogs" → ASL: RAIN HEAVY
-English: "If it rains tomorrow, I will stay home" → ASL: TOMORROW RAIN IF I HOME STAY
 English: "I have three dogs" → ASL: I DOG THREE HAVE
 English: "The big red car is fast" → ASL: CAR BIG RED FAST
-English: "Do you like chocolate?" → ASL: YOU CHOCOLATE LIKE
-English: "Yesterday at the hospital she visited her friend" → ASL: YESTERDAY HOSPITAL SHE FRIEND VISIT
+English: "I need to bring it to your attention that the deadline has passed" → ASL: INFORM YOU. DEADLINE FINISH PASS
+English: "She's been giving me the cold shoulder all week" → ASL: ALL-WEEK SHE IGNORE ME
+English: "I'm going to hit the gym before grabbing lunch" → ASL: FIRST I GYM GO. THEN LUNCH GET
 
 ## Instructions
-Given an English sentence, output ONLY the ASL gloss — no explanations, no extra text.
-Prefer signs from the available vocabulary list below. Fingerspell unknown words."""
+1. Understand the speaker's MEANING (not literal words).
+2. Map that meaning to signs from the AVAILABLE VOCABULARY LIST ONLY.
+3. If a concept has no matching sign, find the closest available synonym. If no synonym exists, fingerspell it.
+4. Output ONLY the ASL gloss — no explanations, no extra text."""
 
 
 def _build_user_prompt(sentence: str, relevant_vocab: list[str]) -> str:
     """Build the user message with sentence and filtered vocabulary."""
     vocab_str = ", ".join(relevant_vocab[:80])
     return (
-        f"Available vocabulary: {vocab_str}\n\n"
+        f"AVAILABLE SIGNS (use ONLY these, fingerspell anything else):\n"
+        f"{vocab_str}\n\n"
         f"Translate to ASL gloss: \"{sentence}\""
     )
 
@@ -138,14 +152,19 @@ def _clean_llm_output(raw: str) -> str:
     return first_line.upper().strip()
 
 
-# ── Whisper Speech-to-Text (placeholder) ─────────────────────────────
+# ── Whisper Speech-to-Text ────────────────────────────────────────────
 
-async def transcribe_audio(audio_bytes: bytes) -> Optional[str]:
+async def transcribe_audio(
+    audio_bytes: bytes,
+    filename: str = "audio.webm",
+) -> Optional[str]:
     """
     Transcribe audio to English text using Groq Whisper.
 
     Args:
-        audio_bytes: Raw audio file bytes (wav, mp3, etc.)
+        audio_bytes: Raw audio file bytes (wav, mp3, webm, etc.)
+        filename: Original filename — Groq uses the extension to detect
+                  format. Browser MediaRecorder typically outputs .webm.
 
     Returns:
         Transcribed English text, or None on failure.
@@ -160,17 +179,20 @@ async def transcribe_audio(audio_bytes: bytes) -> Optional[str]:
 
         client = AsyncGroq(api_key=api_key)
 
-        # Groq's Whisper endpoint
         response = await client.audio.transcriptions.create(
-            model="whisper-large-v3",
-            file=("audio.wav", audio_bytes),
+            model="whisper-large-v3-turbo",
+            file=(filename, audio_bytes),
             response_format="text",
             language="en",
+            temperature=0.0,
+            prompt="Transcribe this English speech. The speaker may be "
+                   "discussing everyday topics, asking questions, or giving commands.",
         )
 
         text = response.strip()
-        logger.info(f"Whisper transcription: '{text[:80]}...'")
-        return text
+        if text:
+            logger.info(f"Whisper transcription: '{text[:80]}'")
+        return text if text else None
 
     except Exception as e:
         logger.error(f"Whisper transcription failed: {e}")

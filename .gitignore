@@ -34,3 +34,8 @@ venv/
 env/
 .env/
 backend/.duosign_venv
+backend/run_json_scenarios.py
+backend/data/test_results.json
+backend/data/test_scenarios.json
+
+docs/inspo

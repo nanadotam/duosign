@@ -107,6 +107,7 @@ class TranslateResponse(BaseModel):
     tokens: list[str]           # Individual gloss tokens
     method: str                 # "rule_based", "llm", or "llm_quality"
     confidence: float
+    transcribed_text: str = ""  # Only set for audio endpoint — what Whisper heard
 
 class VocabularyResponse(BaseModel):
     """Response from /api/vocabulary."""
@@ -260,8 +261,11 @@ async def translate_audio(audio: UploadFile = File(...)):
     """
     Speech → Text → ASL Gloss pipeline.
 
-    Accepts audio file (wav, mp3, etc.), transcribes with Groq Whisper,
+    Accepts audio file (wav, mp3, webm, etc.), transcribes with Groq Whisper,
     then translates the text to ASL Gloss.
+
+    Browser MediaRecorder typically sends webm. Groq supports:
+    mp3, mp4, mpeg, mpga, m4a, wav, webm (max 25MB).
     """
     if not converter:
         raise HTTPException(503, "Converter not initialized")
@@ -270,12 +274,17 @@ async def translate_audio(audio: UploadFile = File(...)):
     if not audio_bytes:
         raise HTTPException(400, "Empty audio file")
 
-    text = await transcribe_audio(audio_bytes)
+    # Pass the original filename so Groq can detect the format
+    filename = audio.filename or "audio.webm"
+
+    text = await transcribe_audio(audio_bytes, filename=filename)
     if not text:
         raise HTTPException(502, "Speech transcription failed — check GROQ_API_KEY")
 
     result = await converter.convert(text)
-    return _result_to_response(result)
+    response = _result_to_response(result)
+    response.transcribed_text = text
+    return response
 
 
 @app.get("/api/vocabulary", response_model=VocabularyResponse)
