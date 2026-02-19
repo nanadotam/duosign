@@ -12,7 +12,8 @@
     "next": "14.2.35",
     "react": "^18",
     "react-dom": "^18",
-    "react-hook-form": "^7.71.1"
+    "react-hook-form": "^7.71.1",
+    "use-scramble": "^2.2.15"
   },
   "devDependencies": {
     "@types/node": "^20",

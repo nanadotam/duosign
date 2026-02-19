@@ -4,7 +4,10 @@ import { useState } from "react";
 import { MAX_INPUT_LENGTH } from "@/shared/constants";
 import GlossChip from "@/shared/ui/GlossChip";
 import VoiceRecordingPane from "@/features/translate-text/ui/VoiceRecordingPane";
+import GlossDisplay from "@/features/translate-text/ui/GlossDisplay";
+import DebugStats from "@/features/translate-text/ui/DebugStats";
 import type { GlossToken } from "@/entities/gloss/types";
+import type { DebugInfo } from "@/features/translate-text/ui/DebugStats";
 
 interface InputPanelProps {
   inputText: string;
@@ -19,6 +22,8 @@ interface InputPanelProps {
   onChipClick?: (index: number) => void;
   onVoiceDone?: (text: string) => void;
   onVoiceTranslate?: (text: string) => void;
+  glossText?: string;
+  debugInfo?: DebugInfo | null;
 }
 
 export default function InputPanel({
@@ -34,6 +39,8 @@ export default function InputPanel({
   onChipClick,
   onVoiceDone,
   onVoiceTranslate,
+  glossText = "",
+  debugInfo = null,
 }: InputPanelProps) {
   const [micActive, setMicActive] = useState(false);
 
@@ -142,10 +149,13 @@ export default function InputPanel({
         </div>
       )}
 
-      {/* Gloss Strip */}
+      {/* Gloss Display — scramble animation */}
+      <GlossDisplay glossText={glossText} />
+
+      {/* Gloss Strip — token chips */}
       <div className="px-4 py-3 border-t border-border transition-colors duration-250">
         <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-2 transition-colors duration-250">
-          ASL Gloss Output
+          Gloss Tokens
         </div>
         <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
           {glossTokens.length === 0 ? (
@@ -166,6 +176,9 @@ export default function InputPanel({
           )}
         </div>
       </div>
+
+      {/* Debug Stats — collapsible */}
+      <DebugStats info={debugInfo} />
     </div>
   );
 }

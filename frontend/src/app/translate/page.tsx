@@ -23,6 +23,7 @@ export default function TranslatePage() {
     inputText,
     setInputText,
     glossTokens,
+    glossText,
     isTranslating,
     translate,
     clearInput,
@@ -30,6 +31,7 @@ export default function TranslatePage() {
     charCount,
     activeIndex,
     setActiveIndex,
+    debugInfo,
   } = useTranslate();
 
   const [recentHistory, setRecentHistory] = useState<HistoryEntry[]>([]);
@@ -121,6 +123,8 @@ export default function TranslatePage() {
               onChipClick={(index) => setActiveIndex(index)}
               onVoiceDone={handleVoiceDone}
               onVoiceTranslate={handleVoiceTranslate}
+              glossText={glossText}
+              debugInfo={debugInfo}
             />
             <RecentTranslations
               entries={recentHistory}
