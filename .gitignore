@@ -39,3 +39,4 @@ backend/data/test_results.json
 backend/data/test_scenarios.json
 
 docs/inspo
+backend/data/test_results_terminal.txt

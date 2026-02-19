@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { useState } from "react";
 import { MAX_INPUT_LENGTH } from "@/shared/constants";
 import GlossChip from "@/shared/ui/GlossChip";
@@ -43,11 +44,27 @@ export default function InputPanel({
   debugInfo = null,
 }: InputPanelProps) {
   const [micActive, setMicActive] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  /** Auto-resize textarea on mobile */
+  function handleInput(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const val = e.target.value.slice(0, MAX_INPUT_LENGTH);
+    onInputChange(val);
+    const el = e.target;
+    // reset then grow
+    el.style.height = "42px";
+    const scrollH = el.scrollHeight;
+    el.style.height = `${Math.min(scrollH, 120)}px`;
+  }
 
   return (
-    <div className="bg-surface border border-border rounded-panel shadow-[var(--raised),inset_0_1px_0_rgba(255,255,255,0.045)] flex flex-col overflow-hidden transition-all duration-250">
-      {/* Panel Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-surface-2 border-b border-border transition-all duration-250">
+    <div className="
+      bg-surface border border-border rounded-panel
+      shadow-[var(--raised),inset_0_1px_0_rgba(255,255,255,0.045)]
+      flex flex-col overflow-hidden transition-all duration-250
+    ">
+      {/* Panel Header — hidden on mobile (compact bar needs no header) */}
+      <div className="hidden lg:flex items-center justify-between px-4 py-3 bg-surface-2 border-b border-border transition-all duration-250">
         <div className="flex items-center gap-[7px] text-[10.5px] font-bold tracking-[0.09em] uppercase text-text-3">
           <div className="w-1.5 h-1.5 rounded-full bg-border-hi flex-shrink-0 transition-colors duration-250" />
           English Input
@@ -63,19 +80,31 @@ export default function InputPanel({
       </div>
 
       {/* Textarea */}
-      <div className="px-4 py-3.5 flex-1">
+      <div className="px-2.5 py-2 lg:px-4 lg:py-3.5 flex-1">
         <textarea
+          ref={textareaRef}
           value={inputText}
-          onChange={(e) => onInputChange(e.target.value.slice(0, MAX_INPUT_LENGTH))}
+          onChange={handleInput}
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
               e.preventDefault();
               onTranslate();
             }
           }}
-          placeholder="Type something to translate into American Sign Language..."
-          rows={8}
-          className="w-full min-h-[190px] bg-surface-3 border border-border rounded-[12px] px-3.5 py-3.5 text-text-1 font-sans text-[15px] leading-relaxed resize-none outline-none shadow-inset transition-all duration-150 placeholder:text-text-3 focus:border-accent/60 focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]"
+          placeholder="Type to translate into ASL..."
+          rows={1}
+          className="
+            w-full bg-surface-3 border border-border rounded-[10px] lg:rounded-[12px]
+            px-3 py-2.5 lg:px-3.5 lg:py-3.5
+            text-text-1 font-sans text-[14px] lg:text-[15px] leading-relaxed
+            resize-none outline-none shadow-inset
+            transition-all duration-150 placeholder:text-text-3
+            focus:border-accent/60 focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]
+            /* mobile: min 42px, grows up to 120px */
+            min-h-[42px] lg:min-h-[190px]
+            overflow-y-auto lg:overflow-y-hidden
+          "
+          style={{ height: "42px" }}
         />
       </div>
 
@@ -93,27 +122,27 @@ export default function InputPanel({
           onClose={() => setMicActive(false)}
         />
       ) : (
-        <div className="flex items-center justify-between px-4 py-2.5 border-t border-border transition-colors duration-250">
-          <div className="flex gap-[7px]">
-            {/* Mic button — blue glow */}
+        <div className="flex items-center justify-between px-2.5 py-1.5 lg:px-4 lg:py-2.5 border-t border-border transition-colors duration-250">
+          <div className="flex gap-1.5 lg:gap-[7px]">
+            {/* Mic button */}
             <button
               onClick={() => setMicActive(true)}
-              className="w-[37px] h-[37px] rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-accent hover:border-accent/40 hover:shadow-[var(--raised-sm),0_0_12px_var(--accent-glow)] active:shadow-inset-press active:translate-y-px"
+              className="w-[34px] h-[34px] lg:w-[37px] lg:h-[37px] rounded-[8px] lg:rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-accent hover:border-accent/40 hover:shadow-[var(--raised-sm),0_0_12px_var(--accent-glow)] active:shadow-inset-press active:translate-y-px"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
                 <line x1="12" y1="19" x2="12" y2="23" />
                 <line x1="8" y1="23" x2="16" y2="23" />
               </svg>
             </button>
-            {/* Clear button — red glow */}
+            {/* Clear button */}
             <button
               onClick={onClear}
-              className="w-[37px] h-[37px] rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-error hover:border-error/40 hover:shadow-[var(--raised-sm),0_0_12px_rgba(248,113,113,0.25)] active:shadow-inset-press active:translate-y-px"
+              className="w-[34px] h-[34px] lg:w-[37px] lg:h-[37px] rounded-[8px] lg:rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-error hover:border-error/40 hover:shadow-[var(--raised-sm),0_0_12px_rgba(248,113,113,0.25)] active:shadow-inset-press active:translate-y-px"
               title="Clear input"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="3 6 5 6 21 6" />
                 <path d="M19 6l-1 14H6L5 6" />
                 <path d="M10 11v6" /><path d="M14 11v6" />
@@ -126,7 +155,7 @@ export default function InputPanel({
           <button
             onClick={onTranslate}
             disabled={isTranslating || !inputText.trim()}
-            className="flex items-center gap-2 px-5 py-2 rounded-btn text-white font-sans text-[13.5px] font-semibold cursor-pointer tracking-[0.01em] transition-all duration-120 hover:brightness-110 active:translate-y-px active:brightness-[0.93] disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
+            className="flex items-center gap-1.5 lg:gap-2 px-4 py-2 lg:px-5 lg:py-2 rounded-[8px] lg:rounded-btn text-white font-sans text-[13px] lg:text-[13.5px] font-semibold cursor-pointer tracking-[0.01em] transition-all duration-120 hover:brightness-110 active:translate-y-px active:brightness-[0.93] disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
             style={{
               background: "linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%)",
               border: "1px solid var(--accent-dim)",
@@ -139,7 +168,7 @@ export default function InputPanel({
                 <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
               </svg>
             ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12" />
                 <polyline points="12 5 19 12 12 19" />
               </svg>
@@ -149,11 +178,13 @@ export default function InputPanel({
         </div>
       )}
 
-      {/* Gloss Display — scramble animation */}
-      <GlossDisplay glossText={glossText} />
+      {/* Gloss Display — scramble animation — desktop only */}
+      <div className="hidden lg:block">
+        <GlossDisplay glossText={glossText} />
+      </div>
 
-      {/* Gloss Strip — token chips */}
-      <div className="px-4 py-3 border-t border-border transition-colors duration-250">
+      {/* Gloss Strip — token chips — desktop only */}
+      <div className="hidden lg:block px-4 py-3 border-t border-border transition-colors duration-250">
         <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-2 transition-colors duration-250">
           Gloss Tokens
         </div>
@@ -177,8 +208,10 @@ export default function InputPanel({
         </div>
       </div>
 
-      {/* Debug Stats — collapsible */}
-      <DebugStats info={debugInfo} />
+      {/* Debug Stats — collapsible — desktop only */}
+      <div className="hidden lg:block">
+        <DebugStats info={debugInfo} />
+      </div>
     </div>
   );
 }

@@ -39,10 +39,14 @@ export default function AvatarPanel({
   }[playbackState];
 
   return (
-    <div className="bg-surface border border-border rounded-panel shadow-[var(--raised),inset_0_1px_0_rgba(255,255,255,0.045)] flex flex-col overflow-hidden transition-all duration-250">
+    <div className="
+      bg-surface border border-border rounded-panel
+      shadow-[var(--raised),inset_0_1px_0_rgba(255,255,255,0.045)]
+      flex flex-col overflow-hidden transition-all duration-250
+    ">
       {/* Panel Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-surface-2 border-b border-border transition-all duration-250">
-        <div className="flex items-center gap-[7px] text-[10.5px] font-bold tracking-[0.09em] uppercase text-text-3">
+      <div className="flex items-center justify-between px-3 py-2 lg:px-4 lg:py-3 bg-surface-2 border-b border-border transition-all duration-250">
+        <div className="flex items-center gap-[5px] lg:gap-[7px] text-[9.5px] lg:text-[10.5px] font-bold tracking-[0.09em] uppercase text-text-3">
           <div
             className={[
               "w-1.5 h-1.5 rounded-full flex-shrink-0 transition-all duration-250",
@@ -53,7 +57,7 @@ export default function AvatarPanel({
           />
           {statusText}
         </div>
-        <div className="flex items-center gap-[7px]">
+        <div className="flex items-center gap-[5px] lg:gap-[7px]">
           <SegmentedControl
             options={["Avatar", "Skeleton"]}
             value={displayMode === "avatar" ? "Avatar" : "Skeleton"}
@@ -61,10 +65,10 @@ export default function AvatarPanel({
             size="sm"
           />
           <button
-            className="w-[27px] h-[27px] rounded-[7px] border border-border bg-surface text-text-3 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-100 hover:text-text-1 hover:border-border-hi active:shadow-inset-press active:translate-y-px"
+            className="w-[24px] h-[24px] lg:w-[27px] lg:h-[27px] rounded-[6px] lg:rounded-[7px] border border-border bg-surface text-text-3 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-100 hover:text-text-1 hover:border-border-hi active:shadow-inset-press active:translate-y-px"
             title="Fullscreen"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
             </svg>
           </button>
@@ -72,8 +76,13 @@ export default function AvatarPanel({
       </div>
 
       {/* Avatar Canvas Area */}
-      <div className="flex-1 flex items-center justify-center relative min-h-[420px] overflow-hidden transition-all duration-250"
-        style={{ background: "var(--av-glow), var(--surface)" }}
+      <div
+        className="flex-1 flex items-center justify-center relative overflow-hidden transition-all duration-250"
+        style={{
+          background: "var(--av-glow), var(--surface)",
+          // Mobile: viewport-fraction height; Desktop: fixed min
+          minHeight: "min(50dvh, 55vh)",
+        }}
       >
         {/* Grid Background */}
         <div
@@ -89,24 +98,25 @@ export default function AvatarPanel({
         {/* Ghost Avatar Placeholder */}
         <div
           className={[
-            "flex flex-col items-center gap-4 z-[1] transition-opacity duration-300",
+            "flex flex-col items-center gap-3 lg:gap-4 z-[1] transition-opacity duration-300",
             isLive ? "opacity-[0.22]" : "opacity-100",
           ].join(" ")}
         >
-          <div className="w-[110px] h-[150px] bg-gradient-to-b from-surface-3 to-surface-2 rounded-[55px_55px_38px_38px] border border-border-hi shadow-[var(--raised),inset_0_1px_0_rgba(255,255,255,0.04)] relative overflow-hidden transition-all duration-250">
+          {/* Scaled ghost figure — smaller on mobile */}
+          <div className="w-[70px] h-[95px] lg:w-[110px] lg:h-[150px] bg-gradient-to-b from-surface-3 to-surface-2 rounded-[35px_35px_24px_24px] lg:rounded-[55px_55px_38px_38px] border border-border-hi shadow-[var(--raised),inset_0_1px_0_rgba(255,255,255,0.04)] relative overflow-hidden transition-all duration-250">
             {/* Head */}
-            <div className="absolute top-[18px] left-1/2 -translate-x-1/2 w-11 h-11 rounded-full bg-surface-3 border border-border-hi" />
+            <div className="absolute top-[12px] lg:top-[18px] left-1/2 -translate-x-1/2 w-7 h-7 lg:w-11 lg:h-11 rounded-full bg-surface-3 border border-border-hi" />
             {/* Body */}
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[74px] h-[55px] rounded-t-[37px] bg-surface-3 border border-border-hi" />
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[48px] h-[36px] lg:w-[74px] lg:h-[55px] rounded-t-[24px] lg:rounded-t-[37px] bg-surface-3 border border-border-hi" />
           </div>
-          <div className="text-text-3 text-[12.5px] text-center max-w-[190px] leading-relaxed transition-colors duration-250">
+          <div className="text-text-3 text-[11px] lg:text-[12.5px] text-center max-w-[160px] lg:max-w-[190px] leading-relaxed transition-colors duration-250">
             Your sign language animation will appear here
           </div>
         </div>
 
         {/* Now Signing Badge */}
         {isLive && (
-          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-pill bg-success/10 border border-success/25 text-[10px] font-bold tracking-[0.08em] uppercase text-success">
+          <div className="absolute top-2 left-2 lg:top-3 lg:left-3 flex items-center gap-1.5 px-2 py-0.5 lg:px-2.5 lg:py-1 rounded-pill bg-success/10 border border-success/25 text-[9px] lg:text-[10px] font-bold tracking-[0.08em] uppercase text-success">
             <div className="w-[5px] h-[5px] rounded-full bg-success animate-[blink_1s_infinite]" />
             Now Signing
           </div>
@@ -115,8 +125,8 @@ export default function AvatarPanel({
         {/* Playback Bar */}
         <div
           className={[
-            "absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-[7px]",
-            "px-2.5 py-1 rounded-pill border border-border-hi backdrop-blur-[10px]",
+            "absolute bottom-2 lg:bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-[5px] lg:gap-[7px]",
+            "px-1.5 py-0.5 lg:px-2.5 lg:py-1 rounded-pill border border-border-hi backdrop-blur-[10px]",
             "shadow-raised transition-all duration-200",
             isReady
               ? "opacity-100 pointer-events-auto"
@@ -127,10 +137,10 @@ export default function AvatarPanel({
           {/* Prev */}
           <button
             onClick={onPrev}
-            className="w-[30px] h-[30px] rounded-full border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:scale-[0.93]"
+            className="w-[26px] h-[26px] lg:w-[30px] lg:h-[30px] rounded-full border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:scale-[0.93]"
             title="Previous"
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
@@ -138,7 +148,7 @@ export default function AvatarPanel({
           {/* Play/Pause */}
           <button
             onClick={onTogglePlay}
-            className="w-9 h-9 rounded-full text-white flex items-center justify-center cursor-pointer transition-all duration-120 hover:brightness-110 active:brightness-[0.92] active:scale-[0.94]"
+            className="w-[30px] h-[30px] lg:w-9 lg:h-9 rounded-full text-white flex items-center justify-center cursor-pointer transition-all duration-120 hover:brightness-110 active:brightness-[0.92] active:scale-[0.94]"
             style={{
               background: "linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%)",
               border: "1px solid var(--accent-dim)",
@@ -146,12 +156,12 @@ export default function AvatarPanel({
             }}
           >
             {playbackState === "playing" ? (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="4" width="4" height="16" />
                 <rect x="14" y="4" width="4" height="16" />
               </svg>
             ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                 <polygon points="5 3 19 12 5 21 5 3" />
               </svg>
             )}
@@ -160,24 +170,24 @@ export default function AvatarPanel({
           {/* Next */}
           <button
             onClick={onNext}
-            className="w-[30px] h-[30px] rounded-full border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:scale-[0.93]"
+            className="w-[26px] h-[26px] lg:w-[30px] lg:h-[30px] rounded-full border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:scale-[0.93]"
             title="Next"
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
 
           {/* Divider */}
-          <div className="w-px h-[18px] bg-border mx-px" />
+          <div className="w-px h-[14px] lg:h-[18px] bg-border mx-px" />
 
           {/* Replay */}
           <button
             onClick={onReplay}
-            className="w-[30px] h-[30px] rounded-full border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:scale-[0.93]"
+            className="w-[26px] h-[26px] lg:w-[30px] lg:h-[30px] rounded-full border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:scale-[0.93]"
             title="Replay"
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="1 4 1 10 7 10" />
               <path d="M3.51 15a9 9 0 1 0 .49-4" />
             </svg>
@@ -186,7 +196,7 @@ export default function AvatarPanel({
           {/* Speed Chip */}
           <button
             onClick={onCycleSpeed}
-            className="px-2 py-0.5 rounded-[5px] font-mono text-[10px] font-medium bg-surface-3 border border-border text-text-3 cursor-pointer shadow-inset transition-all duration-100 hover:text-text-2 active:shadow-inset-press active:translate-y-px"
+            className="px-1.5 py-0.5 rounded-[5px] font-mono text-[9px] lg:text-[10px] font-medium bg-surface-3 border border-border text-text-3 cursor-pointer shadow-inset transition-all duration-100 hover:text-text-2 active:shadow-inset-press active:translate-y-px"
           >
             {SPEED_LABELS[speed]}
           </button>

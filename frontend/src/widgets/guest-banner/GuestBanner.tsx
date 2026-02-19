@@ -8,7 +8,7 @@ interface GuestBannerProps {
 
 export default function GuestBanner({ remaining = 3 }: GuestBannerProps) {
   return (
-    <div className="flex items-center justify-center gap-2 px-6 py-2 border-b transition-all duration-250"
+    <div className="hidden md:flex items-center justify-center gap-2 px-6 py-2 border-b transition-all duration-250"
       style={{
         background: "var(--banner-bg)",
         borderColor: "var(--banner-border)",

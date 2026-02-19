@@ -220,3 +220,55 @@ body {
     transform: translateY(-8px);
   }
 }
+
+/* ═══════════════════════════════════════
+   MOBILE LAYOUT UTILITIES
+═══════════════════════════════════════ */
+
+/* Flush panel edges on mobile (no rounded corners, no side borders) */
+.mobile-flush {
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+
+/* Input panel bottom bar — no bottom border/radius */
+.mobile-input-bar {
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  /* safe area for notched phones */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Avatar panel top area — no top border/radius */
+.mobile-avatar-top {
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+}
+
+/* Scrollable middle zone on mobile */
+.mobile-gloss-zone {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+/* Auto-resize textarea for mobile */
+textarea.auto-resize {
+  resize: none;
+  overflow-y: hidden;
+  transition: height 0.1s ease;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
