@@ -1,4 +1,13 @@
+import type { AvatarModel } from "@/entities/avatar/types";
+
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+
+export const AVATAR_MODELS: AvatarModel[] = [
+  { id: "ds-proto", name: "DS Proto", path: "/avatars/DS-Proto-2.1.vrm" },
+  { id: "ashtra", name: "Ashtra", path: "/avatars/Ashtra.vrm" },
+  { id: "val", name: "Val", path: "/avatars/VAL.vrm" },
+  { id: "ds-g-proto", name: "DS G Proto", path: "/avatars/DuoSign-G-Proto-2.vrm" },
+];
 
 export const MAX_INPUT_LENGTH = 500;
 

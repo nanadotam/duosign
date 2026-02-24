@@ -9,10 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@pixiv/three-vrm": "^3.4.5",
+    "@types/three": "^0.183.1",
+    "kalidokit": "^1.1.5",
     "next": "14.2.35",
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.71.1",
+    "three": "^0.183.1",
     "use-scramble": "^2.2.15"
   },
   "devDependencies": {

@@ -159,6 +159,7 @@ export default function TranslatePage() {
               onReplay={replay}
               onCycleSpeed={cycleSpeed}
               hasTokens={glossTokens.length > 0}
+              glossSequence={glossTokens.map((t) => t.text)}
             />
           </div>
         </main>
@@ -183,6 +184,7 @@ export default function TranslatePage() {
               onReplay={replay}
               onCycleSpeed={cycleSpeed}
               hasTokens={glossTokens.length > 0}
+              glossSequence={glossTokens.map((t) => t.text)}
             />
 
             {/* Gloss Output — card with rounded corners */}
