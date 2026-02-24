@@ -76,9 +76,9 @@ export function useAvatarRenderer(): UseAvatarRendererReturn {
       powerPreference: "high-performance",
     });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.0;
+    // Match original script.js: no outputEncoding, no toneMapping.
+    // Default LinearEncoding + NoToneMapping preserves the VRM's original colors.
+    // Setting sRGBEncoding washes out the model, making it appear pale.
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
@@ -103,17 +103,11 @@ export function useAvatarRenderer(): UseAvatarRendererReturn {
     controls.update();
     controlsRef.current = controls;
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-    newScene.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
-    directionalLight.position.set(1.0, 2.0, 1.0).normalize();
-    newScene.add(directionalLight);
-
-    const fillLight = new THREE.DirectionalLight(0xc4d4ff, 0.3);
-    fillLight.position.set(-1.0, 1.0, -0.5).normalize();
-    newScene.add(fillLight);
+    // Lighting — matches original script.js: single directional light, no ambient.
+    // Ambient/fill lights wash out the VRM model making it pale.
+    const light = new THREE.DirectionalLight(0xffffff);
+    light.position.set(1.0, 1.0, 1.0).normalize();
+    newScene.add(light);
 
     // Resize handler
     const handleResize = () => {

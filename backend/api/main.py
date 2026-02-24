@@ -22,9 +22,12 @@ import logging
 from pathlib import Path
 from contextlib import asynccontextmanager
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
 from pydantic import BaseModel, Field
 
 from .vocabulary import get_vocabulary, VocabularyManager
@@ -45,6 +48,7 @@ logging.basicConfig(level=logging.INFO)
 # └──────────────────────────────────────────────────────────────────┘
 TSV_PATH = Path(__file__).parent.parent / "data" / "glosses.tsv"
 LEXICON_DIR = Path(__file__).parent.parent / "public" / "lexicon" / "ase"
+BUCKET_DIR = Path(__file__).parent.parent.parent / "bucket"
 
 
 # ── App lifecycle ────────────────────────────────────────────────────
@@ -307,6 +311,34 @@ async def search_vocab(q: str = "", limit: int = 50):
     if not vocab:
         raise HTTPException(503, "Vocabulary not loaded")
     return {"query": q, "results": vocab.search(q, limit=limit)}
+
+
+# ── Media Serving (Video + Pose files) ───────────────────────────────
+
+@app.get("/api/video/{gloss}")
+async def serve_video(gloss: str):
+    """Serve a sign language video (.mp4) from the bucket."""
+    path = BUCKET_DIR / "videos" / f"{gloss}.mp4"
+    if not path.exists():
+        raise HTTPException(404, f"Video not found: {gloss}")
+    return FileResponse(
+        path,
+        media_type="video/mp4",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@app.get("/api/pose/{gloss}")
+async def serve_pose(gloss: str):
+    """Serve a pose data file (.pose) from the bucket."""
+    path = BUCKET_DIR / "poses" / f"{gloss}.pose"
+    if not path.exists():
+        raise HTTPException(404, f"Pose not found: {gloss}")
+    return FileResponse(
+        path,
+        media_type="application/octet-stream",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @app.get("/api/health")

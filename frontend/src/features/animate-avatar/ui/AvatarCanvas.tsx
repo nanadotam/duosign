@@ -4,20 +4,25 @@
  * AvatarCanvas — Three.js VRM rendering component
  * =================================================
  * Mounts the Three.js renderer, loads the VRM model,
- * and plays pose sequences. Resizes to fit parent container.
+ * and plays pose/video sequences. Supports two render modes:
+ *   - "avatar" (video engine): video → MediaPipe → Kalidokit → VRM
+ *   - "skeleton" (pose engine): .pose binary → Kalidokit → VRM
+ * Resizes to fit parent container.
  */
 
 import { useEffect } from "react";
 import { useAvatarRenderer } from "../model/useAvatarRenderer";
 import { useVRM } from "../model/useVRM";
 import { usePosePlayer } from "../model/usePosePlayer";
-import type { ViewMode, AvatarDebugStats } from "@/entities/avatar/types";
+import { useVideoEngine } from "../model/useVideoEngine";
+import type { ViewMode, AvatarDebugStats, AvatarDisplayMode } from "@/entities/avatar/types";
 
 interface AvatarCanvasProps {
   viewMode: ViewMode;
   avatarPath: string;
   glossSequence: string[];
   isPlaying: boolean;
+  renderMode: AvatarDisplayMode;
   onDebugStats?: (stats: AvatarDebugStats) => void;
   onViewModeChange?: (mode: ViewMode) => void;
   className?: string;
@@ -28,6 +33,7 @@ export default function AvatarCanvas({
   avatarPath,
   glossSequence,
   isPlaying,
+  renderMode = "avatar",
   onDebugStats,
   className = "",
 }: AvatarCanvasProps) {
@@ -44,12 +50,24 @@ export default function AvatarCanvas({
     initialPath: avatarPath,
   });
 
+  // Pose engine (skeleton mode)
   const posePlayer = usePosePlayer({
     vrm,
     viewMode: currentViewMode,
     modelName,
     fps,
   });
+
+  // Video engine (avatar mode)
+  const videoEngine = useVideoEngine({
+    vrm,
+    viewMode: currentViewMode,
+    modelName,
+    fps,
+  });
+
+  // Pick active engine based on render mode
+  const activeEngine = renderMode === "avatar" ? videoEngine : posePlayer;
 
   // Sync view mode from parent
   useEffect(() => {
@@ -58,19 +76,19 @@ export default function AvatarCanvas({
     }
   }, [viewMode, currentViewMode, setViewMode]);
 
-  // Report debug stats to parent
+  // Report debug stats from the active engine to parent
   useEffect(() => {
-    onDebugStats?.(posePlayer.debugStats);
-  }, [posePlayer.debugStats, onDebugStats]);
+    onDebugStats?.(activeEngine.debugStats);
+  }, [activeEngine.debugStats, onDebugStats]);
 
   // Handle playback trigger
   useEffect(() => {
-    if (isPlaying && glossSequence.length > 0 && vrm && !posePlayer.isPlaying) {
-      posePlayer.playSequence(glossSequence);
-    } else if (!isPlaying && posePlayer.isPlaying) {
-      posePlayer.stop();
+    if (isPlaying && glossSequence.length > 0 && vrm && !activeEngine.isPlaying) {
+      activeEngine.playSequence(glossSequence);
+    } else if (!isPlaying && activeEngine.isPlaying) {
+      activeEngine.stop();
     }
-  }, [isPlaying, glossSequence, vrm, posePlayer]);
+  }, [isPlaying, glossSequence, vrm, activeEngine]);
 
   return (
     <div

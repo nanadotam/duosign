@@ -1,7 +1,8 @@
 """
 Vocabulary Manager
 ==================
-Loads available ASL glosses from a TSV file and/or JSON lexicon directory.
+Loads available ASL glosses from a TSV file, JSON lexicon directory,
+and/or .pose file directory (ground truth for available animations).
 Provides lookup, search, and semantic filtering for LLM prompt construction.
 
 TSV format (tab-separated, no header):
@@ -52,9 +53,12 @@ class VocabularyManager:
         self,
         tsv_path: Optional[Path] = None,
         lexicon_dir: Optional[Path] = None,
+        poses_dir: Optional[Path] = None,
     ):
         # All available glosses stored as uppercase strings
         self.glosses: set[str] = set()
+        # Glosses that have actual .pose files (ground truth for animation)
+        self._pose_glosses: set[str] = set()
         # Maps GLOSS → metadata (source file, id, etc.)
         self.gloss_info: dict[str, dict] = {}
 
@@ -62,6 +66,8 @@ class VocabularyManager:
             self._load_tsv(tsv_path)
         if lexicon_dir:
             self._load_lexicon_dir(lexicon_dir)
+        if poses_dir:
+            self._load_poses_dir(poses_dir)
 
         # Always include alphabet letters and number signs
         self.glosses.update(FINGERSPELL_ALPHABET)
@@ -115,6 +121,29 @@ class VocabularyManager:
 
         logger.info(f"Loaded {count} glosses from lexicon: {directory}")
 
+    def _load_poses_dir(self, directory: Path) -> None:
+        """Load glosses by scanning *.pose files in pose directory (ground truth)."""
+        if not directory.exists():
+            logger.warning(f"Poses directory not found: {directory}")
+            return
+
+        count = 0
+        for pose_file in directory.glob("*.pose"):
+            gloss_upper = pose_file.stem.upper()
+            self._pose_glosses.add(gloss_upper)
+            self.glosses.add(gloss_upper)
+            # Update info with pose path
+            if gloss_upper in self.gloss_info:
+                self.gloss_info[gloss_upper]["pose_file"] = str(pose_file)
+            else:
+                self.gloss_info[gloss_upper] = {
+                    "pose_file": str(pose_file),
+                    "source": "pose",
+                }
+            count += 1
+
+        logger.info(f"Loaded {count} pose-backed glosses from: {directory}")
+
     # ── Lookups ──────────────────────────────────────────────────────
 
     def has(self, gloss: str) -> bool:
@@ -139,6 +168,23 @@ class VocabularyManager:
             return True
 
         return False
+
+    def has_pose(self, gloss: str) -> bool:
+        """
+        Check if a gloss has an actual .pose file available.
+        This is the ground truth for whether the avatar can sign it.
+        """
+        g = gloss.upper()
+        if g in self._pose_glosses:
+            return True
+        if g.endswith("+") and g[:-1] in self._pose_glosses:
+            return True
+        return False
+
+    @property
+    def pose_glosses(self) -> set[str]:
+        """Return the set of glosses that have .pose files."""
+        return self._pose_glosses.copy()
 
     def is_letter(self, gloss: str) -> bool:
         """Check if gloss is a single fingerspelling letter."""
@@ -202,6 +248,7 @@ class VocabularyManager:
         """Return vocabulary statistics."""
         return {
             "total": len(self.glosses),
+            "pose_count": len(self._pose_glosses),
             "has_full_alphabet": FINGERSPELL_ALPHABET.issubset(self.glosses),
             "sample": sorted(self.glosses)[:20],
         }
@@ -215,6 +262,7 @@ _instance: Optional[VocabularyManager] = None
 def get_vocabulary(
     tsv_path: Optional[Path] = None,
     lexicon_dir: Optional[Path] = None,
+    poses_dir: Optional[Path] = None,
 ) -> VocabularyManager:
     """Get or create the global VocabularyManager."""
     global _instance
@@ -222,6 +270,7 @@ def get_vocabulary(
         _instance = VocabularyManager(
             tsv_path=tsv_path,
             lexicon_dir=lexicon_dir,
+            poses_dir=poses_dir,
         )
     return _instance
 

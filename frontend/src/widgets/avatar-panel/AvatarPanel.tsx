@@ -10,6 +10,7 @@ import type {
   ViewMode,
   AvatarDebugStats,
   AvatarModel,
+  AvatarDisplayMode,
 } from "@/entities/avatar/types";
 
 // Dynamic imports for Three.js components (avoid SSR)
@@ -56,6 +57,7 @@ export default function AvatarPanel({
   glossSequence = [],
 }: AvatarPanelProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("interpreter");
+  const [renderMode, setRenderMode] = useState<AvatarDisplayMode>("avatar");
   const [currentModel, setCurrentModel] = useState<AvatarModel>(AVATAR_MODELS[0]);
   const [showStats, setShowStats] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(true);
@@ -229,6 +231,7 @@ export default function AvatarPanel({
             avatarPath={currentModel.path}
             glossSequence={glossNames}
             isPlaying={isLive}
+            renderMode={renderMode}
             onDebugStats={handleDebugStats}
           />
         </div>
@@ -249,6 +252,26 @@ export default function AvatarPanel({
           <div className="absolute top-2 left-2 lg:top-3 lg:left-3 flex items-center gap-1.5 px-2 py-0.5 lg:px-2.5 lg:py-1 rounded-pill bg-success/10 border border-success/25 text-[9px] lg:text-[10px] font-bold tracking-[0.08em] uppercase text-success z-10">
             <div className="w-[5px] h-[5px] rounded-full bg-success animate-[blink_1s_infinite]" />
             Now Signing
+          </div>
+        )}
+
+        {/* Render Mode Toggle — Avatar vs Skeleton */}
+        {overlayVisible && (
+          <div className="absolute top-2 right-10 z-10 flex gap-1">
+            {(["avatar", "skeleton"] as AvatarDisplayMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setRenderMode(mode)}
+                className={[
+                  "text-[9px] lg:text-[10px] font-bold tracking-[0.06em] uppercase px-2 py-0.5 rounded-pill border transition-all duration-150 cursor-pointer",
+                  renderMode === mode
+                    ? "border-accent text-accent bg-accent/10"
+                    : "border-border-hi text-text-3 bg-surface-2/80 hover:text-text-1",
+                ].join(" ")}
+              >
+                {mode === "avatar" ? "Avatar" : "Skeleton"}
+              </button>
+            ))}
           </div>
         )}
 
