@@ -5,36 +5,14 @@ import NavigationBar from "@/widgets/navigation-bar/NavigationBar";
 import GuestBanner from "@/widgets/guest-banner/GuestBanner";
 import GlossChip from "@/shared/ui/GlossChip";
 import { ToastProvider } from "@/shared/ui/Toast";
+import { useHistory } from "@/shared/hooks/useHistory";
 
-/* ═══ DEMO DATA ═══ */
-const DEMO_HISTORY = [
-  {
-    id: "h1", text: "Hello, how are you doing today?", time: "2:14 PM",
-    type: "typed" as const, glosses: ["HELLO", "HOW", "YOU", "DO", "TODAY", "Q"], date: "Today",
-  },
-  {
-    id: "h2", text: "Nice to meet you, my name is Nana.", time: "1:52 PM",
-    type: "voiced" as const, glosses: ["NICE", "MEET", "YOU", "MY", "NAME", "NANA", "Q"], date: "Today",
-  },
-  {
-    id: "h3", text: "Thank you for your help today.", time: "11:03 AM",
-    type: "api" as const, glosses: ["THANK", "YOU", "HELP", "TODAY", "Q"], date: "Today",
-  },
-  {
-    id: "h4", text: "Good morning, I hope you have a wonderful day ahead.", time: "9:30 AM",
-    type: "typed" as const, glosses: ["GOOD", "MORNING", "I", "HOPE", "YOU", "WONDERFUL", "DAY", "AHEAD"], date: "Yesterday",
-  },
-  {
-    id: "h5", text: "Can you please repeat that sign again?", time: "4:45 PM",
-    type: "voiced" as const, glosses: ["CAN", "YOU", "PLEASE", "REPEAT", "AGAIN"], date: "Yesterday",
-  },
-];
 
 const DATE_CHIPS = ["Today", "This Week", "This Month", "All Time"];
-const TYPE_FILTERS = [
-  { key: "typed", label: "Typed Text", color: "var(--accent)", count: 12 },
-  { key: "voiced", label: "Voice Input", color: "var(--teal)", count: 7 },
-  { key: "api", label: "API Request", color: "var(--warn)", count: 3 },
+const TYPE_FILTERS_STATIC = [
+  { key: "typed", label: "Typed Text", color: "var(--accent)" },
+  { key: "voiced", label: "Voice Input", color: "var(--teal)" },
+  { key: "api", label: "API Request", color: "var(--warn)" },
 ];
 
 const ICON_COLORS = {
@@ -63,9 +41,9 @@ function TypeIcon({ type }: { type: "typed" | "voiced" | "api" }) {
 }
 
 export default function HistoryPage() {
-  const [entries, setEntries] = useState(DEMO_HISTORY);
+  const { deleteEntry, getFiltered, stats } = useHistory();
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [activeDate, setActiveDate] = useState("Today");
+  const [activeDate, setActiveDate] = useState("All Time");
   const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set(["typed", "voiced", "api"]));
   const [searchQuery, setSearchQuery] = useState("");
   const [segTab, setSegTab] = useState("All");
@@ -80,24 +58,24 @@ export default function HistoryPage() {
   }, []);
 
   const handleDelete = useCallback((id: string) => {
-    setEntries((prev) => prev.filter((e) => e.id !== id));
-  }, []);
+    deleteEntry(id);
+  }, [deleteEntry]);
 
   const clearFilters = useCallback(() => {
-    setActiveDate("Today");
+    setActiveDate("All Time");
     setActiveTypes(new Set(["typed", "voiced", "api"]));
     setSearchQuery("");
   }, []);
 
   // Filter entries
-  const filtered = entries.filter((e) => {
-    if (!activeTypes.has(e.type)) return false;
-    if (searchQuery && !e.text.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    return true;
+  const filtered = getFiltered({
+    types: activeTypes,
+    search: searchQuery,
+    dateRange: activeDate,
   });
 
   // Group by date
-  const dateGroups: Record<string, typeof entries> = {};
+  const dateGroups: Record<string, typeof filtered> = {};
   filtered.forEach((e) => {
     if (!dateGroups[e.date]) dateGroups[e.date] = [];
     dateGroups[e.date].push(e);
@@ -170,7 +148,7 @@ export default function HistoryPage() {
                 <div className="mb-[18px]">
                   <div className="text-[9.5px] font-bold tracking-[0.1em] uppercase text-text-3 mb-2 font-mono">Input Type</div>
                   <div className="flex flex-col gap-1">
-                    {TYPE_FILTERS.map((t) => (
+                    {TYPE_FILTERS_STATIC.map((t) => (
                       <button
                         key={t.key}
                         onClick={() => toggleType(t.key)}
@@ -183,7 +161,7 @@ export default function HistoryPage() {
                       >
                         <div className="w-[7px] h-[7px] rounded-full flex-shrink-0" style={{ background: t.color }} />
                         {t.label}
-                        <span className="ml-auto font-mono text-[10px] text-text-3">{t.count}</span>
+                        <span className="ml-auto font-mono text-[10px] text-text-3">{stats.types[t.key as keyof typeof stats.types]}</span>
                       </button>
                     ))}
                   </div>
@@ -194,10 +172,10 @@ export default function HistoryPage() {
                   <div className="text-[9.5px] font-bold tracking-[0.1em] uppercase text-text-3 mb-2 font-mono">Your Stats</div>
                   <div className="grid grid-cols-2 gap-px bg-border rounded-[10px] overflow-hidden">
                     {[
-                      { num: String(entries.length), lbl: "Total" },
-                      { num: "4", lbl: "Today" },
-                      { num: "148", lbl: "Signs" },
-                      { num: "~42ms", lbl: "Avg." },
+                      { num: String(stats.total), lbl: "Total" },
+                      { num: String(stats.today), lbl: "Today" },
+                      { num: String(stats.totalSigns), lbl: "Signs" },
+                      { num: "–", lbl: "Avg." },
                     ].map((s) => (
                       <div key={s.lbl} className="bg-surface-2 px-3 py-[10px] text-center">
                         <div className="font-serif text-[22px] text-text-1 leading-none tracking-tight">{s.num}</div>
@@ -298,7 +276,7 @@ export default function HistoryPage() {
                                     {entry.type === "typed" ? "Typed" : entry.type === "voiced" ? "Voice" : "API"}
                                   </span>
                                   <span className="px-2 py-[2px] rounded-pill text-[10px] font-semibold font-mono border border-border bg-surface-3 text-text-3 shadow-inset">
-                                    {entry.glosses.length} glosses
+                                    {entry.glossTokens.length} glosses
                                   </span>
                                 </div>
                               </div>
@@ -306,7 +284,7 @@ export default function HistoryPage() {
                               {/* Right */}
                               <div className="flex items-center gap-[7px] flex-shrink-0">
                                 <span className="text-[11px] text-text-3 font-mono px-2 py-[3px] rounded-[6px] bg-surface-3 border border-border shadow-inset">
-                                  {entry.glosses.length} signs
+                                  {entry.glossTokens.length} signs
                                 </span>
                                 <div className={[
                                   "w-5 h-5 flex items-center justify-center transition-transform duration-200",
@@ -323,7 +301,7 @@ export default function HistoryPage() {
                             {isExpanded && (
                               <div className="px-3.5 pb-[13px] pt-[11px] border-t border-border flex flex-col gap-[10px]">
                                 <div className="flex gap-[5px] flex-wrap">
-                                  {entry.glosses.map((g, i) => (
+                                  {entry.glossTokens.map((g, i) => (
                                     <GlossChip key={`${g}-${i}`} text={g} delay={0} />
                                   ))}
                                 </div>

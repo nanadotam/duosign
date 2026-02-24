@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Serif_Display, DM_Sans, JetBrains_Mono, Instrument_Serif, Instrument_Sans } from "next/font/google";
 import { ThemeScript } from "@/shared/ui/ThemeScript";
+import { SettingsProvider } from "@/shared/providers/SettingsProvider";
 import "./globals.css";
 
 const dmSerif = DM_Serif_Display({
@@ -55,7 +56,9 @@ export default function RootLayout({
         <ThemeScript />
       </head>
       <body className="font-sans antialiased">
-        {children}
+        <SettingsProvider>
+          {children}
+        </SettingsProvider>
       </body>
     </html>
   );

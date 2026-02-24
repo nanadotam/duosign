@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import NavigationBar from "@/widgets/navigation-bar/NavigationBar";
+import { useSettings } from "@/shared/hooks/useSettings";
+import { useHistory } from "@/shared/hooks/useHistory";
 
 /* ═══ SIDEBAR DATA ═══ */
 const SIDEBAR = [
@@ -149,21 +151,9 @@ function Select({ options, defaultValue, onChange }: { options: string[]; defaul
 
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState("preferences");
-  const [dirty, setDirty] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
-
-  // Toggle states
-  const [toggles, setToggles] = useState<Record<string, boolean>>({
-    showGloss: true, autoPaste: true, loop: false, fingerspell: true,
-    noiseSuppression: true, autoSend: false,
-    highContrast: false, reduceMotion: false, keyboard: true,
-    glossUpdates: true, apiAlerts: true, productUpdates: false,
-  });
-
-  const [skinTone, setSkinTone] = useState(0);
-  const [accentColor, setAccentColor] = useState(0);
-  const [avatarStyle, setAvatarStyle] = useState("Stylized");
-  const [speed, setSpeed] = useState(100);
+  const { settings, updateSetting, isDirty, save, discard } = useSettings();
+  const { clearAll: clearHistory } = useHistory();
 
   // Voice sheet
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -171,16 +161,11 @@ export default function SettingsPage() {
   const barsRef = useRef<HTMLDivElement>(null);
   const waveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const markDirty = useCallback(() => setDirty(true), []);
-  const toggleKey = useCallback((key: string) => {
-    setToggles((prev) => ({ ...prev, [key]: !prev[key] }));
-    markDirty();
-  }, [markDirty]);
-
   const handleSave = useCallback(() => {
+    save();
     setSavedFlash(true);
-    setTimeout(() => { setSavedFlash(false); setDirty(false); }, 1800);
-  }, []);
+    setTimeout(() => setSavedFlash(false), 1800);
+  }, [save]);
 
   // Voice sheet waveform
   useEffect(() => {
@@ -253,192 +238,395 @@ export default function SettingsPage() {
 
         {/* MAIN CONTENT */}
         <main className="py-7 px-8 max-w-[780px] overflow-y-auto">
-          <div className="mb-6">
-            <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
-              Settings
-              <span className="inline-block w-5 h-px bg-border-hi" />
-            </div>
-            <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">Preferences</h1>
-            <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Customize how DuoSign translates, looks, and behaves.</p>
-          </div>
 
-          {/* 3D AVATAR */}
-          <SettingsCard title="3D Avatar" chip="appearance">
-            <SettingRow label="Skin Tone" desc="Choose the avatar's skin tone for comfortable representation" stack>
-              <div className="flex gap-2 flex-wrap">
-                {SKIN_TONES.map((st, i) => (
-                  <button
-                    key={i}
-                    onClick={() => { setSkinTone(i); markDirty(); }}
-                    className={[
-                      "w-12 h-12 rounded-[12px] border cursor-pointer flex items-center justify-center text-xl transition-all duration-120 shadow-raised-sm relative",
-                      skinTone === i
-                        ? "border-accent shadow-[var(--raised-sm),0_0_0_2px_color-mix(in_srgb,var(--accent)_30%,transparent)]"
-                        : "border-border-hi bg-surface-2 hover:border-accent hover:-translate-y-0.5 hover:shadow-raised",
-                    ].join(" ")}
-                    style={{ background: st.bg }}
-                  >
-                    {st.emoji}
-                    {skinTone === i && <span className="absolute bottom-[2px] right-1 text-[8px] font-bold text-accent">✓</span>}
+          {/* ═══ PROFILE ═══ */}
+          {activeSection === "profile" && (
+            <>
+              <div className="mb-6">
+                <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
+                  Account <span className="inline-block w-5 h-px bg-border-hi" />
+                </div>
+                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">Profile</h1>
+                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Manage your identity and account details.</p>
+              </div>
+
+              <SettingsCard title="Personal Information" chip="identity">
+                <SettingRow label="Display Name" desc="How your name appears across DuoSign">
+                  <input type="text" defaultValue="Nana Amoako" className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
+                </SettingRow>
+                <SettingRow label="Email Address" desc="Used for account recovery and notifications">
+                  <input type="email" defaultValue="nana@duosign.app" className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
+                </SettingRow>
+              </SettingsCard>
+
+              <SettingsCard title="Session" chip="auth">
+                <SettingRow label="Account Status" desc="Your current authentication state">
+                  <span className="px-3 py-1 rounded-pill text-[11px] font-bold font-mono tracking-[0.06em] bg-[color-mix(in_srgb,var(--teal)_12%,var(--surface-3))] border border-[color-mix(in_srgb,var(--teal)_25%,transparent)] text-teal shadow-inset">
+                    Guest Mode
+                  </span>
+                </SettingRow>
+                <SettingRow label="Guest Translations Remaining" desc="Free translations available before sign-up">
+                  <span className="font-mono text-[14px] font-semibold text-accent">3 / 8</span>
+                </SettingRow>
+              </SettingsCard>
+
+              <SettingsCard title="Danger Zone" chip="irreversible" danger>
+                <SettingRow label="Delete Account" desc="Permanently deletes your account and all associated data" danger>
+                  <button className="px-3.5 py-[5px] rounded-btn border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,var(--surface-2))] text-error font-sans text-[12.5px] font-semibold cursor-pointer shadow-raised-sm transition-all duration-120 whitespace-nowrap hover:bg-[color-mix(in_srgb,var(--error)_16%,var(--surface-2))] active:shadow-inset-press active:translate-y-px">
+                    Delete Account
                   </button>
-                ))}
-                <button className="w-12 h-12 rounded-[12px] border border-dashed border-border-hi text-text-3 text-lg flex items-center justify-center cursor-pointer hover:text-text-2 hover:border-border-hi bg-transparent transition-all">
-                  +
-                </button>
+                </SettingRow>
+              </SettingsCard>
+            </>
+          )}
+
+          {/* ═══ PREFERENCES ═══ */}
+          {activeSection === "preferences" && (
+            <>
+              <div className="mb-6">
+                <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
+                  Account <span className="inline-block w-5 h-px bg-border-hi" />
+                </div>
+                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">Preferences</h1>
+                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Customize how DuoSign looks and behaves.</p>
               </div>
-            </SettingRow>
-            <SettingRow label="Avatar Style" desc="Realistic or stylized character rendering">
-              <div className="flex bg-surface-3 border border-border rounded-[7px] p-[2px] shadow-inset transition-all duration-250">
-                {["Realistic", "Stylized", "Minimal"].map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => { setAvatarStyle(s); markDirty(); }}
-                    className={[
-                      "px-[13px] py-1 rounded-[5px] text-[12px] font-medium cursor-pointer transition-all duration-100 border",
-                      avatarStyle === s
-                        ? "bg-surface border-border-hi text-text-1 shadow-raised-sm"
-                        : "border-transparent text-text-3 hover:text-text-2",
-                    ].join(" ")}
-                  >{s}</button>
-                ))}
-              </div>
-            </SettingRow>
-            <SettingRow label="Accent Color" desc="Highlight color used in avatar animations">
-              <div className="flex gap-[7px] items-center">
-                {ACCENT_COLORS.map((c, i) => (
-                  <button
-                    key={c}
-                    onClick={() => { setAccentColor(i); markDirty(); }}
-                    className={[
-                      "w-5 h-5 rounded-full cursor-pointer border-2 transition-all duration-120 shadow-raised-sm hover:scale-[1.2] relative",
-                      accentColor === i ? "border-text-1 shadow-[var(--raised-sm),0_0_0_1px_var(--border-hi)]" : "border-transparent",
-                    ].join(" ")}
-                    style={{ background: c }}
-                  >
-                    {accentColor === i && <span className="absolute inset-[3px] rounded-full border-[1.5px] border-white/55" />}
+
+              <SettingsCard title="Translation" chip="engine">
+                <SettingRow label="Translation Engine" desc="Rule-based handles 75–85% of phrases in under 50ms. LLM fallback covers edge cases.">
+                  <Select options={["Hybrid (Rule + LLM)", "Rule-based only", "LLM only"]} defaultValue={settings.translationEngine} onChange={() => {}} />
+                </SettingRow>
+                <SettingRow label="Animation Speed" desc="Playback speed for signing animations">
+                  <div className="flex items-center gap-[9px]">
+                    <input
+                      type="range" min="50" max="200" value={settings.animationSpeed}
+                      onChange={(e) => updateSetting("animationSpeed", Number(e.target.value))}
+                      className="w-[110px] h-1 rounded bg-surface-3 appearance-none cursor-pointer shadow-inset accent-accent"
+                    />
+                    <span className="font-mono text-[11px] text-accent min-w-[30px] text-right">
+                      {(settings.animationSpeed / 100).toFixed(1)}×
+                    </span>
+                  </div>
+                </SettingRow>
+                <SettingRow label="Show Gloss Strip" desc="Display ASL gloss tokens above the avatar panel">
+                  <Toggle on={settings.showGloss} onChange={() => updateSetting("showGloss", !settings.showGloss)} />
+                </SettingRow>
+                <SettingRow label="Auto-translate on Paste" desc="Instantly translate when text is pasted into the input">
+                  <Toggle on={settings.autoPaste} onChange={() => updateSetting("autoPaste", !settings.autoPaste)} />
+                </SettingRow>
+                <SettingRow label="Loop Animations" desc="Automatically replay the signing sequence after completion">
+                  <Toggle on={settings.loop} onChange={() => updateSetting("loop", !settings.loop)} />
+                </SettingRow>
+                <SettingRow label="Fingerspelling Fallback" desc="Use fingerspelling when a sign is not in the lexicon">
+                  <Toggle on={settings.fingerspell} onChange={() => updateSetting("fingerspell", !settings.fingerspell)} />
+                </SettingRow>
+              </SettingsCard>
+
+              <SettingsCard title="Notifications" chip="alerts">
+                <SettingRow label="New Gloss Updates" desc="When new signs are added to the WLASL lexicon">
+                  <Toggle on={settings.glossUpdates} onChange={() => updateSetting("glossUpdates", !settings.glossUpdates)} />
+                </SettingRow>
+                <SettingRow label="API Usage Alerts" desc="Notify when approaching rate limits">
+                  <Toggle on={settings.apiAlerts} onChange={() => updateSetting("apiAlerts", !settings.apiAlerts)} />
+                </SettingRow>
+                <SettingRow label="Product Updates" desc="Feature announcements and release notes">
+                  <Toggle on={settings.productUpdates} onChange={() => updateSetting("productUpdates", !settings.productUpdates)} />
+                </SettingRow>
+              </SettingsCard>
+
+              <SettingsCard title="Data" chip="storage" danger>
+                <SettingRow label="Clear Translation History" desc="Permanently removes all saved translations from browser storage" danger>
+                  <button onClick={clearHistory} className="px-3.5 py-[5px] rounded-btn border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,var(--surface-2))] text-error font-sans text-[12.5px] font-semibold cursor-pointer shadow-raised-sm transition-all duration-120 whitespace-nowrap hover:bg-[color-mix(in_srgb,var(--error)_16%,var(--surface-2))] active:shadow-inset-press active:translate-y-px">
+                    Clear History
                   </button>
-                ))}
+                </SettingRow>
+              </SettingsCard>
+            </>
+          )}
+
+          {/* ═══ AVATAR ═══ */}
+          {activeSection === "avatar" && (
+            <>
+              <div className="mb-6">
+                <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
+                  Account <span className="inline-block w-5 h-px bg-border-hi" />
+                </div>
+                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">Avatar</h1>
+                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Customize the 3D signing avatar appearance.</p>
               </div>
-            </SettingRow>
-            <SettingRow label="Background" desc="Scene backdrop behind the signing avatar">
-              <Select options={["Transparent", "Grid (Dark)", "Grid (Light)", "Gradient Blue"]} defaultValue="Transparent" onChange={markDirty} />
-            </SettingRow>
-          </SettingsCard>
 
-          {/* TRANSLATION */}
-          <SettingsCard title="Translation" chip="engine">
-            <SettingRow label="Translation Engine" desc="Rule-based handles 75–85% of phrases in under 50ms. LLM fallback covers edge cases.">
-              <Select options={["Hybrid (Rule + LLM)", "Rule-based only", "LLM only"]} defaultValue="Hybrid (Rule + LLM)" onChange={markDirty} />
-            </SettingRow>
-            <SettingRow label="Animation Speed" desc="Playback speed for signing animations">
-              <div className="flex items-center gap-[9px]">
-                <input
-                  type="range" min="50" max="200" value={speed}
-                  onChange={(e) => { setSpeed(Number(e.target.value)); markDirty(); }}
-                  className="w-[110px] h-1 rounded bg-surface-3 appearance-none cursor-pointer shadow-inset accent-accent"
-                />
-                <span className="font-mono text-[11px] text-accent min-w-[30px] text-right">
-                  {(speed / 100).toFixed(1)}×
-                </span>
+              <SettingsCard title="3D Avatar" chip="appearance">
+                <SettingRow label="Skin Tone" desc="Choose the avatar's skin tone for comfortable representation" stack>
+                  <div className="flex gap-2 flex-wrap">
+                    {SKIN_TONES.map((st, i) => (
+                      <button
+                        key={i}
+                        onClick={() => updateSetting("skinTone", i)}
+                        className={[
+                          "w-12 h-12 rounded-[12px] border cursor-pointer flex items-center justify-center text-xl transition-all duration-120 shadow-raised-sm relative",
+                          settings.skinTone === i
+                            ? "border-accent shadow-[var(--raised-sm),0_0_0_2px_color-mix(in_srgb,var(--accent)_30%,transparent)]"
+                            : "border-border-hi bg-surface-2 hover:border-accent hover:-translate-y-0.5 hover:shadow-raised",
+                        ].join(" ")}
+                        style={{ background: st.bg }}
+                      >
+                        {st.emoji}
+                        {settings.skinTone === i && <span className="absolute bottom-[2px] right-1 text-[8px] font-bold text-accent">✓</span>}
+                      </button>
+                    ))}
+                    <button className="w-12 h-12 rounded-[12px] border border-dashed border-border-hi text-text-3 text-lg flex items-center justify-center cursor-pointer hover:text-text-2 hover:border-border-hi bg-transparent transition-all">
+                      +
+                    </button>
+                  </div>
+                </SettingRow>
+                <SettingRow label="Avatar Style" desc="Realistic or stylized character rendering">
+                  <div className="flex bg-surface-3 border border-border rounded-[7px] p-[2px] shadow-inset transition-all duration-250">
+                    {["Realistic", "Stylized", "Minimal"].map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => updateSetting("avatarStyle", s as "Realistic" | "Stylized" | "Minimal")}
+                        className={[
+                          "px-[13px] py-1 rounded-[5px] text-[12px] font-medium cursor-pointer transition-all duration-100 border",
+                          settings.avatarStyle === s
+                            ? "bg-surface border-border-hi text-text-1 shadow-raised-sm"
+                            : "border-transparent text-text-3 hover:text-text-2",
+                        ].join(" ")}
+                      >{s}</button>
+                    ))}
+                  </div>
+                </SettingRow>
+                <SettingRow label="Accent Color" desc="Highlight color used in avatar animations">
+                  <div className="flex gap-[7px] items-center">
+                    {ACCENT_COLORS.map((c, i) => (
+                      <button
+                        key={c}
+                        onClick={() => updateSetting("accentColorIndex", i)}
+                        className={[
+                          "w-5 h-5 rounded-full cursor-pointer border-2 transition-all duration-120 shadow-raised-sm hover:scale-[1.2] relative",
+                          settings.accentColorIndex === i ? "border-text-1 shadow-[var(--raised-sm),0_0_0_1px_var(--border-hi)]" : "border-transparent",
+                        ].join(" ")}
+                        style={{ background: c }}
+                      >
+                        {settings.accentColorIndex === i && <span className="absolute inset-[3px] rounded-full border-[1.5px] border-white/55" />}
+                      </button>
+                    ))}
+                  </div>
+                </SettingRow>
+                <SettingRow label="Background" desc="Scene backdrop behind the signing avatar">
+                  <Select options={["Transparent", "Grid (Dark)", "Grid (Light)", "Gradient Blue"]} defaultValue={settings.avatarBackground} onChange={() => updateSetting("avatarBackground", "Transparent")} />
+                </SettingRow>
+              </SettingsCard>
+            </>
+          )}
+
+          {/* ═══ ACCESSIBILITY ═══ */}
+          {activeSection === "accessibility" && (
+            <>
+              <div className="mb-6">
+                <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
+                  Account <span className="inline-block w-5 h-px bg-border-hi" />
+                </div>
+                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">Accessibility</h1>
+                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Adjust display and interaction settings for your comfort.</p>
               </div>
-            </SettingRow>
-            <SettingRow label="Show Gloss Strip" desc="Display ASL gloss tokens above the avatar panel">
-              <Toggle on={toggles.showGloss} onChange={() => toggleKey("showGloss")} />
-            </SettingRow>
-            <SettingRow label="Auto-translate on Paste" desc="Instantly translate when text is pasted into the input">
-              <Toggle on={toggles.autoPaste} onChange={() => toggleKey("autoPaste")} />
-            </SettingRow>
-            <SettingRow label="Loop Animations" desc="Automatically replay the signing sequence after completion">
-              <Toggle on={toggles.loop} onChange={() => toggleKey("loop")} />
-            </SettingRow>
-            <SettingRow label="Fingerspelling Fallback" desc="Use fingerspelling when a sign is not in the lexicon">
-              <Toggle on={toggles.fingerspell} onChange={() => toggleKey("fingerspell")} />
-            </SettingRow>
-          </SettingsCard>
 
-          {/* VOICE INPUT */}
-          <SettingsCard title="Voice Input">
-            <SettingRow label="Default Microphone" desc="Input device used for voice translation">
-              <Select options={["System Default", "Built-in Microphone", "External Mic"]} onChange={markDirty} />
-            </SettingRow>
-            <SettingRow label="Recognition Language" desc="Language used for speech-to-text">
-              <Select options={["English (US)", "English (UK)", "English (AU)"]} onChange={markDirty} />
-            </SettingRow>
-            <SettingRow label="Noise Suppression" desc="Filter background noise during voice input">
-              <Toggle on={toggles.noiseSuppression} onChange={() => toggleKey("noiseSuppression")} />
-            </SettingRow>
-            <SettingRow label="Auto-send after silence" desc="Automatically translate after 1.5s of silence detected">
-              <Toggle on={toggles.autoSend} onChange={() => toggleKey("autoSend")} />
-            </SettingRow>
-          </SettingsCard>
+              <SettingsCard title="Accessibility" chip="display">
+                <SettingRow label="Caption Size" desc="Font size for gloss and transcript captions">
+                  <Select options={["Small", "Medium", "Large", "Extra Large"]} defaultValue={settings.captionSize} onChange={() => {}} />
+                </SettingRow>
+                <SettingRow label="High Contrast Mode" desc="Increase contrast ratios for better visibility">
+                  <Toggle on={settings.highContrast} onChange={() => updateSetting("highContrast", !settings.highContrast)} />
+                </SettingRow>
+                <SettingRow label="Reduce Motion" desc="Minimize UI animations (does not affect signing playback)">
+                  <Toggle on={settings.reduceMotion} onChange={() => updateSetting("reduceMotion", !settings.reduceMotion)} />
+                </SettingRow>
+                <SettingRow label="Keyboard Shortcuts" desc="Space to start/stop voice — Enter to translate">
+                  <Toggle on={settings.keyboardShortcuts} onChange={() => updateSetting("keyboardShortcuts", !settings.keyboardShortcuts)} />
+                </SettingRow>
+              </SettingsCard>
+            </>
+          )}
 
-          {/* ACCESSIBILITY */}
-          <SettingsCard title="Accessibility" chip="display">
-            <SettingRow label="Caption Size" desc="Font size for gloss and transcript captions">
-              <Select options={["Small", "Medium", "Large", "Extra Large"]} defaultValue="Medium" onChange={markDirty} />
-            </SettingRow>
-            <SettingRow label="High Contrast Mode" desc="Increase contrast ratios for better visibility">
-              <Toggle on={toggles.highContrast} onChange={() => toggleKey("highContrast")} />
-            </SettingRow>
-            <SettingRow label="Reduce Motion" desc="Minimize UI animations (does not affect signing playback)">
-              <Toggle on={toggles.reduceMotion} onChange={() => toggleKey("reduceMotion")} />
-            </SettingRow>
-            <SettingRow label="Keyboard Shortcuts" desc="Space to start/stop voice — Enter to translate">
-              <Toggle on={toggles.keyboard} onChange={() => toggleKey("keyboard")} />
-            </SettingRow>
-          </SettingsCard>
+          {/* ═══ NLP ENGINE ═══ */}
+          {activeSection === "nlp" && (
+            <>
+              <div className="mb-6">
+                <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
+                  Translation <span className="inline-block w-5 h-px bg-border-hi" />
+                </div>
+                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">NLP Engine</h1>
+                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Configure the text-to-gloss translation pipeline.</p>
+              </div>
 
-          {/* API ACCESS */}
-          <SettingsCard title="API Access" chip="developer">
-            <SettingRow label="Production Key" desc="Use in your production app — keep this secret">
-              <input type="password" defaultValue="ds_live_••••••••••••••••" className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-mono text-[11.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" onChange={markDirty} />
-            </SettingRow>
-            <SettingRow label="Test Key" desc="Development only — rate limited to 100 req/day">
-              <input type="password" defaultValue="ds_test_••••••••••••••••" className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-mono text-[11.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" onChange={markDirty} />
-            </SettingRow>
-            <SettingRow label="Webhook Endpoint" desc="URL to receive translation lifecycle events">
-              <input type="text" placeholder="https://your-app.com/hook" className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-mono text-[11.5px] text-text-1 w-[210px] outline-none shadow-inset placeholder:text-text-3 transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" onChange={markDirty} />
-            </SettingRow>
-          </SettingsCard>
+              <SettingsCard title="Engine Configuration" chip="pipeline">
+                <SettingRow label="Translation Engine" desc="Rule-based handles 75–85% of phrases in under 50ms. LLM fallback covers edge cases.">
+                  <Select options={["Hybrid (Rule + LLM)", "Rule-based only", "LLM only"]} defaultValue={settings.translationEngine} onChange={() => {}} />
+                </SettingRow>
+                <SettingRow label="Fingerspelling Fallback" desc="Use fingerspelling when a sign is not in the lexicon">
+                  <Toggle on={settings.fingerspell} onChange={() => updateSetting("fingerspell", !settings.fingerspell)} />
+                </SettingRow>
+              </SettingsCard>
 
-          {/* NOTIFICATIONS */}
-          <SettingsCard title="Notifications" chip="alerts">
-            <SettingRow label="New Gloss Updates" desc="When new signs are added to the WLASL lexicon">
-              <Toggle on={toggles.glossUpdates} onChange={() => toggleKey("glossUpdates")} />
-            </SettingRow>
-            <SettingRow label="API Usage Alerts" desc="Notify when approaching rate limits">
-              <Toggle on={toggles.apiAlerts} onChange={() => toggleKey("apiAlerts")} />
-            </SettingRow>
-            <SettingRow label="Product Updates" desc="Feature announcements and release notes">
-              <Toggle on={toggles.productUpdates} onChange={() => toggleKey("productUpdates")} />
-            </SettingRow>
-          </SettingsCard>
+              <SettingsCard title="Performance" chip="metrics">
+                <SettingRow label="Cache Status" desc="Cached translation results for faster repeat queries">
+                  <span className="px-3 py-1 rounded-pill text-[11px] font-bold font-mono tracking-[0.06em] bg-[color-mix(in_srgb,var(--success)_12%,var(--surface-3))] border border-[color-mix(in_srgb,var(--success)_25%,transparent)] text-success shadow-inset">
+                    Active
+                  </span>
+                </SettingRow>
+                <SettingRow label="Lexicon Size" desc="Total number of ASL signs available in the dataset">
+                  <span className="font-mono text-[14px] font-semibold text-accent">2,000+</span>
+                </SettingRow>
+              </SettingsCard>
+            </>
+          )}
 
-          {/* DANGER ZONE */}
-          <SettingsCard title="Danger Zone" chip="irreversible" danger>
-            <SettingRow label="Clear Translation History" desc="Permanently removes all saved translations" danger>
-              <button className="px-3.5 py-[5px] rounded-btn border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,var(--surface-2))] text-error font-sans text-[12.5px] font-semibold cursor-pointer shadow-raised-sm transition-all duration-120 whitespace-nowrap hover:bg-[color-mix(in_srgb,var(--error)_16%,var(--surface-2))] active:shadow-inset-press active:translate-y-px">
-                Clear History
-              </button>
-            </SettingRow>
-            <SettingRow label="Revoke All API Keys" desc="Immediately invalidates all active keys" danger>
-              <button className="px-3.5 py-[5px] rounded-btn border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,var(--surface-2))] text-error font-sans text-[12.5px] font-semibold cursor-pointer shadow-raised-sm transition-all duration-120 whitespace-nowrap hover:bg-[color-mix(in_srgb,var(--error)_16%,var(--surface-2))] active:shadow-inset-press active:translate-y-px">
-                Revoke Keys
-              </button>
-            </SettingRow>
-            <SettingRow label="Delete Account" desc="Permanently deletes your account and all associated data" danger>
-              <button className="px-3.5 py-[5px] rounded-btn border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,var(--surface-2))] text-error font-sans text-[12.5px] font-semibold cursor-pointer shadow-raised-sm transition-all duration-120 whitespace-nowrap hover:bg-[color-mix(in_srgb,var(--error)_16%,var(--surface-2))] active:shadow-inset-press active:translate-y-px">
-                Delete Account
-              </button>
-            </SettingRow>
-          </SettingsCard>
+          {/* ═══ VOICE INPUT ═══ */}
+          {activeSection === "voice" && (
+            <>
+              <div className="mb-6">
+                <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
+                  Translation <span className="inline-block w-5 h-px bg-border-hi" />
+                </div>
+                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">Voice Input</h1>
+                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Configure microphone and speech recognition settings.</p>
+              </div>
+
+              <SettingsCard title="Voice Input" chip="microphone">
+                <SettingRow label="Default Microphone" desc="Input device used for voice translation">
+                  <Select options={["System Default", "Built-in Microphone", "External Mic"]} defaultValue={settings.defaultMic} onChange={() => {}} />
+                </SettingRow>
+                <SettingRow label="Recognition Language" desc="Language used for speech-to-text">
+                  <Select options={["English (US)", "English (UK)", "English (AU)"]} defaultValue={settings.recognitionLanguage} onChange={() => {}} />
+                </SettingRow>
+                <SettingRow label="Noise Suppression" desc="Filter background noise during voice input">
+                  <Toggle on={settings.noiseSuppression} onChange={() => updateSetting("noiseSuppression", !settings.noiseSuppression)} />
+                </SettingRow>
+                <SettingRow label="Auto-send after silence" desc="Automatically translate after 1.5s of silence detected">
+                  <Toggle on={settings.autoSend} onChange={() => updateSetting("autoSend", !settings.autoSend)} />
+                </SettingRow>
+              </SettingsCard>
+
+              <SettingsCard title="Test Voice" chip="preview">
+                <SettingRow label="Voice Preview" desc="Test your microphone setup and speech recognition" stack>
+                  <button
+                    onClick={() => setSheetOpen(true)}
+                    className="flex items-center gap-[7px] px-4 py-[7px] rounded-btn text-white font-sans text-[12.5px] font-medium cursor-pointer transition-all hover:brightness-110 active:translate-y-px active:brightness-[0.93]"
+                    style={{
+                      background: "linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%)",
+                      border: "1px solid var(--accent-dim)",
+                      boxShadow: "0 1px 0 rgba(255,255,255,0.18) inset, 0 3px 10px color-mix(in srgb, var(--accent) 35%, transparent)",
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
+                    </svg>
+                    Open Voice Test
+                  </button>
+                </SettingRow>
+              </SettingsCard>
+            </>
+          )}
+
+          {/* ═══ API KEYS ═══ */}
+          {activeSection === "api" && (
+            <>
+              <div className="mb-6">
+                <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
+                  Developer <span className="inline-block w-5 h-px bg-border-hi" />
+                </div>
+                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">API Keys</h1>
+                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Manage your API credentials for programmatic access.</p>
+              </div>
+
+              <SettingsCard title="API Access" chip="credentials">
+                <SettingRow label="Production Key" desc="Use in your production app — keep this secret">
+                  <input type="password" defaultValue="ds_live_••••••••••••••••" className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-mono text-[11.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
+                </SettingRow>
+                <SettingRow label="Test Key" desc="Development only — rate limited to 100 req/day">
+                  <input type="password" defaultValue="ds_test_••••••••••••••••" className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-mono text-[11.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
+                </SettingRow>
+              </SettingsCard>
+
+              <SettingsCard title="Danger Zone" chip="irreversible" danger>
+                <SettingRow label="Revoke All API Keys" desc="Immediately invalidates all active keys" danger>
+                  <button className="px-3.5 py-[5px] rounded-btn border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,var(--surface-2))] text-error font-sans text-[12.5px] font-semibold cursor-pointer shadow-raised-sm transition-all duration-120 whitespace-nowrap hover:bg-[color-mix(in_srgb,var(--error)_16%,var(--surface-2))] active:shadow-inset-press active:translate-y-px">
+                    Revoke Keys
+                  </button>
+                </SettingRow>
+              </SettingsCard>
+            </>
+          )}
+
+          {/* ═══ WEBHOOKS ═══ */}
+          {activeSection === "webhooks" && (
+            <>
+              <div className="mb-6">
+                <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
+                  Developer <span className="inline-block w-5 h-px bg-border-hi" />
+                </div>
+                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">Webhooks</h1>
+                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Receive real-time notifications for translation events.</p>
+              </div>
+
+              <SettingsCard title="Webhook Configuration" chip="events">
+                <SettingRow label="Endpoint URL" desc="URL to receive translation lifecycle events">
+                  <input type="text" placeholder="https://your-app.com/hook" className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-mono text-[11.5px] text-text-1 w-[210px] outline-none shadow-inset placeholder:text-text-3 transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
+                </SettingRow>
+                <SettingRow label="Events" desc="Choose which events trigger webhook calls">
+                  <Select options={["All Events", "Translation Only", "Errors Only"]} onChange={() => {}} />
+                </SettingRow>
+                <SettingRow label="Status" desc="Current webhook delivery status">
+                  <span className="px-3 py-1 rounded-pill text-[11px] font-bold font-mono tracking-[0.06em] bg-surface-3 border border-border text-text-3 shadow-inset">
+                    Not Configured
+                  </span>
+                </SettingRow>
+              </SettingsCard>
+            </>
+          )}
+
+          {/* ═══ HELP & DOCS ═══ */}
+          {activeSection === "help" && (
+            <>
+              <div className="mb-6">
+                <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
+                  Support <span className="inline-block w-5 h-px bg-border-hi" />
+                </div>
+                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">Help & Documentation</h1>
+                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Resources to get the most out of DuoSign.</p>
+              </div>
+
+              <SettingsCard title="Quick Links" chip="resources">
+                <SettingRow label="Getting Started" desc="A brief walkthrough of DuoSign's features and how to translate text to ASL">
+                  <a href="#" className="text-[12.5px] font-medium text-accent hover:underline">View Guide →</a>
+                </SettingRow>
+                <SettingRow label="API Documentation" desc="Reference docs for the text-to-gloss REST API">
+                  <a href="#" className="text-[12.5px] font-medium text-accent hover:underline">Open Docs →</a>
+                </SettingRow>
+                <SettingRow label="Keyboard Shortcuts" desc="Complete list of available keyboard shortcuts">
+                  <a href="#" className="text-[12.5px] font-medium text-accent hover:underline">View All →</a>
+                </SettingRow>
+              </SettingsCard>
+
+              <SettingsCard title="About DuoSign" chip="info">
+                <SettingRow label="Version" desc="Current application version">
+                  <span className="font-mono text-[12px] text-text-2">0.1.0-alpha</span>
+                </SettingRow>
+                <SettingRow label="Technology" desc="Built with Next.js, Three.js, VRM, and FastAPI">
+                  <span className="font-mono text-[12px] text-text-2">Next.js 14</span>
+                </SettingRow>
+                <SettingRow label="Lexicon" desc="Sign language dataset powering the avatar">
+                  <span className="font-mono text-[12px] text-text-2">WLASL v0.3</span>
+                </SettingRow>
+              </SettingsCard>
+            </>
+          )}
+
         </main>
       </div>
 
       {/* SAVE BAR */}
       <div className={[
         "fixed bottom-0 left-[220px] right-0 bg-surface border-t border-border px-8 py-[11px] flex items-center justify-between z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.25)] transition-transform duration-300",
-        dirty ? "translate-y-0" : "translate-y-full",
+        isDirty ? "translate-y-0" : "translate-y-full",
       ].join(" ")} style={{ transitionTimingFunction: "cubic-bezier(.34,1.26,.64,1)" }}>
         <div className="flex items-center gap-[7px] text-[12.5px] text-text-3 transition-colors duration-250">
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--warn)] shadow-[0_0_6px_var(--warn)] animate-[blink_1.2s_ease-in-out_infinite]" />
@@ -446,7 +634,7 @@ export default function SettingsPage() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => setDirty(false)}
+            onClick={discard}
             className="px-4 py-[7px] rounded-btn border border-border-hi bg-surface-2 text-text-2 font-sans text-[13px] font-medium cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:translate-y-px"
           >Discard</button>
           <button

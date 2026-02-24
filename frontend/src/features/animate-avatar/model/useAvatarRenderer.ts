@@ -21,21 +21,21 @@ interface CameraPreset {
 
 const CAMERA_PRESETS: Record<ViewMode, CameraPreset> = {
   interpreter: {
-    position: [0, 1.5, 0.55],
-    target: [0, 1.45, 0],
-    fov: 30,
+    position: [0, 1.2, 1.2],
+    target: [0, 1.3, 0],
+    fov: 60,
     orbitEnabled: false,
   },
   fullbody: {
-    position: [0, 1.2, 1.0],
-    target: [0, 1.15, 0],
-    fov: 38,
+    position: [0, 0.9, 1.8],
+    target: [0, 1.0, 0],
+    fov: 60,
     orbitEnabled: false,
   },
   world: {
-    position: [0, 1.4, 1.5],
+    position: [0, 1.0, 2.5],
     target: [0, 1.2, 0],
-    fov: 45,
+    fov: 55,
     orbitEnabled: true,
   },
 };

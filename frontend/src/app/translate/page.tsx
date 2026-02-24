@@ -8,17 +8,12 @@ import RecentTranslations from "@/widgets/recent-translations/RecentTranslations
 import { ToastProvider } from "@/shared/ui/Toast";
 import { useTranslate } from "@/features/translate-text/model/useTranslate";
 import { usePlayback } from "@/features/animate-avatar/model/usePlayback";
-import { useCallback, useState } from "react";
+import { useHistory } from "@/shared/hooks/useHistory";
+import { useCallback, useMemo } from "react";
 import type { GlossToken } from "@/entities/gloss/types";
 import GlossChip from "@/shared/ui/GlossChip";
 import Link from "next/link";
 
-interface HistoryEntry {
-  id: string;
-  inputText: string;
-  glossTokens: GlossToken[];
-  relativeTime: string;
-}
 
 export default function TranslatePage() {
   const {
@@ -36,7 +31,21 @@ export default function TranslatePage() {
     debugInfo,
   } = useTranslate();
 
-  const [recentHistory, setRecentHistory] = useState<HistoryEntry[]>([]);
+  const { addEntry, getRecent, deleteEntry } = useHistory();
+
+  // Convert history entries to the format RecentTranslations expects
+  const recentHistory = useMemo(() => {
+    return getRecent(3).map((e) => ({
+      id: e.id,
+      inputText: e.text,
+      glossTokens: e.glossTokens.map((t, i) => ({
+        id: `${e.id}-${i}`,
+        text: t,
+        isSpelled: false,
+      })) as GlossToken[],
+      relativeTime: e.time,
+    }));
+  }, [getRecent]);
 
   const handleTokenChange = useCallback(
     (index: number) => setActiveIndex(index),
@@ -69,18 +78,10 @@ export default function TranslatePage() {
     if (!text) return;
     translate();
     setTimeout(() => {
-      setRecentHistory((prev) => {
-        const newEntry: HistoryEntry = {
-          id: `rh-${Date.now()}`,
-          inputText: text,
-          glossTokens: glossTokens.length > 0 ? glossTokens : [],
-          relativeTime: "Just now",
-        };
-        return [newEntry, ...prev].slice(0, 3);
-      });
+      addEntry(text, glossTokens.map((t) => t.text), "typed");
       play();
     }, 350);
-  }, [translate, play, inputText, glossTokens]);
+  }, [translate, play, inputText, glossTokens, addEntry]);
 
   const handleClear = useCallback(() => {
     clearInput();
@@ -88,8 +89,8 @@ export default function TranslatePage() {
   }, [clearInput, reset]);
 
   const handleDeleteRecent = useCallback((id: string) => {
-    setRecentHistory((prev) => prev.filter((e) => e.id !== id));
-  }, []);
+    deleteEntry(id);
+  }, [deleteEntry]);
 
   const handleVoiceDone = useCallback((text: string) => {
     setInputText(text);
