@@ -17,6 +17,7 @@ export interface HistoryEntry {
   date: string;       // e.g. "Today", "Yesterday", "Feb 23"
   time: string;       // e.g. "2:14 PM"
   timestamp: number;  // Date.now() for sorting
+  exported?: boolean; // true once the user has exported this entry
 }
 
 const STORAGE_KEY = "duosign:history";
@@ -108,6 +109,14 @@ export function useHistory() {
     saveHistory([]);
   }, []);
 
+  const markExported = useCallback((id: string) => {
+    setEntries((prev) => {
+      const next = prev.map((e) => e.id === id ? { ...e, exported: true } : e);
+      saveHistory(next);
+      return next;
+    });
+  }, []);
+
   // Get recent entries (for translate page sidebar)
   const getRecent = useCallback(
     (count = 3) => entries.slice(0, count),
@@ -163,6 +172,7 @@ export function useHistory() {
     addEntry,
     deleteEntry,
     clearAll,
+    markExported,
     getRecent,
     getFiltered,
     stats,

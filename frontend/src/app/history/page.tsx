@@ -1,24 +1,26 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import NavigationBar from "@/widgets/navigation-bar/NavigationBar";
 import GuestBanner from "@/widgets/guest-banner/GuestBanner";
 import GlossChip from "@/shared/ui/GlossChip";
 import { ToastProvider } from "@/shared/ui/Toast";
 import { useHistory } from "@/shared/hooks/useHistory";
+import type { HistoryEntry } from "@/shared/hooks/useHistory";
 
 
 const DATE_CHIPS = ["Today", "This Week", "This Month", "All Time"];
 const TYPE_FILTERS_STATIC = [
-  { key: "typed", label: "Typed Text", color: "var(--accent)" },
+  { key: "typed",  label: "Typed Text",  color: "var(--accent)" },
   { key: "voiced", label: "Voice Input", color: "var(--teal)" },
-  { key: "api", label: "API Request", color: "var(--warn)" },
+  { key: "api",    label: "API Request", color: "var(--warn)" },
 ];
 
 const ICON_COLORS = {
-  typed: "var(--accent)",
+  typed:  "var(--accent)",
   voiced: "var(--teal)",
-  api: "var(--warn)",
+  api:    "var(--warn)",
 } as const;
 
 function TypeIcon({ type }: { type: "typed" | "voiced" | "api" }) {
@@ -40,13 +42,35 @@ function TypeIcon({ type }: { type: "typed" | "voiced" | "api" }) {
   );
 }
 
+/** Download a plain-text summary of a single translation entry. */
+function exportEntry(entry: HistoryEntry) {
+  const lines = [
+    "DuoSign Translation",
+    "───────────────────",
+    `Input:  ${entry.text}`,
+    `Gloss:  ${entry.glossTokens.join(" ")}`,
+    `Signs:  ${entry.glossTokens.length}`,
+    `Date:   ${entry.date} · ${entry.time}`,
+    `Type:   ${entry.type}`,
+  ];
+  const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `duosign-${entry.id}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function HistoryPage() {
-  const { deleteEntry, getFiltered, stats } = useHistory();
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [activeDate, setActiveDate] = useState("All Time");
+  const router = useRouter();
+  const { deleteEntry, markExported, getFiltered, stats } = useHistory();
+
+  const [expandedId, setExpandedId]   = useState<string | null>(null);
+  const [activeDate, setActiveDate]   = useState("All Time");
   const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set(["typed", "voiced", "api"]));
   const [searchQuery, setSearchQuery] = useState("");
-  const [segTab, setSegTab] = useState("All");
+  const [segTab, setSegTab]           = useState("All");
 
   const toggleType = useCallback((key: string) => {
     setActiveTypes((prev) => {
@@ -67,16 +91,30 @@ export default function HistoryPage() {
     setSearchQuery("");
   }, []);
 
-  // Filter entries
-  const filtered = getFiltered({
-    types: activeTypes,
-    search: searchQuery,
-    dateRange: activeDate,
-  });
+  const handleReplay = useCallback((entry: HistoryEntry) => {
+    const params = new URLSearchParams({ text: entry.text, autoplay: "true" });
+    router.push(`/translate?${params.toString()}`);
+  }, [router]);
 
-  // Group by date
-  const dateGroups: Record<string, typeof filtered> = {};
-  filtered.forEach((e) => {
+  const handleEdit = useCallback((entry: HistoryEntry) => {
+    const params = new URLSearchParams({ text: entry.text });
+    router.push(`/translate?${params.toString()}`);
+  }, [router]);
+
+  const handleExport = useCallback((entry: HistoryEntry) => {
+    exportEntry(entry);
+    markExported(entry.id);
+  }, [markExported]);
+
+  // Base filter
+  const filtered = getFiltered({ types: activeTypes, search: searchQuery, dateRange: activeDate });
+
+  // Seg-tab filter on top
+  const segFiltered = segTab === "Exported" ? filtered.filter((e) => e.exported) : filtered;
+
+  // Group by date label
+  const dateGroups: Record<string, typeof segFiltered> = {};
+  segFiltered.forEach((e) => {
     if (!dateGroups[e.date]) dateGroups[e.date] = [];
     dateGroups[e.date].push(e);
   });
@@ -144,7 +182,7 @@ export default function HistoryPage() {
                   </div>
                 </div>
 
-                {/* Source Type */}
+                {/* Input Type */}
                 <div className="mb-[18px]">
                   <div className="text-[9.5px] font-bold tracking-[0.1em] uppercase text-text-3 mb-2 font-mono">Input Type</div>
                   <div className="flex flex-col gap-1">
@@ -167,15 +205,15 @@ export default function HistoryPage() {
                   </div>
                 </div>
 
-                {/* Stats Strip */}
+                {/* Stats */}
                 <div>
                   <div className="text-[9.5px] font-bold tracking-[0.1em] uppercase text-text-3 mb-2 font-mono">Your Stats</div>
                   <div className="grid grid-cols-2 gap-px bg-border rounded-[10px] overflow-hidden">
                     {[
-                      { num: String(stats.total), lbl: "Total" },
-                      { num: String(stats.today), lbl: "Today" },
+                      { num: String(stats.total),      lbl: "Total" },
+                      { num: String(stats.today),      lbl: "Today" },
                       { num: String(stats.totalSigns), lbl: "Signs" },
-                      { num: "–", lbl: "Avg." },
+                      { num: "–",                      lbl: "Avg." },
                     ].map((s) => (
                       <div key={s.lbl} className="bg-surface-2 px-3 py-[10px] text-center">
                         <div className="font-serif text-[22px] text-text-1 leading-none tracking-tight">{s.num}</div>
@@ -195,49 +233,47 @@ export default function HistoryPage() {
               <div className="flex items-center gap-[7px] text-[10.5px] font-bold tracking-[0.09em] uppercase text-text-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_6px_var(--accent)]" />
                 Translation History
-                <span className="px-[9px] py-[3px] rounded-pill bg-surface-3 border border-border text-[11px] text-text-3 font-mono shadow-inset ml-1">{filtered.length} entries</span>
+                <span className="px-[9px] py-[3px] rounded-pill bg-surface-3 border border-border text-[11px] text-text-3 font-mono shadow-inset ml-1">{segFiltered.length} entries</span>
               </div>
-              <div className="flex items-center gap-[7px]">
-                <div className="flex bg-surface-3 border border-border rounded-[7px] p-[2px] shadow-inset">
-                  {["All", "Starred", "Exported"].map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setSegTab(s)}
-                      className={[
-                        "px-[11px] py-[3px] rounded-[5px] text-[11px] font-medium cursor-pointer border transition-all",
-                        segTab === s
-                          ? "bg-surface border-border-hi text-text-1 shadow-raised-sm"
-                          : "border-transparent text-text-3 hover:text-text-2",
-                      ].join(" ")}
-                    >{s}</button>
-                  ))}
-                </div>
-                <button className="w-[27px] h-[27px] rounded-[7px] border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:translate-y-px" title="Export all">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                </button>
+              {/* Segmented control — All / Exported only */}
+              <div className="flex bg-surface-3 border border-border rounded-[7px] p-[2px] shadow-inset">
+                {["All", "Exported"].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSegTab(s)}
+                    className={[
+                      "px-[11px] py-[3px] rounded-[5px] text-[11px] font-medium cursor-pointer border transition-all",
+                      segTab === s
+                        ? "bg-surface border-border-hi text-text-1 shadow-raised-sm"
+                        : "border-transparent text-text-3 hover:text-text-2",
+                    ].join(" ")}
+                  >{s}</button>
+                ))}
               </div>
             </div>
 
             {/* Body */}
             <div className="p-4 flex flex-col gap-[10px]">
-              {filtered.length === 0 ? (
+              {segFiltered.length === 0 ? (
                 <div className="flex flex-col items-center justify-center px-6 py-[60px] text-center gap-3">
                   <div className="w-14 h-14 rounded-2xl bg-surface-2 border border-border flex items-center justify-center shadow-inset mb-1">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-3">
                       <circle cx="12" cy="12" r="10" /><line x1="8" y1="15" x2="16" y2="15" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" />
                     </svg>
                   </div>
-                  <div className="font-serif text-[18px] text-text-1">No translations yet</div>
+                  <div className="font-serif text-[18px] text-text-1">
+                    {segTab === "Exported" ? "No exported translations yet" : "No translations yet"}
+                  </div>
                   <p className="text-[12.5px] text-text-3 leading-relaxed max-w-[240px]">
-                    Head over to the Translate tab to create your first translation.
+                    {segTab === "Exported"
+                      ? "Hit Export on any translation to save it as a file."
+                      : "Head over to the Translate tab to create your first translation."}
                   </p>
                 </div>
               ) : (
                 Object.entries(dateGroups).map(([date, items]) => (
                   <div key={date}>
-                    {/* Date Divider */}
+                    {/* Date divider */}
                     <div className="flex items-center gap-[10px] text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 font-mono py-1 mb-1">
                       {date}
                       <div className="flex-1 h-px bg-border" />
@@ -257,19 +293,17 @@ export default function HistoryPage() {
                           >
                             {/* Top row */}
                             <div className="flex items-start gap-3 px-3.5 py-[13px]">
-                              {/* Type icon */}
                               <div className="w-9 h-9 rounded-btn flex-shrink-0 bg-surface-3 border border-border flex items-center justify-center shadow-inset transition-colors">
                                 <TypeIcon type={entry.type} />
                               </div>
 
-                              {/* Main */}
                               <div className="flex-1 min-w-0">
                                 <div className="text-[13.5px] font-medium text-text-1 truncate leading-snug">{entry.text}</div>
                                 <div className="flex items-center gap-2 mt-[5px] flex-wrap">
                                   <span className="text-[11.5px] text-text-3 font-mono">{entry.time}</span>
                                   <span className={[
                                     "px-2 py-[2px] rounded-pill text-[10px] font-semibold font-mono tracking-[0.04em] border shadow-inset",
-                                    entry.type === "typed" ? "bg-[color-mix(in_srgb,var(--accent)_10%,var(--surface-3))] border-[color-mix(in_srgb,var(--accent)_25%,transparent)] text-accent" :
+                                    entry.type === "typed"  ? "bg-[color-mix(in_srgb,var(--accent)_10%,var(--surface-3))] border-[color-mix(in_srgb,var(--accent)_25%,transparent)] text-accent" :
                                     entry.type === "voiced" ? "bg-[color-mix(in_srgb,var(--teal)_10%,var(--surface-3))] border-[color-mix(in_srgb,var(--teal)_25%,transparent)] text-teal" :
                                     "bg-[color-mix(in_srgb,var(--warn)_10%,var(--surface-3))] border-[color-mix(in_srgb,var(--warn)_25%,transparent)] text-[var(--warn)]",
                                   ].join(" ")}>
@@ -278,10 +312,14 @@ export default function HistoryPage() {
                                   <span className="px-2 py-[2px] rounded-pill text-[10px] font-semibold font-mono border border-border bg-surface-3 text-text-3 shadow-inset">
                                     {entry.glossTokens.length} glosses
                                   </span>
+                                  {entry.exported && (
+                                    <span className="px-2 py-[2px] rounded-pill text-[10px] font-semibold font-mono border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_8%,var(--surface-3))] text-success shadow-inset">
+                                      Exported
+                                    </span>
+                                  )}
                                 </div>
                               </div>
 
-                              {/* Right */}
                               <div className="flex items-center gap-[7px] flex-shrink-0">
                                 <span className="text-[11px] text-text-3 font-mono px-2 py-[3px] rounded-[6px] bg-surface-3 border border-border shadow-inset">
                                   {entry.glossTokens.length} signs
@@ -297,7 +335,7 @@ export default function HistoryPage() {
                               </div>
                             </div>
 
-                            {/* Expanded gloss strip + actions */}
+                            {/* Expanded: gloss strip + actions */}
                             {isExpanded && (
                               <div className="px-3.5 pb-[13px] pt-[11px] border-t border-border flex flex-col gap-[10px]">
                                 <div className="flex gap-[5px] flex-wrap">
@@ -306,9 +344,9 @@ export default function HistoryPage() {
                                   ))}
                                 </div>
                                 <div className="flex gap-1.5 items-center">
-                                  {/* Replay */}
+                                  {/* Replay — navigate to translate page and auto-play */}
                                   <button
-                                    onClick={(e) => e.stopPropagation()}
+                                    onClick={(e) => { e.stopPropagation(); handleReplay(entry); }}
                                     className="flex items-center gap-[5px] px-[11px] py-[5px] rounded-[7px] text-white font-sans text-[12px] font-medium cursor-pointer transition-all hover:brightness-110 active:translate-y-px active:brightness-[0.93]"
                                     style={{
                                       background: "linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%)",
@@ -319,23 +357,26 @@ export default function HistoryPage() {
                                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
                                     Replay
                                   </button>
-                                  {/* Export */}
+
+                                  {/* Export — download .txt and mark as exported */}
                                   <button
-                                    onClick={(e) => e.stopPropagation()}
+                                    onClick={(e) => { e.stopPropagation(); handleExport(entry); }}
                                     className="flex items-center gap-[5px] px-[11px] py-[5px] rounded-[7px] border border-border-hi bg-surface text-text-2 font-sans text-[12px] font-medium cursor-pointer shadow-raised-sm transition-all hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:translate-y-px"
                                   >
                                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                                     Export
                                   </button>
-                                  {/* Edit */}
+
+                                  {/* Edit — navigate to translate page with text pre-filled */}
                                   <button
-                                    onClick={(e) => e.stopPropagation()}
+                                    onClick={(e) => { e.stopPropagation(); handleEdit(entry); }}
                                     className="flex items-center gap-[5px] px-[11px] py-[5px] rounded-[7px] border border-border-hi bg-surface text-text-2 font-sans text-[12px] font-medium cursor-pointer shadow-raised-sm transition-all hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:translate-y-px"
                                   >
                                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                                     Edit
                                   </button>
-                                  {/* Delete — danger with red glow */}
+
+                                  {/* Delete */}
                                   <button
                                     onClick={(e) => { e.stopPropagation(); handleDelete(entry.id); }}
                                     className="flex items-center gap-[5px] px-[11px] py-[5px] rounded-[7px] border border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-surface text-error font-sans text-[12px] font-medium cursor-pointer shadow-raised-sm transition-all ml-auto hover:bg-[color-mix(in_srgb,var(--error)_8%,var(--surface))] hover:shadow-[var(--raised-sm),0_0_12px_rgba(248,113,113,0.25)] active:shadow-inset-press active:translate-y-px"
@@ -355,11 +396,10 @@ export default function HistoryPage() {
                 ))
               )}
 
-              {/* Load more */}
-              {filtered.length > 0 && (
+              {segFiltered.length > 0 && (
                 <div className="flex justify-center pt-2 pb-4">
                   <button className="px-7 py-2 rounded-btn border border-border-hi bg-surface-2 text-text-2 font-sans text-[13px] font-medium cursor-pointer shadow-raised-sm transition-all hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:translate-y-px">
-                    Load 17 more entries
+                    Load more entries
                   </button>
                 </div>
               )}

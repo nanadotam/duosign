@@ -10,7 +10,8 @@ import { LoadingProvider } from "@/shared/providers/LoadingProvider";
 import { useTranslate } from "@/features/translate-text/model/useTranslate";
 import { usePlayback } from "@/features/animate-avatar/model/usePlayback";
 import { useHistory } from "@/shared/hooks/useHistory";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import type { GlossToken } from "@/entities/gloss/types";
 import type { AvatarDisplayMode } from "@/entities/avatar/types";
 import GlossChip from "@/shared/ui/GlossChip";
@@ -19,6 +20,8 @@ import Link from "next/link";
 
 export default function TranslatePage() {
   const [displayMode, setDisplayMode] = useState<AvatarDisplayMode>("avatar");
+  const searchParams = useSearchParams();
+  const autoplayPending = useRef(false);
 
   const {
     inputText,
@@ -76,6 +79,28 @@ export default function TranslatePage() {
     onTokenChange: handleTokenChange,
     onComplete: handleComplete,
   });
+
+  // Read ?text= and ?autoplay=true from URL (used by Replay and Edit from history)
+  useEffect(() => {
+    const text = searchParams.get("text");
+    const shouldAutoplay = searchParams.get("autoplay") === "true";
+    if (text) {
+      setInputText(decodeURIComponent(text));
+      if (shouldAutoplay) autoplayPending.current = true;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Once inputText is set and autoplay is pending, trigger translate + play
+  useEffect(() => {
+    if (autoplayPending.current && inputText) {
+      autoplayPending.current = false;
+      setTimeout(() => {
+        translate();
+        setTimeout(() => play(), 400);
+      }, 50);
+    }
+  }, [inputText, translate, play]);
 
   const handleTranslate = useCallback(() => {
     const text = inputText.trim();
