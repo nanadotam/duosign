@@ -32,7 +32,7 @@ from pydantic import BaseModel, Field
 
 from .vocabulary import get_vocabulary, VocabularyManager
 from .text_to_gloss import TextToGloss, GlossResult
-from .llm import transcribe_audio
+from .voice import transcribe_audio
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -43,7 +43,7 @@ logging.basicConfig(level=logging.INFO)
 # │  INJECT YOUR GLOSS LIST HERE:                                    │
 # │  Point TSV_PATH to your tab-separated gloss file.                │
 # │  Format: id<TAB>gloss  (one per line, no header)                 │
-# │                                                                   │
+# │                                                                  │
 # │  Point LEXICON_DIR to your pose JSON directory (optional).       │
 # └──────────────────────────────────────────────────────────────────┘
 TSV_PATH = Path(__file__).parent.parent / "data" / "glosses.tsv"
