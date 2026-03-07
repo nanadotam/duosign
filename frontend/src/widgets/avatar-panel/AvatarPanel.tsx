@@ -15,6 +15,11 @@ import type {
 
 import { useLoading } from "@/shared/providers/LoadingProvider";
 
+const ExportVideoModal = dynamic(
+  () => import("@/features/animate-avatar/ui/ExportVideoModal"),
+  { ssr: false }
+);
+
 // Dynamic imports for Three.js components (avoid SSR)
 const LoadingOverlay = dynamic(
   () => import("@/shared/ui/LoadingOverlay"),
@@ -49,6 +54,7 @@ interface AvatarPanelProps {
   glossSequence?: string[];
   displayMode?: AvatarDisplayMode;
   onDisplayModeChange?: (mode: AvatarDisplayMode) => void;
+  onExport?: () => void;
 }
 
 const VIEW_MODE_LABELS: Record<ViewMode, string> = {
@@ -69,7 +75,14 @@ export default function AvatarPanel({
   glossSequence = [],
   displayMode = "avatar",
   onDisplayModeChange,
+  onExport,
 }: AvatarPanelProps) {
+  const [showExportModal, setShowExportModal] = useState(false);
+
+  const handleExport = useCallback(() => {
+    onExport?.();
+    setShowExportModal(true);
+  }, [onExport]);
   const [viewMode, setViewMode] = useState<ViewMode>("interpreter");
   const [renderMode, setRenderMode] = useState<AvatarDisplayMode>("avatar");
   const isSkeleton = displayMode === "skeleton";
@@ -408,9 +421,34 @@ export default function AvatarPanel({
             >
               {SPEED_LABELS[speed]}
             </button>
+
+            {/* Divider */}
+            <div className="w-px h-[14px] lg:h-[18px] bg-border mx-px" />
+
+            {/* Export */}
+            <button
+              onClick={handleExport}
+              className="w-[26px] h-[26px] lg:w-[30px] lg:h-[30px] rounded-full border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:scale-[0.93]"
+              title="Export video"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </button>
           </div>
         )}
       </div>
+
+      {/* Export Video Modal */}
+      {showExportModal && (
+        <ExportVideoModal
+          glossSequence={glossSequence}
+          avatarPath={currentModel.path}
+          onClose={() => setShowExportModal(false)}
+        />
+      )}
     </div>
   );
 }

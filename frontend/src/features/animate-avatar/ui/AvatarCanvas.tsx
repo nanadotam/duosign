@@ -10,7 +10,7 @@
  * Resizes to fit parent container.
  */
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useAvatarRenderer } from "../model/useAvatarRenderer";
 import { useVRM } from "../model/useVRM";
 import { usePosePlayer } from "../model/usePosePlayer";
@@ -25,6 +25,7 @@ interface AvatarCanvasProps {
   renderMode: AvatarDisplayMode;
   onDebugStats?: (stats: AvatarDebugStats) => void;
   onViewModeChange?: (mode: ViewMode) => void;
+  onCanvasReady?: (canvas: HTMLCanvasElement) => void;
   className?: string;
 }
 
@@ -35,8 +36,10 @@ export default function AvatarCanvas({
   isPlaying,
   renderMode = "avatar",
   onDebugStats,
+  onCanvasReady,
   className = "",
 }: AvatarCanvasProps) {
+  const canvasReadyFiredRef = useRef(false);
   const {
     containerRef,
     scene,
@@ -68,6 +71,22 @@ export default function AvatarCanvas({
 
   // Pick active engine based on render mode
   const activeEngine = renderMode === "avatar" ? videoEngine : posePlayer;
+
+  // Fire onCanvasReady once the Three.js canvas is mounted
+  useEffect(() => {
+    if (!onCanvasReady || canvasReadyFiredRef.current) return;
+    // Three.js creates the <canvas> element shortly after mounting
+    const poll = setInterval(() => {
+      const canvas = (containerRef.current as HTMLDivElement | null)?.querySelector("canvas");
+      if (canvas) {
+        clearInterval(poll);
+        canvasReadyFiredRef.current = true;
+        onCanvasReady(canvas as HTMLCanvasElement);
+      }
+    }, 100);
+    return () => clearInterval(poll);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onCanvasReady]);
 
   // Sync view mode from parent
   useEffect(() => {
