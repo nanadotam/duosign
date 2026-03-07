@@ -35,6 +35,7 @@ from spacy.tokens import Token
 
 from .vocabulary import VocabularyManager, NUMBER_WORDS
 from .llm import llm_translate
+from .fingerspell import fingerspell_word, is_fingerspelled, expand_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -256,6 +257,18 @@ class TextToGloss:
         # ── Step 2: Glossify — convert each token to its gloss form ──
         glossed = self._glossify(kept)
 
+        # ── Step 2b: Expand fingerspelled tokens into individual letters ──
+        # "N-A-N-A" → [("N", t), ("A", t), ("N", t), ("A", t)]
+        # so each letter maps to its own pose file in the avatar.
+        expanded: list[tuple[str, object]] = []
+        for g, t in glossed:
+            if is_fingerspelled(g):
+                for letter in g.split("-"):
+                    expanded.append((letter, t))
+            else:
+                expanded.append((g, t))
+        glossed = expanded
+
         # ── Step 3: Targeted reordering for ASL grammar ──────────────
 
         # 3a. SOV — move verb after its object
@@ -426,24 +439,45 @@ class TextToGloss:
                 glossed.append((PRONOUN_TO_IX[word], token))
                 continue
 
-            # Nouns → lemmatize + plural marker
-            # Skip plural "+" when a number child handles quantity
+            # Nouns / proper nouns → lemmatize + plural marker.
+            # If the base gloss is not in the vocabulary (e.g. a name like
+            # "Nana", "Ghana"), fingerspell it as individual letter tokens.
             if pos in ("NOUN", "PROPN"):
-                gloss = lemma.upper()
-                is_plural = "Plur" in (token.morph.get("Number") or [])
-                has_number = any(c.pos_ == "NUM" for c in token.children)
-                if is_plural and not has_number:
-                    gloss += "+"
+                base = lemma.upper()
+                if not self.vocab.has(base):
+                    # Unknown word — produce hyphenated fingerspell form
+                    # (will be expanded to individual letters after glossify)
+                    letters = fingerspell_word(token.text)
+                    gloss = "-".join(letters) if letters else base
+                else:
+                    gloss = base
+                    is_plural = "Plur" in (token.morph.get("Number") or [])
+                    has_number = any(c.pos_ == "NUM" for c in token.children)
+                    if is_plural and not has_number:
+                        gloss += "+"
                 glossed.append((gloss, token))
                 continue
 
-            # Verbs → base form
+            # Verbs → base form; fingerspell if not in vocabulary
             if pos == "VERB":
-                glossed.append((lemma.upper(), token))
+                base = lemma.upper()
+                if not self.vocab.has(base):
+                    letters = fingerspell_word(token.text)
+                    gloss = "-".join(letters) if letters else base
+                else:
+                    gloss = base
+                glossed.append((gloss, token))
                 continue
 
-            # Adjectives, adverbs, everything else → lemmatize
-            glossed.append((lemma.upper(), token))
+            # Adjectives, adverbs, everything else → lemmatize;
+            # fingerspell if not in vocabulary
+            base = lemma.upper()
+            if not self.vocab.has(base):
+                letters = fingerspell_word(token.text)
+                gloss = "-".join(letters) if letters else base
+            else:
+                gloss = base
+            glossed.append((gloss, token))
 
         return glossed
 
@@ -705,10 +739,15 @@ class TextToGloss:
 
     @staticmethod
     def _apply_llm_result(result: GlossResult, llm_gloss: str, method: str) -> None:
-        """Apply LLM gloss to an existing result, updating all fields."""
+        """Apply LLM gloss to an existing result, updating all fields.
+
+        The LLM uses hyphenated notation for fingerspelling (N-A-N-A).
+        We expand those into individual letter tokens so each maps to
+        its own sign in the avatar.
+        """
         result.gloss_internal = llm_gloss
         result.gloss = TextToGloss._to_display_form(llm_gloss)
-        result.tokens = llm_gloss.split()
+        result.tokens = expand_tokens(llm_gloss.split())
         result.method = method
 
     # ── Other helpers ────────────────────────────────────────────────

@@ -138,14 +138,17 @@ export default function ExportVideoModal({
     stage !== "done" && stage !== "error"
   );
 
-  // Called once VRM is fully loaded — safe to start recording immediately
+  // Called once VRM is fully loaded — safe to start recording.
+  // We start the recorder first and wait 400 ms for the codec to
+  // establish clean keyframes (eliminating the initial scratch/blur),
+  // then kick off playback.
   const handleCanvasReady = useCallback(
     (canvas: HTMLCanvasElement) => {
       if (recordingStartedRef.current) return;
       recordingStartedRef.current = true;
       startRecording(canvas);
       startProgressSimulation();
-      setIsPlaying(true);
+      setTimeout(() => setIsPlaying(true), 400);
     },
     [startRecording, startProgressSimulation]
   );
@@ -193,7 +196,7 @@ export default function ExportVideoModal({
       onClick={isLocked ? undefined : onClose}
     >
       <div
-        className="relative bg-surface border border-border rounded-panel overflow-hidden w-full max-w-sm shadow-[0_32px_80px_rgba(0,0,0,0.65)]"
+        className="relative bg-surface border border-border rounded-panel overflow-hidden w-full max-w-2xl shadow-[0_32px_80px_rgba(0,0,0,0.65)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Header ───────────────────────────────────────────────── */}
@@ -226,13 +229,13 @@ export default function ExportVideoModal({
 
         {/* ── Avatar Canvas ─────────────────────────────────────────── */}
         {/*
-          The inner canvas renders at 1280×720 (720p) but is scaled down
-          visually via CSS transform so the modal stays compact.
-          Three.js ResizeObserver sees the full 1280×720 layout size,
-          so captureStream() captures at true 720p quality.
+          Native 16:9 canvas — no CSS transforms. Three.js renders at the
+          true container size. On a 672px modal that's ~672×378px display;
+          with devicePixelRatio=2 the backing canvas is 1344×756px which
+          FFmpeg scales to a crisp 1280×720 output.
         */}
-        <div className="relative overflow-hidden" style={{ height: 216 }}>
-          {/* Grid — shown at the preview scale */}
+        <div className="relative" style={{ aspectRatio: "16/9" }}>
+          {/* Grid background */}
           <div
             className="absolute inset-0"
             style={{
@@ -244,16 +247,8 @@ export default function ExportVideoModal({
             }}
           />
 
-          {/* 720p canvas — scaled down to fit modal width */}
-          <div
-            style={{
-              position: "absolute",
-              width: 1280,
-              height: 720,
-              transformOrigin: "top left",
-              transform: "scale(0.3)",   // 1280*0.3=384px ≈ modal width; 720*0.3=216px height
-            }}
-          >
+          {/* Three.js canvas — fills the container naturally */}
+          <div className="absolute inset-0">
             <AvatarCanvas
               viewMode="interpreter"
               avatarPath={modelPath}
