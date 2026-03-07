@@ -7,6 +7,12 @@ import AvatarPanel from "@/widgets/avatar-panel/AvatarPanel";
 import RecentTranslations from "@/widgets/recent-translations/RecentTranslations";
 import { ToastProvider } from "@/shared/ui/Toast";
 import { LoadingProvider } from "@/shared/providers/LoadingProvider";
+import dynamic from "next/dynamic";
+
+const ExportVideoModal = dynamic(
+  () => import("@/features/animate-avatar/ui/ExportVideoModal"),
+  { ssr: false }
+);
 import { useTranslate } from "@/features/translate-text/model/useTranslate";
 import { usePlayback } from "@/features/animate-avatar/model/usePlayback";
 import { useHistory } from "@/shared/hooks/useHistory";
@@ -20,8 +26,10 @@ import Link from "next/link";
 
 export default function TranslatePage() {
   const [displayMode, setDisplayMode] = useState<AvatarDisplayMode>("avatar");
+  const [showExportModal, setShowExportModal] = useState(false);
   const searchParams = useSearchParams();
   const autoplayPending = useRef(false);
+  const exportPending = useRef(false);
 
   const {
     inputText,
@@ -80,18 +88,20 @@ export default function TranslatePage() {
     onComplete: handleComplete,
   });
 
-  // Read ?text= and ?autoplay=true from URL (used by Replay and Edit from history)
+  // Read URL params: ?text=, ?autoplay=true, ?export=true
   useEffect(() => {
     const text = searchParams.get("text");
     const shouldAutoplay = searchParams.get("autoplay") === "true";
+    const shouldExport = searchParams.get("export") === "true";
     if (text) {
       setInputText(decodeURIComponent(text));
-      if (shouldAutoplay) autoplayPending.current = true;
+      if (shouldAutoplay || shouldExport) autoplayPending.current = true;
+      if (shouldExport) exportPending.current = true;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Once inputText is set and autoplay is pending, trigger translate + play
+  // Once inputText is set and autoplay/export is pending, trigger translate + play
   useEffect(() => {
     if (autoplayPending.current && inputText) {
       autoplayPending.current = false;
@@ -101,6 +111,15 @@ export default function TranslatePage() {
       }, 50);
     }
   }, [inputText, translate, play]);
+
+  // Once glossTokens are ready and export is pending, open the export modal
+  useEffect(() => {
+    if (exportPending.current && glossTokens.length > 0) {
+      exportPending.current = false;
+      // Small delay so the avatar has started playing before the modal mounts
+      setTimeout(() => setShowExportModal(true), 800);
+    }
+  }, [glossTokens]);
 
   const handleTranslate = useCallback(() => {
     const text = inputText.trim();
@@ -136,6 +155,12 @@ export default function TranslatePage() {
   return (
     <LoadingProvider>
     <ToastProvider>
+      {showExportModal && glossTokens.length > 0 && (
+        <ExportVideoModal
+          glossSequence={glossTokens.map((t) => t.text)}
+          onClose={() => setShowExportModal(false)}
+        />
+      )}
       {/*
         MOBILE LAYOUT STRATEGY
         ─────────────────────────────────────────────────────
@@ -193,6 +218,7 @@ export default function TranslatePage() {
               glossSequence={glossTokens.map((t) => t.text)}
               displayMode={displayMode}
               onDisplayModeChange={setDisplayMode}
+              onExport={() => setShowExportModal(true)}
             />
           </div>
         </main>
@@ -220,6 +246,7 @@ export default function TranslatePage() {
               glossSequence={glossTokens.map((t) => t.text)}
               displayMode={displayMode}
               onDisplayModeChange={setDisplayMode}
+              onExport={() => setShowExportModal(true)}
             />
 
             {/* Gloss Output — card with rounded corners */}

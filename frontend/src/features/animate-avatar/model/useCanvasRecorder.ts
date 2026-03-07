@@ -118,7 +118,7 @@ export function useCanvasRecorder(apiBase = ""): UseCanvasRecorderResult {
         const mimeType = getBestMimeType();
         const recorder = new MediaRecorder(stream, {
           mimeType,
-          videoBitsPerSecond: 2_500_000,
+          videoBitsPerSecond: 8_000_000, // 8 Mbps → good 720p quality
         });
 
         recorder.ondataavailable = (e) => {

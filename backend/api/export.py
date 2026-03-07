@@ -68,7 +68,10 @@ async def export_video(
                 "-i", str(input_path),
                 "-c:v", "libx264",
                 "-preset", "fast",
-                "-crf", "23",
+                "-vf", "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1",
+                "-b:v", "4M",
+                "-maxrate", "6M",
+                "-bufsize", "8M",
                 "-movflags", "+faststart",
                 "-pix_fmt", "yuv420p",
                 str(output_path),
@@ -88,7 +91,10 @@ async def export_video(
                 # Strip data URI prefix (data:image/jpeg;base64,...)
                 if "," in frame_b64:
                     frame_b64 = frame_b64.split(",", 1)[1]
-                frame_bytes = base64.b64decode(frame_b64)
+                try:
+                    frame_bytes = base64.b64decode(frame_b64, validate=True)
+                except Exception:
+                    raise HTTPException(400, f"Frame {i} is not valid base64")
                 (tmp / f"frame{i:04d}.jpg").write_bytes(frame_bytes)
 
             cmd = [
@@ -97,7 +103,10 @@ async def export_video(
                 "-i", str(tmp / "frame%04d.jpg"),
                 "-c:v", "libx264",
                 "-preset", "fast",
-                "-crf", "23",
+                "-vf", "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1",
+                "-b:v", "4M",
+                "-maxrate", "6M",
+                "-bufsize", "8M",
                 "-movflags", "+faststart",
                 "-pix_fmt", "yuv420p",
                 str(output_path),

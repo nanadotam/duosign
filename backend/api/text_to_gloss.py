@@ -167,8 +167,9 @@ class TextToGloss:
         if not text:
             return GlossResult(input_text=text, gloss="", gloss_internal="")
 
-        # 1. Cache check
-        cache_key = text.lower()
+        # 1. Cache check — key includes llm_quality_check flag so fast-mode
+        #    results never pollute full-mode results and vice versa.
+        cache_key = f"{text.lower()}|llm={llm_quality_check}"
         if cache_key in self._cache:
             return self._cache[cache_key]
 

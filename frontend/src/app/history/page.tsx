@@ -42,25 +42,6 @@ function TypeIcon({ type }: { type: "typed" | "voiced" | "api" }) {
   );
 }
 
-/** Download a plain-text summary of a single translation entry. */
-function exportEntry(entry: HistoryEntry) {
-  const lines = [
-    "DuoSign Translation",
-    "───────────────────",
-    `Input:  ${entry.text}`,
-    `Gloss:  ${entry.glossTokens.join(" ")}`,
-    `Signs:  ${entry.glossTokens.length}`,
-    `Date:   ${entry.date} · ${entry.time}`,
-    `Type:   ${entry.type}`,
-  ];
-  const blob = new Blob([lines.join("\n")], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `duosign-${entry.id}.txt`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 export default function HistoryPage() {
   const router = useRouter();
@@ -102,9 +83,10 @@ export default function HistoryPage() {
   }, [router]);
 
   const handleExport = useCallback((entry: HistoryEntry) => {
-    exportEntry(entry);
     markExported(entry.id);
-  }, [markExported]);
+    const params = new URLSearchParams({ text: entry.text, autoplay: "true", export: "true" });
+    router.push(`/translate?${params.toString()}`);
+  }, [markExported, router]);
 
   // Base filter
   const filtered = getFiltered({ types: activeTypes, search: searchQuery, dateRange: activeDate });

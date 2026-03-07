@@ -25,7 +25,10 @@ interface AvatarCanvasProps {
   renderMode: AvatarDisplayMode;
   onDebugStats?: (stats: AvatarDebugStats) => void;
   onViewModeChange?: (mode: ViewMode) => void;
+  /** Fires once — after Three.js canvas exists AND VRM has fully loaded */
   onCanvasReady?: (canvas: HTMLCanvasElement) => void;
+  /** Fires when the gloss sequence finishes playing (engine stops naturally) */
+  onPlaybackComplete?: () => void;
   className?: string;
 }
 
@@ -37,9 +40,11 @@ export default function AvatarCanvas({
   renderMode = "avatar",
   onDebugStats,
   onCanvasReady,
+  onPlaybackComplete,
   className = "",
 }: AvatarCanvasProps) {
   const canvasReadyFiredRef = useRef(false);
+  const engineWasPlayingRef = useRef(false);
   const {
     containerRef,
     scene,
@@ -72,21 +77,28 @@ export default function AvatarCanvas({
   // Pick active engine based on render mode
   const activeEngine = renderMode === "avatar" ? videoEngine : posePlayer;
 
-  // Fire onCanvasReady once the Three.js canvas is mounted
+  // Fire onCanvasReady once BOTH the Three.js canvas exists AND the VRM is loaded.
+  // Waiting for vrm prevents starting recording while the avatar is in T-pose.
   useEffect(() => {
     if (!onCanvasReady || canvasReadyFiredRef.current) return;
-    // Three.js creates the <canvas> element shortly after mounting
-    const poll = setInterval(() => {
-      const canvas = (containerRef.current as HTMLDivElement | null)?.querySelector("canvas");
-      if (canvas) {
-        clearInterval(poll);
-        canvasReadyFiredRef.current = true;
-        onCanvasReady(canvas as HTMLCanvasElement);
-      }
-    }, 100);
-    return () => clearInterval(poll);
+    if (isLoading || !vrm) return; // VRM not ready yet
+    const canvas = (containerRef.current as HTMLDivElement | null)?.querySelector("canvas");
+    if (canvas) {
+      canvasReadyFiredRef.current = true;
+      onCanvasReady(canvas as HTMLCanvasElement);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onCanvasReady]);
+  }, [onCanvasReady, vrm, isLoading]);
+
+  // Detect when the engine finishes playing naturally (sequence complete)
+  useEffect(() => {
+    if (!onPlaybackComplete) return;
+    if (engineWasPlayingRef.current && !activeEngine.isPlaying && isPlaying) {
+      // Engine stopped on its own while parent still thinks we're playing
+      onPlaybackComplete();
+    }
+    engineWasPlayingRef.current = activeEngine.isPlaying;
+  }, [activeEngine.isPlaying, isPlaying, onPlaybackComplete]);
 
   // Sync view mode from parent
   useEffect(() => {

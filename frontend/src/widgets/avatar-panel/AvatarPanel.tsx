@@ -15,10 +15,6 @@ import type {
 
 import { useLoading } from "@/shared/providers/LoadingProvider";
 
-const ExportVideoModal = dynamic(
-  () => import("@/features/animate-avatar/ui/ExportVideoModal"),
-  { ssr: false }
-);
 
 // Dynamic imports for Three.js components (avoid SSR)
 const LoadingOverlay = dynamic(
@@ -77,11 +73,8 @@ export default function AvatarPanel({
   onDisplayModeChange,
   onExport,
 }: AvatarPanelProps) {
-  const [showExportModal, setShowExportModal] = useState(false);
-
   const handleExport = useCallback(() => {
     onExport?.();
-    setShowExportModal(true);
   }, [onExport]);
   const [viewMode, setViewMode] = useState<ViewMode>("interpreter");
   const [renderMode, setRenderMode] = useState<AvatarDisplayMode>("avatar");
@@ -119,9 +112,11 @@ export default function AvatarPanel({
     complete: `${modeLabel} — Complete`,
   }[playbackState];
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts — ignore when user is typing in an input/textarea
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) return;
       if (e.key === "h" || e.key === "H") {
         setOverlayVisible((prev) => !prev);
       }
@@ -294,16 +289,6 @@ export default function AvatarPanel({
         {/* Stats for Nerds overlay */}
         <StatsForNerds stats={debugStats} visible={showStats} />
 
-        {/* Avatar Switcher — only in avatar mode */}
-        {!isSkeleton && (
-          <AvatarSwitcher
-            models={AVATAR_MODELS}
-            currentModelId={currentModel.id}
-            onSelect={handleModelSelect}
-            visible={overlayVisible}
-          />
-        )}
-
         {/* Now Signing Badge — part of overlay */}
         {isLive && overlayVisible && (
           <div className="absolute top-2 left-2 lg:top-3 lg:left-3 flex items-center gap-1.5 px-2 py-0.5 lg:px-2.5 lg:py-1 rounded-pill bg-success/10 border border-success/25 text-[9px] lg:text-[10px] font-bold tracking-[0.08em] uppercase text-success z-10">
@@ -355,6 +340,19 @@ export default function AvatarPanel({
             ].join(" ")}
             style={{ background: "color-mix(in srgb, var(--surface) 88%, transparent)" }}
           >
+            {/* Avatar Switcher — leftmost in bar, avatar mode only */}
+            {!isSkeleton && (
+              <>
+                <AvatarSwitcher
+                  models={AVATAR_MODELS}
+                  currentModelId={currentModel.id}
+                  onSelect={handleModelSelect}
+                  visible={overlayVisible}
+                />
+                <div className="w-px h-[14px] lg:h-[18px] bg-border mx-px" />
+              </>
+            )}
+
             {/* Prev */}
             <button
               onClick={onPrev}
@@ -422,33 +420,37 @@ export default function AvatarPanel({
               {SPEED_LABELS[speed]}
             </button>
 
-            {/* Divider */}
-            <div className="w-px h-[14px] lg:h-[18px] bg-border mx-px" />
-
-            {/* Export */}
-            <button
-              onClick={handleExport}
-              className="w-[26px] h-[26px] lg:w-[30px] lg:h-[30px] rounded-full border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:scale-[0.93]"
-              title="Export video"
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-            </button>
           </div>
+        )}
+
+        {/* Export Video button — lives outside the playback pill so it's always accessible */}
+        {overlayVisible && (
+          <button
+            onClick={handleExport}
+            disabled={!isReady}
+            className={[
+              "absolute bottom-2 lg:bottom-3 right-2 lg:right-3 z-10",
+              "flex items-center gap-1.5 px-2.5 py-1 lg:px-3 lg:py-1.5 rounded-pill",
+              "border border-border-hi backdrop-blur-[10px] shadow-raised",
+              "text-[10px] lg:text-[11px] font-semibold tracking-[0.04em]",
+              "transition-all duration-150",
+              isReady
+                ? "text-text-2 hover:text-text-1 hover:border-accent hover:text-accent cursor-pointer"
+                : "opacity-30 pointer-events-none cursor-not-allowed",
+            ].join(" ")}
+            style={{ background: "color-mix(in srgb, var(--surface) 88%, transparent)" }}
+            title="Export avatar video"
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Export
+          </button>
         )}
       </div>
 
-      {/* Export Video Modal */}
-      {showExportModal && (
-        <ExportVideoModal
-          glossSequence={glossSequence}
-          avatarPath={currentModel.path}
-          onClose={() => setShowExportModal(false)}
-        />
-      )}
     </div>
   );
 }

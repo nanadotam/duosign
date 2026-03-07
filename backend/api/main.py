@@ -91,9 +91,20 @@ app = FastAPI(
 
 app.include_router(export_router)
 
+_DEV_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+]
+
+# allow_credentials=True is incompatible with the "*" wildcard — browsers
+# reject credentialed requests to wildcard CORS. Keep explicit origins for
+# dev; production origins should be set via ALLOWED_ORIGINS env var.
+import os as _os
+_extra = [o.strip() for o in _os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "*"],
+    allow_origins=_DEV_ORIGINS + _extra,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -168,7 +179,7 @@ async def translate(req: TranslateRequest):
 @app.post("/api/translate/fast", response_model=TranslateResponse)
 async def translate_fast(req: TranslateRequest):
     """
-    Translate English text to ASL Gloss — rule-based only, no LLM.
+    Translate English text to ASL Gloss — rule-based only, strictly no LLM.
 
     Always returns in <50ms. Works completely offline.
     Best for: slow/no network, real-time typing preview, batch processing.
@@ -176,7 +187,9 @@ async def translate_fast(req: TranslateRequest):
     if not converter:
         raise HTTPException(503, "Converter not initialized")
 
-    result = await converter.convert(req.text, llm_quality_check=False)
+    # Use convert_sync — skips ALL LLM paths, including mandatory fallback.
+    # convert(..., llm_quality_check=False) still calls LLM when needs_llm=True.
+    result = converter.convert_sync(req.text)
     return _result_to_response(result)
 
 
