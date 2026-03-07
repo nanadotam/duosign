@@ -157,17 +157,20 @@ def _clean_llm_output(raw: str) -> str:
 async def transcribe_audio(
     audio_bytes: bytes,
     filename: str = "audio.webm",
+    language: Optional[str] = "en",
 ) -> Optional[str]:
     """
-    Transcribe audio to English text using Groq Whisper.
+    Transcribe audio using Groq Whisper.
 
     Args:
         audio_bytes: Raw audio file bytes (wav, mp3, webm, etc.)
         filename: Original filename — Groq uses the extension to detect
                   format. Browser MediaRecorder typically outputs .webm.
+        language: BCP-47 language code passed to Whisper (e.g. "en", "tw",
+                  "ee"). Pass None to let Whisper auto-detect the language.
 
     Returns:
-        Transcribed English text, or None on failure.
+        Transcribed text, or None on failure.
     """
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
@@ -179,19 +182,22 @@ async def transcribe_audio(
 
         client = AsyncGroq(api_key=api_key)
 
-        response = await client.audio.transcriptions.create(
-            model="whisper-large-v3-turbo",
-            file=(filename, audio_bytes),
-            response_format="text",
-            language="en",
-            temperature=0.0,
-            prompt="Transcribe this English speech. The speaker may be "
-                   "discussing everyday topics, asking questions, or giving commands.",
-        )
+        create_kwargs: dict = {
+            "model": "whisper-large-v3-turbo",
+            "file": (filename, audio_bytes),
+            "response_format": "text",
+            "temperature": 0.0,
+            "prompt": "Transcribe the speech. The speaker may be discussing "
+                      "everyday topics, asking questions, or giving commands.",
+        }
+        if language:
+            create_kwargs["language"] = language
+
+        response = await client.audio.transcriptions.create(**create_kwargs)
 
         text = response.strip()
         if text:
-            logger.info(f"Whisper transcription: '{text[:80]}'")
+            logger.info(f"Whisper transcription (lang={language}): '{text[:80]}'")
         return text if text else None
 
     except Exception as e:

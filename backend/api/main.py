@@ -261,7 +261,10 @@ async def translate_stream(req: TranslateRequest):
 
 
 @app.post("/api/translate/audio", response_model=TranslateResponse)
-async def translate_audio(audio: UploadFile = File(...)):
+async def translate_audio(
+    audio: UploadFile = File(...),
+    language: str | None = None,
+):
     """
     Speech → Text → ASL Gloss pipeline.
 
@@ -270,6 +273,10 @@ async def translate_audio(audio: UploadFile = File(...)):
 
     Browser MediaRecorder typically sends webm. Groq supports:
     mp3, mp4, mpeg, mpga, m4a, wav, webm (max 25MB).
+
+    Optional query param:
+      language — BCP-47 code passed to Whisper (e.g. "en", "tw", "ee").
+                 Omit to let Whisper auto-detect.
     """
     if not converter:
         raise HTTPException(503, "Converter not initialized")
@@ -278,10 +285,9 @@ async def translate_audio(audio: UploadFile = File(...)):
     if not audio_bytes:
         raise HTTPException(400, "Empty audio file")
 
-    # Pass the original filename so Groq can detect the format
     filename = audio.filename or "audio.webm"
 
-    text = await transcribe_audio(audio_bytes, filename=filename)
+    text = await transcribe_audio(audio_bytes, filename=filename, language=language)
     if not text:
         raise HTTPException(502, "Speech transcription failed — check GROQ_API_KEY")
 
