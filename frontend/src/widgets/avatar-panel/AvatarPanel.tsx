@@ -13,7 +13,13 @@ import type {
   AvatarDisplayMode,
 } from "@/entities/avatar/types";
 
+import { useLoading } from "@/shared/providers/LoadingProvider";
+
 // Dynamic imports for Three.js components (avoid SSR)
+const LoadingOverlay = dynamic(
+  () => import("@/shared/ui/LoadingOverlay"),
+  { ssr: false }
+);
 const AvatarCanvas = dynamic(
   () => import("@/features/animate-avatar/ui/AvatarCanvas"),
   { ssr: false }
@@ -24,6 +30,10 @@ const StatsForNerds = dynamic(
 );
 const AvatarSwitcher = dynamic(
   () => import("@/features/animate-avatar/ui/AvatarSwitcher"),
+  { ssr: false }
+);
+const SkeletonCanvas = dynamic(
+  () => import("@/features/skeleton-viewer/ui/SkeletonCanvas"),
   { ssr: false }
 );
 
@@ -37,6 +47,8 @@ interface AvatarPanelProps {
   onCycleSpeed: () => void;
   hasTokens: boolean;
   glossSequence?: string[];
+  displayMode?: AvatarDisplayMode;
+  onDisplayModeChange?: (mode: AvatarDisplayMode) => void;
 }
 
 const VIEW_MODE_LABELS: Record<ViewMode, string> = {
@@ -55,9 +67,12 @@ export default function AvatarPanel({
   onCycleSpeed,
   hasTokens,
   glossSequence = [],
+  displayMode = "avatar",
+  onDisplayModeChange,
 }: AvatarPanelProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("interpreter");
   const [renderMode, setRenderMode] = useState<AvatarDisplayMode>("avatar");
+  const isSkeleton = displayMode === "skeleton";
   const [currentModel, setCurrentModel] = useState<AvatarModel>(AVATAR_MODELS[0]);
   const [showStats, setShowStats] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(true);
@@ -78,15 +93,17 @@ export default function AvatarPanel({
     currentGlossIndex: 0,
   });
 
+  const { overallReady } = useLoading();
   const panelRef = useRef<HTMLDivElement>(null);
   const isLive = playbackState === "playing";
   const isReady = hasTokens;
 
+  const modeLabel = isSkeleton ? "Skeleton" : "Avatar";
   const statusText = {
-    idle: "Avatar — Idle",
-    playing: "Avatar — Signing",
-    paused: "Avatar — Paused",
-    complete: "Avatar — Complete",
+    idle: `${modeLabel} — Idle`,
+    playing: `${modeLabel} — Signing`,
+    paused: `${modeLabel} — Paused`,
+    complete: `${modeLabel} — Complete`,
   }[playbackState];
 
   // Keyboard shortcuts
@@ -157,18 +174,32 @@ export default function AvatarPanel({
             {statusText}
           </div>
           <div className="flex items-center gap-[5px] lg:gap-[7px]">
-            {/* View Mode Toggle */}
-            <SegmentedControl
-              options={["Close-up", "Full Body", "3D World"]}
-              value={VIEW_MODE_LABELS[viewMode]}
-              onChange={(val) => {
-                const mode = Object.entries(VIEW_MODE_LABELS).find(
-                  ([, label]) => label === val
-                )?.[0] as ViewMode;
-                if (mode) setViewMode(mode);
-              }}
-              size="sm"
-            />
+            {/* Display Mode Toggle — Avatar / Skeleton */}
+            {onDisplayModeChange && (
+              <SegmentedControl
+                options={["Avatar", "Skeleton"]}
+                value={isSkeleton ? "Skeleton" : "Avatar"}
+                onChange={(val) =>
+                  onDisplayModeChange(val === "Skeleton" ? "skeleton" : "avatar")
+                }
+                size="sm"
+              />
+            )}
+
+            {/* View Mode Toggle — only for avatar mode */}
+            {!isSkeleton && (
+              <SegmentedControl
+                options={["Close-up", "Full Body", "3D World"]}
+                value={VIEW_MODE_LABELS[viewMode]}
+                onChange={(val) => {
+                  const mode = Object.entries(VIEW_MODE_LABELS).find(
+                    ([, label]) => label === val
+                  )?.[0] as ViewMode;
+                  if (mode) setViewMode(mode);
+                }}
+                size="sm"
+              />
+            )}
 
             {/* Stats toggle */}
             <button
@@ -224,54 +255,47 @@ export default function AvatarPanel({
           }}
         />
 
-        {/* Three.js Canvas */}
+        {/* Loading Overlay — shown while deps initializing */}
+        {!overallReady && <LoadingOverlay />}
+
+        {/* Canvas — either Three.js avatar or 2D skeleton */}
         <div className="absolute inset-0 z-[1]">
-          <AvatarCanvas
-            viewMode={viewMode}
-            avatarPath={currentModel.path}
-            glossSequence={glossNames}
-            isPlaying={isLive}
-            renderMode={renderMode}
-            onDebugStats={handleDebugStats}
-          />
+          {isSkeleton ? (
+            <SkeletonCanvas
+              glossSequence={glossNames}
+              isPlaying={isLive}
+              onDebugStats={handleDebugStats}
+            />
+          ) : (
+            <AvatarCanvas
+              viewMode={viewMode}
+              avatarPath={currentModel.path}
+              glossSequence={glossNames}
+              isPlaying={isLive}
+              renderMode={renderMode}
+              onDebugStats={handleDebugStats}
+            />
+          )}
         </div>
 
         {/* Stats for Nerds overlay */}
         <StatsForNerds stats={debugStats} visible={showStats} />
 
-        {/* Avatar Switcher — part of overlay */}
-        <AvatarSwitcher
-          models={AVATAR_MODELS}
-          currentModelId={currentModel.id}
-          onSelect={handleModelSelect}
-          visible={overlayVisible}
-        />
+        {/* Avatar Switcher — only in avatar mode */}
+        {!isSkeleton && (
+          <AvatarSwitcher
+            models={AVATAR_MODELS}
+            currentModelId={currentModel.id}
+            onSelect={handleModelSelect}
+            visible={overlayVisible}
+          />
+        )}
 
         {/* Now Signing Badge — part of overlay */}
         {isLive && overlayVisible && (
           <div className="absolute top-2 left-2 lg:top-3 lg:left-3 flex items-center gap-1.5 px-2 py-0.5 lg:px-2.5 lg:py-1 rounded-pill bg-success/10 border border-success/25 text-[9px] lg:text-[10px] font-bold tracking-[0.08em] uppercase text-success z-10">
             <div className="w-[5px] h-[5px] rounded-full bg-success animate-[blink_1s_infinite]" />
             Now Signing
-          </div>
-        )}
-
-        {/* Render Mode Toggle — Avatar vs Skeleton */}
-        {overlayVisible && (
-          <div className="absolute top-2 right-10 z-10 flex gap-1">
-            {(["avatar", "skeleton"] as AvatarDisplayMode[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setRenderMode(mode)}
-                className={[
-                  "text-[9px] lg:text-[10px] font-bold tracking-[0.06em] uppercase px-2 py-0.5 rounded-pill border transition-all duration-150 cursor-pointer",
-                  renderMode === mode
-                    ? "border-accent text-accent bg-accent/10"
-                    : "border-border-hi text-text-3 bg-surface-2/80 hover:text-text-1",
-                ].join(" ")}
-              >
-                {mode === "avatar" ? "Avatar" : "Skeleton"}
-              </button>
-            ))}
           </div>
         )}
 

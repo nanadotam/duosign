@@ -38,6 +38,7 @@ backend/run_json_scenarios.py
 backend/data/test_results.json
 backend/data/test_scenarios.json
 
+docs/
 docs/inspo
 backend/data/test_results_terminal.txt
 bucket/poses
@@ -48,3 +49,19 @@ code-to-be-implemented
 
 
 bucket
+main (3).pdf
+.gitignore
+Sign Language Interpretion in local dialect.csv
+
+
+screenshots/
+rand.md
+.gitignore
+POSSIBLE TITLES.md
+old slides but in svg
+slides/
+GHANA_VOICE_GUIDE.md
+PRESENTATION_NOTES.md
+TEST_PROMPTS.md
+TODO.md
+WAXAL_POSSIBILITIES.md

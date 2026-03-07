@@ -6,16 +6,20 @@ import InputPanel from "@/widgets/input-panel/InputPanel";
 import AvatarPanel from "@/widgets/avatar-panel/AvatarPanel";
 import RecentTranslations from "@/widgets/recent-translations/RecentTranslations";
 import { ToastProvider } from "@/shared/ui/Toast";
+import { LoadingProvider } from "@/shared/providers/LoadingProvider";
 import { useTranslate } from "@/features/translate-text/model/useTranslate";
 import { usePlayback } from "@/features/animate-avatar/model/usePlayback";
 import { useHistory } from "@/shared/hooks/useHistory";
-import { useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { GlossToken } from "@/entities/gloss/types";
+import type { AvatarDisplayMode } from "@/entities/avatar/types";
 import GlossChip from "@/shared/ui/GlossChip";
 import Link from "next/link";
 
 
 export default function TranslatePage() {
+  const [displayMode, setDisplayMode] = useState<AvatarDisplayMode>("avatar");
+
   const {
     inputText,
     setInputText,
@@ -105,6 +109,7 @@ export default function TranslatePage() {
   }, [setInputText, translate, play]);
 
   return (
+    <LoadingProvider>
     <ToastProvider>
       {/*
         MOBILE LAYOUT STRATEGY
@@ -161,6 +166,8 @@ export default function TranslatePage() {
               onCycleSpeed={cycleSpeed}
               hasTokens={glossTokens.length > 0}
               glossSequence={glossTokens.map((t) => t.text)}
+              displayMode={displayMode}
+              onDisplayModeChange={setDisplayMode}
             />
           </div>
         </main>
@@ -186,6 +193,8 @@ export default function TranslatePage() {
               onCycleSpeed={cycleSpeed}
               hasTokens={glossTokens.length > 0}
               glossSequence={glossTokens.map((t) => t.text)}
+              displayMode={displayMode}
+              onDisplayModeChange={setDisplayMode}
             />
 
             {/* Gloss Output — card with rounded corners */}
@@ -285,5 +294,6 @@ export default function TranslatePage() {
         </div>
       </div>
     </ToastProvider>
+    </LoadingProvider>
   );
 }

@@ -42,7 +42,7 @@ declare global {
 
 // ── Dependency Loaders ─────────────────────────────────────────────
 
-async function loadKalidokit() {
+export async function loadKalidokit() {
   if (Kalidokit) return Kalidokit;
   Kalidokit = await import("kalidokit");
   return Kalidokit;
@@ -53,7 +53,7 @@ async function loadKalidokit() {
  * Returns true if ready, false if failed permanently.
  * Safe to call from anywhere — concurrent calls share the same Promise.
  */
-function initHolistic(): Promise<boolean> {
+export function initHolistic(): Promise<boolean> {
   // Check if already initialized (survives HMR via window)
   if (window.__duosign_holistic__ && holisticReady) return Promise.resolve(true);
   if (holisticFailed) return Promise.resolve(false);

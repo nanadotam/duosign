@@ -14,6 +14,7 @@ import path from "path";
 const BUCKET_DIR = path.join(process.cwd(), "..", "bucket");
 const POSES_DIR = path.join(BUCKET_DIR, "best");
 const BACKUP_DIR = path.join(BUCKET_DIR, "poses-backup");
+const POSES_ALT_DIR = path.join(BUCKET_DIR, "poses");
 
 export async function GET(
   _request: NextRequest,
@@ -39,6 +40,19 @@ export async function GET(
   const backupPath = path.join(BACKUP_DIR, `${gloss}_2.pose`);
   if (existsSync(backupPath)) {
     const data = await readFile(backupPath);
+    return new NextResponse(data, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "Cache-Control": "public, max-age=86400, immutable",
+      },
+    });
+  }
+
+  // Try bucket/poses/ directory as fallback
+  const altPath = path.join(POSES_ALT_DIR, `${gloss}.pose`);
+  if (existsSync(altPath)) {
+    const data = await readFile(altPath);
     return new NextResponse(data, {
       status: 200,
       headers: {
