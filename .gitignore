@@ -43,7 +43,7 @@ docs/inspo
 backend/data/test_results_terminal.txt
 bucket/poses
 
-backend/wlasl_pose_pipeline.py
+# backend/wlasl_pose_pipeline.py
 
 code-to-be-implemented
 
@@ -65,3 +65,11 @@ PRESENTATION_NOTES.md
 TEST_PROMPTS.md
 TODO.md
 WAXAL_POSSIBILITIES.md
+four.tex
+DEPLOYMENT_GUIDE.md
+ANIMATION_BUGS.md
+two.tex
+
+erds/
+skills
+docs

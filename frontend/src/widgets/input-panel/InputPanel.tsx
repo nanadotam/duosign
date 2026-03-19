@@ -27,6 +27,7 @@ interface InputPanelProps {
   debugInfo?: DebugInfo | null;
 }
 
+// TODO: Guest User - Input English text (up to 500 characters) and receive a corresponding ASL avatar animation.
 export default function InputPanel({
   inputText,
   onInputChange,

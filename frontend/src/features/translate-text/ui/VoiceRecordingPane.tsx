@@ -29,6 +29,7 @@ interface VoiceRecordingPaneProps {
   onClose: () => void;
 }
 
+// TODO: Guest User - Use voice input via microphone as an alternative to typed text, with clear visual feedback indicating listening, idle, and error states.
 export default function VoiceRecordingPane({ onDone, onTranslate, onClose }: VoiceRecordingPaneProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);

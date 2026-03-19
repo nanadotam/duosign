@@ -10,6 +10,7 @@ interface UsePlaybackOptions {
   onComplete?: () => void;
 }
 
+// TODO: Guest User - Control playback with pause, resume, previous/next token navigation, replay, and adjustable speed (0.5x, 1x, 1.5x, 2x).
 export function usePlayback({ totalTokens, onTokenChange, onComplete }: UsePlaybackOptions) {
   const [state, setState] = useState<PlaybackState>("idle");
   const [currentIndex, setCurrentIndex] = useState(0);

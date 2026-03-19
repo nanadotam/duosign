@@ -121,6 +121,10 @@ export default function TranslatePage() {
     }
   }, [glossTokens]);
 
+  // TODO: Guest User - Guest users may translate up to five words or gloss tokens before being prompted to log in or create an account.
+  // TODO: Guest User - Access the system from any modern browser without installing additional software or creating an account, subject to a configurable per-session translation limit.
+  // TODO: Registered User - All capabilities available to Guest Users, without a translation limit.
+  // TODO: Registered User - Create an account and log in to unlock persistent access once the guest usage threshold is reached, without blocking translation during the registration prompt.
   const handleTranslate = useCallback(() => {
     const text = inputText.trim();
     if (!text) return;

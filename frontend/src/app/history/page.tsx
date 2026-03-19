@@ -43,6 +43,8 @@ function TypeIcon({ type }: { type: "typed" | "voiced" | "api" }) {
 }
 
 
+// TODO: Guest User - Guest users cannot export MP4 videos and cannot access translation history actions (search, filter, replay from history, re-edit, or delete saved entries).
+// TODO: Registered User - View previously translated phrases in a searchable, filterable translation history, grouped by date and annotated with input type (typed, voiced).
 export default function HistoryPage() {
   const router = useRouter();
   const { deleteEntry, markExported, getFiltered, stats } = useHistory();
@@ -327,6 +329,7 @@ export default function HistoryPage() {
                                 </div>
                                 <div className="flex gap-1.5 items-center">
                                   {/* Replay — navigate to translate page and auto-play */}
+                                  {/* TODO: Registered User - Replay, re-edit, or delete any saved history entry. */}
                                   <button
                                     onClick={(e) => { e.stopPropagation(); handleReplay(entry); }}
                                     className="flex items-center gap-[5px] px-[11px] py-[5px] rounded-[7px] text-white font-sans text-[12px] font-medium cursor-pointer transition-all hover:brightness-110 active:translate-y-px active:brightness-[0.93]"

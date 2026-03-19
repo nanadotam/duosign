@@ -106,6 +106,8 @@ interface UseVideoEngineOptions {
   viewMode: ViewMode;
   modelName: string;
   fps: number;
+  /** Optional fallback for when video playback fails (e.g. pose engine's playGloss) */
+  fallbackPlayGloss?: (gloss: string) => Promise<void>;
 }
 
 interface UseVideoEngineReturn {
@@ -129,6 +131,7 @@ export function useVideoEngine({
   viewMode,
   modelName,
   fps: rendererFps,
+  fallbackPlayGloss,
 }: UseVideoEngineOptions): UseVideoEngineReturn {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -167,6 +170,8 @@ export function useVideoEngine({
   useEffect(() => { vrmRef.current = vrm; }, [vrm]);
   useEffect(() => { viewModeRef.current = viewMode; }, [viewMode]);
   useEffect(() => { modelNameRef.current = modelName; }, [modelName]);
+  const fallbackRef = useRef(fallbackPlayGloss);
+  useEffect(() => { fallbackRef.current = fallbackPlayGloss; }, [fallbackPlayGloss]);
   useEffect(() => { rendererFpsRef.current = rendererFps; }, [rendererFps]);
 
   // Create hidden video element on mount
@@ -334,6 +339,8 @@ export function useVideoEngine({
       const ready = await initHolistic();
       if (!ready) {
         console.warn(`[VideoEngine] HolisticLandmarker not available, skipping ${gloss}`);
+        // Hold briefly so the sequence doesn't instant-skip
+        await new Promise((r) => setTimeout(r, 400));
         return;
       }
 
@@ -347,10 +354,17 @@ export function useVideoEngine({
       const loadTime = performance.now() - loadStart;
       setDebugStats((prev) => ({ ...prev, poseLoadTimeMs: loadTime }));
 
-      // Play the video and process frames
+      // Play the video and process frames (with 30s safety timeout)
       return new Promise<void>((resolve, reject) => {
         const video = videoRef.current!;
         stopFrameLoop();
+
+        const timeout = setTimeout(() => {
+          console.warn(`[VideoEngine] Timeout playing "${gloss}", moving on`);
+          stopFrameLoop();
+          video.pause();
+          resolve();
+        }, 30_000);
 
         video.src = blobUrl;
         video.playbackRate = speedRef.current;
@@ -364,15 +378,17 @@ export function useVideoEngine({
               framesProcessedRef.current = 0;
               startFrameLoop();
             })
-            .catch(reject);
+            .catch((err) => { clearTimeout(timeout); reject(err); });
         };
 
         video.onended = () => {
+          clearTimeout(timeout);
           stopFrameLoop();
           resolve();
         };
 
         video.onerror = (e) => {
+          clearTimeout(timeout);
           stopFrameLoop();
           reject(new Error(`Video error for ${gloss}: ${e}`));
         };
@@ -413,7 +429,18 @@ export function useVideoEngine({
           try {
             await playGloss(glosses[i]);
           } catch (err) {
-            console.warn(`[VideoEngine] Skipping ${glosses[i]}:`, err);
+            console.warn(`[VideoEngine] Video failed for ${glosses[i]}:`, err);
+            // Try pose engine fallback before skipping
+            if (fallbackRef.current) {
+              try {
+                await fallbackRef.current(glosses[i]);
+                continue; // Success via fallback, skip the transition gap
+              } catch {
+                console.warn(`[VideoEngine] Pose fallback also failed for ${glosses[i]}`);
+              }
+            }
+            // Hold current pose briefly so the sequence doesn't appear to skip
+            await new Promise((r) => setTimeout(r, 400));
           }
 
           // Brief pause between signs (50ms transition gap)

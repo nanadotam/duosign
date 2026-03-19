@@ -266,7 +266,10 @@ export function usePosePlayer({
     try {
       const loadStart = performance.now();
       const response = await fetch(`/api/pose/${encodeURIComponent(gloss)}`);
-      if (!response.ok) return null;
+      if (!response.ok) {
+        console.warn(`[PosePlayer] Pose not found for "${gloss}" (${response.status})`);
+        return null;
+      }
 
       const buffer = await response.arrayBuffer();
       const poseData = await parsePoseFile(buffer, gloss);
@@ -348,7 +351,9 @@ export function usePosePlayer({
 
       const poseData = await fetchPose(gloss);
       if (!poseData || poseData.frames.length === 0) {
-        // No pose data — skip (fingerspelling handled by caller)
+        // No pose data — hold current pose briefly so the sequence doesn't skip
+        console.warn(`[PosePlayer] No pose data for "${gloss}", holding 400ms`);
+        await new Promise((r) => setTimeout(r, 400));
         return;
       }
 
@@ -358,8 +363,15 @@ export function usePosePlayer({
         let frameIdx = 0;
         let lastFrameTime = performance.now();
 
+        // Safety timeout: if animation hangs, resolve and move on
+        const timeout = setTimeout(() => {
+          console.warn(`[PosePlayer] Timeout playing "${gloss}", moving on`);
+          resolve();
+        }, 30_000);
+
         const playFrame = () => {
           if (!playingRef.current) {
+            clearTimeout(timeout);
             resolve();
             return;
           }
@@ -392,6 +404,7 @@ export function usePosePlayer({
               frameIdx++;
               lastFrameTime = now;
             } else {
+              clearTimeout(timeout);
               resolve();
               return;
             }
@@ -430,7 +443,11 @@ export function usePosePlayer({
             currentGlossIndex: i,
           }));
 
-          await playGloss(glosses[i]);
+          try {
+            await playGloss(glosses[i]);
+          } catch (err) {
+            console.warn(`[PosePlayer] Skipping ${glosses[i]}:`, err);
+          }
 
           // Brief pause between signs (100ms transition gap)
           if (playingRef.current && i < glosses.length - 1) {

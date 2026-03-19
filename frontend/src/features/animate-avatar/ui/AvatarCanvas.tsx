@@ -66,12 +66,13 @@ export default function AvatarCanvas({
     fps,
   });
 
-  // Video engine (avatar mode)
+  // Video engine (avatar mode) — falls back to pose engine when video is missing
   const videoEngine = useVideoEngine({
     vrm,
     viewMode: currentViewMode,
     modelName,
     fps,
+    fallbackPlayGloss: posePlayer.playGloss,
   });
 
   // Pick active engine based on render mode

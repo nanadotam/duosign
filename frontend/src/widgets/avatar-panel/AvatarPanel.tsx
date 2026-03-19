@@ -15,6 +15,17 @@ import type {
 
 import { useLoading } from "@/shared/providers/LoadingProvider";
 
+// Pronoun tokens -> actual sign file names that exist in the bucket.
+// Covers both raw IX markers (if they slip through) and display forms
+// from useTranslate's IX_DISPLAY mapping.
+const IX_TO_SIGN: Record<string, string> = {
+  "IX-1": "I",
+  "IX-2": "YOU",
+  "IX-3": "SHE",
+  "IX-1+": "WE",
+  "IX-3+": "THEY",
+  "HE/SHE": "SHE",  // IX_DISPLAY maps IX-3 → "HE/SHE" which breaks URLs
+};
 
 // Dynamic imports for Three.js components (avoid SSR)
 const LoadingOverlay = dynamic(
@@ -59,6 +70,7 @@ const VIEW_MODE_LABELS: Record<ViewMode, string> = {
   world: "3D World",
 };
 
+// TODO: Guest User - Real-time sign rendering with the gloss token breakdown displayed alongside the avatar.
 export default function AvatarPanel({
   playbackState,
   speed,
@@ -151,9 +163,12 @@ export default function AvatarPanel({
     setCurrentModel(model);
   }, []);
 
-  // Memoize gloss names from sequence
+  // Map IX pronoun markers to actual sign file names, then normalize
   const glossNames = useMemo(
-    () => glossSequence.map((g) => g.toUpperCase().replace(/\s+/g, "_")),
+    () => glossSequence.map((g) => {
+      const upper = g.toUpperCase().replace(/\s+/g, "_");
+      return IX_TO_SIGN[upper] ?? upper;
+    }),
     [glossSequence]
   );
 
@@ -183,6 +198,7 @@ export default function AvatarPanel({
           </div>
           <div className="flex items-center gap-[5px] lg:gap-[7px]">
             {/* Display Mode Toggle — Avatar / Skeleton */}
+            {/* TODO: Guest User - Switch between display modes—3D avatar, skeleton overlay, or hidden—to examine pose data at different levels of abstraction. */}
             {onDisplayModeChange && (
               <SegmentedControl
                 options={["Avatar", "Skeleton"]}
@@ -195,6 +211,7 @@ export default function AvatarPanel({
             )}
 
             {/* View Mode Toggle — only for avatar mode */}
+            {/* TODO: Guest User - Select from multiple avatar models and choose between close-up, full-body, and 3D world view modes. */}
             {!isSkeleton && (
               <SegmentedControl
                 options={["Close-up", "Full Body", "3D World"]}
@@ -341,6 +358,7 @@ export default function AvatarPanel({
             style={{ background: "color-mix(in srgb, var(--surface) 88%, transparent)" }}
           >
             {/* Avatar Switcher — leftmost in bar, avatar mode only */}
+            {/* TODO: Guest User - Select from multiple avatar models and choose between close-up, full-body, and 3D world view modes. */}
             {!isSkeleton && (
               <>
                 <AvatarSwitcher
@@ -424,6 +442,8 @@ export default function AvatarPanel({
         )}
 
         {/* Export Video button — lives outside the playback pill so it's always accessible */}
+        {/* TODO: Guest User - Guest users cannot export MP4 videos and cannot access translation history actions. */}
+        {/* TODO: Registered User - Export any translation—current or historical—as a downloadable MP4 video of the avatar performing the sign sequence. */}
         {overlayVisible && (
           <button
             onClick={handleExport}

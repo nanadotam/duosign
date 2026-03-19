@@ -26,6 +26,12 @@ interface ExportVideoModalProps {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+// Pronoun tokens -> actual sign file names (covers raw IX and display forms)
+const IX_TO_SIGN: Record<string, string> = {
+  "IX-1": "I", "IX-2": "YOU", "IX-3": "SHE", "IX-1+": "WE", "IX-3+": "THEY",
+  "HE/SHE": "SHE",
+};
+
 // ── Status messages per phase ─────────────────────────────────────────────────
 
 const MESSAGES_PREPARING = [
@@ -96,7 +102,10 @@ export default function ExportVideoModal({
   const modelPath = avatarPath ?? AVATAR_MODELS[0].path;
 
   const glossNames = useMemo(
-    () => glossSequence.map((g) => g.toUpperCase().replace(/\s+/g, "_")),
+    () => glossSequence.map((g) => {
+      const upper = g.toUpperCase().replace(/\s+/g, "_");
+      return IX_TO_SIGN[upper] ?? upper;
+    }),
     [glossSequence]
   );
 
