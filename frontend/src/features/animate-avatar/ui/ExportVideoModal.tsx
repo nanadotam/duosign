@@ -13,7 +13,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useCanvasRecorder } from "../model/useCanvasRecorder";
-import type { AvatarDebugStats } from "@/entities/avatar/types";
 import { AVATAR_MODELS } from "@/shared/constants";
 
 const AvatarCanvas = dynamic(() => import("./AvatarCanvas"), { ssr: false });
@@ -171,7 +170,7 @@ export default function ExportVideoModal({
     setTimeout(() => stopRecording(), 400);
   }, [stopRecording]);
 
-  const handleDebugStats = useCallback((_stats: AvatarDebugStats) => {}, []);
+  const handleDebugStats = useCallback(() => {}, []);
 
   const handleDownload = useCallback(() => {
     if (!videoUrl) return;
