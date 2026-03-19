@@ -89,7 +89,6 @@ export default function AvatarPanel({
     onExport?.();
   }, [onExport]);
   const [viewMode, setViewMode] = useState<ViewMode>("interpreter");
-  const [renderMode, setRenderMode] = useState<AvatarDisplayMode>("avatar");
   const isSkeleton = displayMode === "skeleton";
   const [currentModel, setCurrentModel] = useState<AvatarModel>(AVATAR_MODELS[0]);
   const [showStats, setShowStats] = useState(false);
@@ -297,7 +296,7 @@ export default function AvatarPanel({
               avatarPath={currentModel.path}
               glossSequence={glossNames}
               isPlaying={isLive}
-              renderMode={renderMode}
+              renderMode={displayMode}
               onDebugStats={handleDebugStats}
             />
           )}
