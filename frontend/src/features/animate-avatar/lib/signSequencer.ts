@@ -1,3 +1,6 @@
+import { INTER_SIGN_SETTLE_MS, REST_POSE_FRAMES } from "./retargetConfig";
+import { lerpToRestPose } from "./applyPose";
+
 export interface SignSequencerCallbacks {
   onGlossStart?: (gloss: string, index: number) => void;
   onGlossComplete?: (gloss: string, index: number) => void;
@@ -7,6 +10,14 @@ export interface SignSequencerCallbacks {
 export class SignSequencer {
   private stopped = false;
   private paused = false;
+
+  private betweenSigns(pauseMs: number): Promise<void> {
+    return new Promise<void>((resolve) => {
+      lerpToRestPose(undefined, REST_POSE_FRAMES, () => {
+        window.setTimeout(resolve, Math.min(INTER_SIGN_SETTLE_MS, pauseMs));
+      });
+    });
+  }
 
   async play(
     glosses: string[],
@@ -38,9 +49,7 @@ export class SignSequencer {
         callbacks.onGlossComplete?.(gloss, index);
 
         if (!this.stopped && index < glosses.length - 1) {
-          await new Promise<void>((resolve) => {
-            window.setTimeout(resolve, pauseMs);
-          });
+          await this.betweenSigns(pauseMs);
         }
       }
     } finally {
