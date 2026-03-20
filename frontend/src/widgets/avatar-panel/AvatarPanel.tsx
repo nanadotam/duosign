@@ -27,6 +27,17 @@ const IX_TO_SIGN: Record<string, string> = {
   "HE/SHE": "SHE",  // IX_DISPLAY maps IX-3 → "HE/SHE" which breaks URLs
 };
 
+function expandGlossSequence(glosses: string[]): string[] {
+  return glosses.flatMap((gloss) => {
+    const upper = gloss.toUpperCase().replace(/\s+/g, "_");
+    if (upper.startsWith("IX-")) return [upper];
+
+    const parts = upper.split("-");
+    const isFingerToken = parts.length > 1 && parts.every((part) => part.length === 1 && /^[A-Z]$/.test(part));
+    return isFingerToken ? parts : [upper];
+  });
+}
+
 // Dynamic imports for Three.js components (avoid SSR)
 const LoadingOverlay = dynamic(
   () => import("@/shared/ui/LoadingOverlay"),
@@ -62,6 +73,8 @@ interface AvatarPanelProps {
   displayMode?: AvatarDisplayMode;
   onDisplayModeChange?: (mode: AvatarDisplayMode) => void;
   onExport?: () => void;
+  onActiveGlossChange?: (index: number) => void;
+  onPlaybackComplete?: () => void;
 }
 
 const VIEW_MODE_LABELS: Record<ViewMode, string> = {
@@ -84,6 +97,8 @@ export default function AvatarPanel({
   displayMode = "avatar",
   onDisplayModeChange,
   onExport,
+  onActiveGlossChange,
+  onPlaybackComplete,
 }: AvatarPanelProps) {
   const handleExport = useCallback(() => {
     onExport?.();
@@ -158,13 +173,18 @@ export default function AvatarPanel({
     setDebugStats(stats);
   }, []);
 
+  useEffect(() => {
+    if (!debugStats.currentGloss || !onActiveGlossChange) return;
+    onActiveGlossChange(debugStats.currentGlossIndex);
+  }, [debugStats.currentGloss, debugStats.currentGlossIndex, onActiveGlossChange]);
+
   const handleModelSelect = useCallback((model: AvatarModel) => {
     setCurrentModel(model);
   }, []);
 
   // Map IX pronoun markers to actual sign file names, then normalize
   const glossNames = useMemo(
-    () => glossSequence.map((g) => {
+    () => expandGlossSequence(glossSequence).map((g) => {
       const upper = g.toUpperCase().replace(/\s+/g, "_");
       return IX_TO_SIGN[upper] ?? upper;
     }),
@@ -287,17 +307,19 @@ export default function AvatarPanel({
           {isSkeleton ? (
             <SkeletonCanvas
               glossSequence={glossNames}
-              isPlaying={isLive}
+              playbackState={playbackState}
               onDebugStats={handleDebugStats}
+              onPlaybackComplete={onPlaybackComplete}
             />
           ) : (
             <AvatarCanvas
               viewMode={viewMode}
               avatarPath={currentModel.path}
               glossSequence={glossNames}
-              isPlaying={isLive}
+              playbackState={playbackState}
               renderMode={displayMode}
               onDebugStats={handleDebugStats}
+              onPlaybackComplete={onPlaybackComplete}
             />
           )}
         </div>

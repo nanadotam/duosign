@@ -34,6 +34,7 @@ from .vocabulary import get_vocabulary, VocabularyManager
 from .text_to_gloss import TextToGloss, GlossResult
 from .voice import transcribe_audio
 from .export import router as export_router
+from .fingerspell import resolve_tokens
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -65,16 +66,18 @@ async def lifespan(app: FastAPI):
 
     tsv = TSV_PATH if TSV_PATH.exists() else None
     lex = LEXICON_DIR if LEXICON_DIR.exists() else None
+    poses = BUCKET_DIR / "poses" if (BUCKET_DIR / "poses").exists() else None
 
-    if not tsv and not lex:
+    if not tsv and not lex and not poses:
         logger.warning(
             f"No vocabulary sources found.\n"
             f"  TSV expected at: {TSV_PATH}\n"
             f"  Lexicon expected at: {LEXICON_DIR}\n"
+            f"  Pose bucket expected at: {BUCKET_DIR / 'poses'}\n"
             f"  The API will work but all words will be fingerspelled."
         )
 
-    vocab = get_vocabulary(tsv_path=tsv, lexicon_dir=lex)
+    vocab = get_vocabulary(tsv_path=tsv, lexicon_dir=lex, poses_dir=poses)
     converter = TextToGloss(vocab)
 
     logger.info(f"DuoSign API ready — {vocab.stats()['total']} glosses loaded")
@@ -236,7 +239,7 @@ async def translate_stream(req: TranslateRequest):
                         input_text=text,
                         gloss=converter._to_display_form(llm_gloss),
                         gloss_internal=llm_gloss,
-                        tokens=llm_gloss.split(),
+                        tokens=resolve_tokens(llm_gloss.split(), vocab),
                         method="llm_quality",
                         confidence=rule_result.confidence,
                     )
@@ -255,7 +258,7 @@ async def translate_stream(req: TranslateRequest):
                         input_text=text,
                         gloss=converter._to_display_form(llm_gloss),
                         gloss_internal=llm_gloss,
-                        tokens=llm_gloss.split(),
+                        tokens=resolve_tokens(llm_gloss.split(), vocab),
                         method="llm",
                         confidence=rule_result.confidence,
                     )

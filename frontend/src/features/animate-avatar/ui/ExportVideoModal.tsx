@@ -261,7 +261,7 @@ export default function ExportVideoModal({
               viewMode="interpreter"
               avatarPath={modelPath}
               glossSequence={glossNames}
-              isPlaying={isPlaying}
+              playbackState={isPlaying ? "playing" : "idle"}
               renderMode="avatar"
               onDebugStats={handleDebugStats}
               onCanvasReady={handleCanvasReady}

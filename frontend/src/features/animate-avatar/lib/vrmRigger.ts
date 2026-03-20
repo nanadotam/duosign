@@ -86,22 +86,19 @@ interface RiggedPose {
   [key: string]: unknown;
 }
 
-/**
- * Apply upper-body pose to VRM — no lower body (legs are irrelevant for ASL).
- */
-export function rigUpperBody(vrm: VRM, riggedPose: RiggedPose): void {
+export function rigUpperBody(vrm: VRM, riggedPose: RiggedPose, smoothing = 0.3): void {
   // Hips rotation only (no position changes — keeps avatar stable)
-  rigRotation(vrm, "Hips", riggedPose.Hips.rotation, 0.7);
+  rigRotation(vrm, "Hips", riggedPose.Hips.rotation, 0.7, smoothing);
 
   // Spine & chest
-  rigRotation(vrm, "Chest", riggedPose.Spine, 0.25, 0.3);
-  rigRotation(vrm, "Spine", riggedPose.Spine, 0.45, 0.3);
+  rigRotation(vrm, "Chest", riggedPose.Spine, 0.25, smoothing);
+  rigRotation(vrm, "Spine", riggedPose.Spine, 0.45, smoothing);
 
   // Arms
-  rigRotation(vrm, "RightUpperArm", riggedPose.RightUpperArm, 1, 0.3);
-  rigRotation(vrm, "RightLowerArm", riggedPose.RightLowerArm, 1, 0.3);
-  rigRotation(vrm, "LeftUpperArm", riggedPose.LeftUpperArm, 1, 0.3);
-  rigRotation(vrm, "LeftLowerArm", riggedPose.LeftLowerArm, 1, 0.3);
+  rigRotation(vrm, "RightUpperArm", riggedPose.RightUpperArm, 1, smoothing);
+  rigRotation(vrm, "RightLowerArm", riggedPose.RightLowerArm, 1, smoothing);
+  rigRotation(vrm, "LeftUpperArm", riggedPose.LeftUpperArm, 1, smoothing);
+  rigRotation(vrm, "LeftLowerArm", riggedPose.LeftLowerArm, 1, smoothing);
 }
 
 // ── Hand Rig ────────────────────────────────────────────────────────
@@ -125,18 +122,19 @@ export function rigHands(
   vrm: VRM,
   riggedLeftHand: RiggedHand | null,
   riggedRightHand: RiggedHand | null,
-  riggedPose: RiggedPose
+  riggedPose: RiggedPose,
+  smoothing = 0.3
 ): void {
   if (riggedLeftHand) {
     rigRotation(vrm, "LeftHand", {
       z: riggedPose.LeftHand.z,
       y: riggedLeftHand.LeftWrist?.y ?? 0,
       x: riggedLeftHand.LeftWrist?.x ?? 0,
-    });
+    }, 1, smoothing);
     for (const bone of FINGER_BONES) {
       const key = `Left${bone}`;
       if (riggedLeftHand[key]) {
-        rigRotation(vrm, key, riggedLeftHand[key]);
+        rigRotation(vrm, key, riggedLeftHand[key], 1, smoothing);
       }
     }
   }
@@ -146,11 +144,11 @@ export function rigHands(
       z: riggedPose.RightHand.z,
       y: riggedRightHand.RightWrist?.y ?? 0,
       x: riggedRightHand.RightWrist?.x ?? 0,
-    });
+    }, 1, smoothing);
     for (const bone of FINGER_BONES) {
       const key = `Right${bone}`;
       if (riggedRightHand[key]) {
-        rigRotation(vrm, key, riggedRightHand[key]);
+        rigRotation(vrm, key, riggedRightHand[key], 1, smoothing);
       }
     }
   }
@@ -172,9 +170,9 @@ const oldLookTarget = new THREE.Euler();
  * Apply face rigging — head rotation + VRM 0.x blendShapeProxy.
  * Uses VRMSchema.BlendShapePresetName for blink, mouth visemes, and pupils.
  */
-export function rigFace(vrm: VRM, riggedFace: RiggedFace): void {
+export function rigFace(vrm: VRM, riggedFace: RiggedFace, smoothing = 0.3): void {
   // Head rotation
-  rigRotation(vrm, "Neck", riggedFace.head, 0.7);
+  rigRotation(vrm, "Neck", riggedFace.head, 0.7, smoothing);
 
   // VRM 0.x: blendShapeProxy + BlendShapePresetName
   const blendshape = vrm.blendShapeProxy;
@@ -213,8 +211,8 @@ export function rigFace(vrm: VRM, riggedFace: RiggedFace): void {
 
   // Pupils — VRM 0.x lookAt API
   const lookTarget = new THREE.Euler(
-    lerp(oldLookTarget.x, riggedFace.pupil.y, 0.4),
-    lerp(oldLookTarget.y, riggedFace.pupil.x, 0.4),
+    lerp(oldLookTarget.x, riggedFace.pupil.y, smoothing),
+    lerp(oldLookTarget.y, riggedFace.pupil.x, smoothing),
     0,
     "XYZ"
   );

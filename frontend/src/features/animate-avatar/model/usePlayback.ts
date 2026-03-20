@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback } from "react";
 import type { PlaybackState, PlaybackSpeed } from "@/entities/avatar/types";
 import { PLAYBACK_SPEEDS } from "@/shared/constants";
 
@@ -10,76 +10,54 @@ interface UsePlaybackOptions {
   onComplete?: () => void;
 }
 
-// TODO: Guest User - Control playback with pause, resume, previous/next token navigation, replay, and adjustable speed (0.5x, 1x, 1.5x, 2x).
 export function usePlayback({ totalTokens, onTokenChange, onComplete }: UsePlaybackOptions) {
   const [state, setState] = useState<PlaybackState>("idle");
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndexState] = useState(0);
   const [speed, setSpeed] = useState<PlaybackSpeed>(1);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const stateRef = useRef(state);
-  stateRef.current = state;
 
-  const clearTimer = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  const tick = useCallback((idx: number, spd: PlaybackSpeed) => {
-    if (stateRef.current !== "playing") return;
-    if (idx < totalTokens) {
-      setCurrentIndex(idx);
-      onTokenChange?.(idx);
-      const delay = 900 * (1 / spd);
-      timerRef.current = setTimeout(() => tick(idx + 1, spd), delay);
-    } else {
-      setState("complete");
-      onComplete?.();
-    }
-  }, [totalTokens, onTokenChange, onComplete]);
+  const setCurrentIndex = useCallback((index: number) => {
+    const next = Math.min(Math.max(index, 0), Math.max(totalTokens - 1, 0));
+    setCurrentIndexState(next);
+    onTokenChange?.(next);
+  }, [onTokenChange, totalTokens]);
 
   const play = useCallback(() => {
     if (totalTokens === 0) return;
     setState("playing");
-    // Will start ticking from currentIndex via useEffect
   }, [totalTokens]);
 
   const pause = useCallback(() => {
-    clearTimer();
     setState("paused");
-  }, [clearTimer]);
+  }, []);
+
+  const complete = useCallback(() => {
+    setState("complete");
+    onComplete?.();
+  }, [onComplete]);
 
   const togglePlay = useCallback(() => {
-    if (state === "playing") {
-      pause();
-    } else {
-      if (state === "complete") setCurrentIndex(0);
-      play();
-    }
-  }, [state, play, pause]);
-
-  const prevToken = useCallback(() => {
-    setCurrentIndex((prev) => {
-      const next = Math.max(0, prev - 1);
-      onTokenChange?.(next);
-      return next;
+    setState((prev) => {
+      if (prev === "playing") return "paused";
+      if (prev === "complete") {
+        setCurrentIndexState(0);
+        onTokenChange?.(0);
+      }
+      return "playing";
     });
   }, [onTokenChange]);
 
+  const prevToken = useCallback(() => {
+    setCurrentIndex((currentIndex - 1 + totalTokens) % Math.max(totalTokens, 1));
+  }, [currentIndex, setCurrentIndex, totalTokens]);
+
   const nextToken = useCallback(() => {
-    setCurrentIndex((prev) => {
-      const next = Math.min(totalTokens - 1, prev + 1);
-      onTokenChange?.(next);
-      return next;
-    });
-  }, [totalTokens, onTokenChange]);
+    setCurrentIndex((currentIndex + 1) % Math.max(totalTokens, 1));
+  }, [currentIndex, setCurrentIndex, totalTokens]);
 
   const replay = useCallback(() => {
-    clearTimer();
     setCurrentIndex(0);
     setState("playing");
-  }, [clearTimer]);
+  }, [setCurrentIndex]);
 
   const cycleSpeed = useCallback(() => {
     setSpeed((prev) => {
@@ -89,20 +67,9 @@ export function usePlayback({ totalTokens, onTokenChange, onComplete }: UsePlayb
   }, []);
 
   const reset = useCallback(() => {
-    clearTimer();
     setState("idle");
     setCurrentIndex(0);
-  }, [clearTimer]);
-
-  // Trigger tick when state becomes "playing"
-  useEffect(() => {
-    if (state === "playing") {
-      clearTimer();
-      tick(currentIndex, speed);
-    }
-    return clearTimer;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, speed]);
+  }, [setCurrentIndex]);
 
   return {
     state,
@@ -110,6 +77,8 @@ export function usePlayback({ totalTokens, onTokenChange, onComplete }: UsePlayb
     speed,
     play,
     pause,
+    complete,
+    setCurrentIndex,
     togglePlay,
     prevToken,
     nextToken,

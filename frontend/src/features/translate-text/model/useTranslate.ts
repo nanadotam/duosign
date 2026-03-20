@@ -18,6 +18,17 @@ const IX_DISPLAY: Record<string, string> = {
   "IX-3+": "THEY",
 };
 
+function expandFingerspelledTokens(tokens: string[]): string[] {
+  return tokens.flatMap((token) => {
+    const normalized = token.toUpperCase();
+    if (normalized.startsWith("IX-")) return [token];
+
+    const parts = normalized.split("-");
+    const isFingerToken = parts.length > 1 && parts.every((part) => part.length === 1 && /^[A-Z]$/.test(part));
+    return isFingerToken ? parts : [token];
+  });
+}
+
 export function useTranslate() {
   const [inputText, setInputText] = useState("");
   const [glossTokens, setGlossTokens] = useState<GlossToken[]>([]);
@@ -35,7 +46,7 @@ export function useTranslate() {
   /** Convert API response tokens to GlossToken[] for chip display.
    *  Replaces IX-1/IX-2/IX-3 with I/YOU/HE-SHE for user-facing display. */
   const toGlossTokens = useCallback((tokens: string[]): GlossToken[] => {
-    return tokens.map((t) => {
+    return expandFingerspelledTokens(tokens).map((t) => {
       const display = IX_DISPLAY[t] ?? t;
       return {
         id: `g-${idCounter.current++}`,

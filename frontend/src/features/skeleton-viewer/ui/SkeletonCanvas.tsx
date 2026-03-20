@@ -10,21 +10,24 @@
 import { useRef, useEffect, useCallback } from "react";
 import { drawSkeleton } from "../lib/skeletonRenderer";
 import { useSkeletonPlayer } from "../model/useSkeletonPlayer";
-import type { AvatarDebugStats } from "@/entities/avatar/types";
+import type { AvatarDebugStats, PlaybackState } from "@/entities/avatar/types";
 
 interface SkeletonCanvasProps {
   glossSequence: string[];
-  isPlaying: boolean;
+  playbackState: PlaybackState;
   onDebugStats?: (stats: AvatarDebugStats) => void;
+  onPlaybackComplete?: () => void;
 }
 
 export default function SkeletonCanvas({
   glossSequence,
-  isPlaying,
+  playbackState,
   onDebugStats,
+  onPlaybackComplete,
 }: SkeletonCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const playerWasPlayingRef = useRef(false);
 
   const { playSequence, stop, isPlaying: playerIsPlaying, debugStats, currentFrame, currentHeader } =
     useSkeletonPlayer();
@@ -54,12 +57,20 @@ export default function SkeletonCanvas({
 
   // Start/stop playback when isPlaying or glossSequence changes
   useEffect(() => {
-    if (isPlaying && glossSequence.length > 0) {
+    if (playbackState === "playing" && glossSequence.length > 0) {
       playSequence(glossSequence);
-    } else if (!isPlaying && playerIsPlaying) {
+    } else if ((playbackState === "idle" || playbackState === "complete") && playerIsPlaying) {
       stop();
     }
-  }, [isPlaying, glossSequence, playSequence, stop, playerIsPlaying]);
+  }, [playSequence, playerIsPlaying, playbackState, glossSequence, stop]);
+
+  useEffect(() => {
+    if (!onPlaybackComplete) return;
+    if (playerWasPlayingRef.current && !playerIsPlaying && playbackState === "playing") {
+      onPlaybackComplete();
+    }
+    playerWasPlayingRef.current = playerIsPlaying;
+  }, [onPlaybackComplete, playbackState, playerIsPlaying]);
 
   // Report debug stats up
   useEffect(() => {

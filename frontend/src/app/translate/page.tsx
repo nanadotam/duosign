@@ -81,6 +81,8 @@ export default function TranslatePage() {
     replay,
     cycleSpeed,
     play,
+    complete,
+    setCurrentIndex,
     reset,
   } = usePlayback({
     totalTokens: glossTokens.length,
@@ -223,6 +225,14 @@ export default function TranslatePage() {
               displayMode={displayMode}
               onDisplayModeChange={setDisplayMode}
               onExport={() => setShowExportModal(true)}
+              onActiveGlossChange={(index) => {
+                setCurrentIndex(index);
+                setActiveIndex(index);
+              }}
+              onPlaybackComplete={() => {
+                complete();
+                handleComplete();
+              }}
             />
           </div>
         </main>
@@ -251,6 +261,14 @@ export default function TranslatePage() {
               displayMode={displayMode}
               onDisplayModeChange={setDisplayMode}
               onExport={() => setShowExportModal(true)}
+              onActiveGlossChange={(index) => {
+                setCurrentIndex(index);
+                setActiveIndex(index);
+              }}
+              onPlaybackComplete={() => {
+                complete();
+                handleComplete();
+              }}
             />
 
             {/* Gloss Output — card with rounded corners */}
