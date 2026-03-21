@@ -182,8 +182,17 @@ export default function DebugStats({ info }: DebugStatsProps) {
                         p.event === "rule_based" ? "bg-teal" : "bg-accent"
                       }`}
                     />
-                    <span className="text-text-2 w-8">
-                      {p.event === "rule_based" ? "⚡" : "🤖"}
+                    <span className="w-4 flex-shrink-0 text-text-3">
+                      {p.event === "rule_based" ? (
+                        <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor" className="text-teal">
+                          <path d="M7 1L2 7h4l-1 4 5-6H6L7 1z" />
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor" className="text-accent">
+                          <circle cx="6" cy="6" r="2" />
+                          <path d="M6 1v1.5M6 9.5V11M1 6h1.5M9.5 6H11M2.93 2.93l1.06 1.06M8.01 8.01l1.06 1.06M2.93 9.07l1.06-1.06M8.01 3.99l1.06-1.06" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+                        </svg>
+                      )}
                     </span>
                     <span className="text-text-2 truncate flex-1">{p.gloss}</span>
                     <span className="text-text-3 text-[10px] tabular-nums">

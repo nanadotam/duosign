@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { VRM } from "@pixiv/three-vrm";
 import type { AvatarDebugStats, ViewMode } from "@/entities/avatar/types";
-import { resetPose } from "../lib/vrmRigger";
+import { resetPose, lerpToRestPose } from "../lib/vrmRigger";
 import { loadPoseData } from "../lib/poseLoader";
 import { animatePose, type PoseAnimationHandle } from "../lib/animatePose";
 import { SignSequencer } from "../lib/signSequencer";
@@ -109,18 +109,31 @@ export function usePosePlayer({
             smoothing: 0.8,
           });
 
+          // Calculate confidence values for this frame (used in debug stats)
+          const avgConfidence = (
+            landmarks: Array<{ visibility?: number }> | null
+          ): number => {
+            if (!landmarks || landmarks.length === 0) return 0;
+            const sum = landmarks.reduce((acc, lm) => acc + (lm.visibility ?? 0), 0);
+            return sum / landmarks.length;
+          };
+
+          const poseConf  = avgConfidence(frame.poseLandmarks);
+          const leftConf  = avgConfidence(frame.leftHandLandmarks);
+          const rightConf = avgConfidence(frame.rightHandLandmarks);
+
           setDebugStats((prev) => ({
             ...prev,
             fps: rendererFps,
             frameIndex,
             totalFrames: poseData.frames.length,
             currentGloss: gloss,
-            poseConfidence: frame.poseLandmarks ? 1 : 0,
-            leftHandConfidence: frame.leftHandLandmarks ? 1 : 0,
-            rightHandConfidence: frame.rightHandLandmarks ? 1 : 0,
+            poseConfidence: poseConf,
+            leftHandConfidence: leftConf,
+            rightHandConfidence: rightConf,
             viewMode,
             modelName,
-            renderTimeMs: renderTime,
+            renderTimeMs: renderTime ?? 0,
             currentGlossIndex: glossIndex,
           }));
 

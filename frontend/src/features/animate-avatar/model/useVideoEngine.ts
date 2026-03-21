@@ -18,7 +18,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { VRM } from "@pixiv/three-vrm";
 import type { AvatarDebugStats, ViewMode } from "@/entities/avatar/types";
-import { rigUpperBody, rigHands, rigFace, resetPose } from "../lib/vrmRigger";
+import { rigUpperBody, rigHands, rigFace, resetPose, lerpToRestPose } from "../lib/vrmRigger";
 import {
   fetchVideoBlobUrl,
   prefetchVideos,
@@ -443,9 +443,11 @@ export function useVideoEngine({
             await new Promise((r) => setTimeout(r, 400));
           }
 
-          // Brief pause between signs (50ms transition gap)
-          if (playingRef.current && i < glosses.length - 1) {
-            await new Promise((r) => setTimeout(r, 50));
+          // Brief pause between signs with rest pose interpolation
+          if (playingRef.current && i < glosses.length - 1 && vrm) {
+            await new Promise<void>((resolve) => {
+              lerpToRestPose(vrm, 3, () => setTimeout(resolve, 20));
+            });
           }
         }
 

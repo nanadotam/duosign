@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
+
+export type TranslationPhase = "idle" | "translating" | "rule_based" | "llm_quality";
 import {
   translateStream,
   translateFast,
@@ -34,6 +36,7 @@ export function useTranslate() {
   const [glossTokens, setGlossTokens] = useState<GlossToken[]>([]);
   const [glossText, setGlossText] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
+  const [translationPhase, setTranslationPhase] = useState<TranslationPhase>("idle");
   const [activeIndex, setActiveIndex] = useState(-1);
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
 
@@ -69,6 +72,7 @@ export function useTranslate() {
     abortRef.current = controller;
 
     setIsTranslating(true);
+    setTranslationPhase("translating");
     setDebugInfo(null);
 
     const startTime = performance.now();
@@ -93,6 +97,9 @@ export function useTranslate() {
 
         // Update token chips (IX markers → readable pronouns)
         setGlossTokens(toGlossTokens(data.tokens));
+
+        // Track pipeline phase for UI status
+        setTranslationPhase(event.event === "llm_quality" ? "llm_quality" : "rule_based");
 
         // Track rule-based result for comparison
         const ruleGloss = event.event === "rule_based" ? data.gloss : undefined;
@@ -155,6 +162,7 @@ export function useTranslate() {
     setGlossText("");
     setActiveIndex(-1);
     setDebugInfo(null);
+    setTranslationPhase("idle");
   }, []);
 
   return {
@@ -164,6 +172,7 @@ export function useTranslate() {
     setGlossTokens,
     glossText,
     isTranslating,
+    translationPhase,
     translate,
     clearInput,
     wordCount,

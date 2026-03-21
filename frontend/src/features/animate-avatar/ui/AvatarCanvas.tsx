@@ -15,6 +15,9 @@ import { useAvatarRenderer } from "../model/useAvatarRenderer";
 import { useVRM } from "../model/useVRM";
 import { usePosePlayer } from "../model/usePosePlayer";
 import { useVideoEngine } from "../model/useVideoEngine";
+import { syncRigSpeed } from "../lib/rigConfigSync";
+import { useSettings } from "@/shared/hooks/useSettings";
+import { BoneDebugOverlay } from "./BoneDebugOverlay";
 import type {
   ViewMode,
   AvatarDebugStats,
@@ -50,6 +53,7 @@ export default function AvatarCanvas({
 }: AvatarCanvasProps) {
   const canvasReadyFiredRef = useRef(false);
   const engineWasPlayingRef = useRef(false);
+  const { settings } = useSettings();
   const {
     containerRef,
     scene,
@@ -82,6 +86,15 @@ export default function AvatarCanvas({
 
   // Pick active engine based on render mode
   const activeEngine = renderMode === "avatar" ? videoEngine : posePlayer;
+
+  // Sync animation speed from settings into the rig config whenever it changes
+  useEffect(() => {
+    syncRigSpeed(settings.animationSpeed);
+  }, [settings.animationSpeed]);
+
+  const debugBonesEnabled =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("debug") === "bones";
 
   // Fire onCanvasReady once BOTH the Three.js canvas exists AND the VRM is loaded.
   // Waiting for vrm prevents starting recording while the avatar is in T-pose.
@@ -156,6 +169,9 @@ export default function AvatarCanvas({
           </div>
         </div>
       )}
+
+      {/* Bone debug overlay — enabled by ?debug=bones */}
+      <BoneDebugOverlay vrm={vrm} enabled={debugBonesEnabled} />
     </div>
   );
 }
