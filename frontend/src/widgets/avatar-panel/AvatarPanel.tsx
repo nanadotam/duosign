@@ -284,7 +284,7 @@ export default function AvatarPanel({
         className="flex-1 flex items-center justify-center relative overflow-hidden transition-all duration-250"
         style={{
           background: "var(--av-glow), var(--surface)",
-          minHeight: isFullscreen ? "100vh" : "min(50dvh, 55vh)",
+          minHeight: isFullscreen ? 0 : "min(50dvh, 55vh)",
         }}
       >
         {/* Grid Background */}

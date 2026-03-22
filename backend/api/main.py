@@ -64,6 +64,16 @@ async def lifespan(app: FastAPI):
     """Initialize vocabulary and converter on startup."""
     global vocab, converter
 
+    # BUCKET_DIR is resolved relative to this file's location so the backend
+    # starts correctly regardless of the working directory it's launched from.
+    logger.info(f"[DuoSign] BUCKET_DIR resolved to: {BUCKET_DIR.resolve()}")
+
+    if not BUCKET_DIR.exists():
+        raise RuntimeError(
+            f"[DuoSign] BUCKET_DIR not found: {BUCKET_DIR.resolve()}\n"
+            f"Expected bucket/ directory at repo root. Run wlasl_pose_pipeline.py first."
+        )
+
     tsv = TSV_PATH if TSV_PATH.exists() else None
     lex = LEXICON_DIR if LEXICON_DIR.exists() else None
     poses = BUCKET_DIR / "poses" if (BUCKET_DIR / "poses").exists() else None

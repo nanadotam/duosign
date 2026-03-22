@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { VRM } from "@pixiv/three-vrm";
 import type { AvatarDebugStats, ViewMode } from "@/entities/avatar/types";
-import { resetPose, lerpToRestPose } from "../lib/vrmRigger";
+import { resetPose, lerpToRestPose, setRenderVRM } from "../lib/vrmRigger";
 import { loadPoseData } from "../lib/poseLoader";
 import { animatePose, type PoseAnimationHandle } from "../lib/animatePose";
 import { SignSequencer } from "../lib/signSequencer";
@@ -253,6 +253,13 @@ export function usePosePlayer({
     },
     [startGlossAnimation, stop, vrm]
   );
+
+  // Register VRM with the global render registry so useAvatarRenderer can
+  // call vrm.update(delta) for spring physics (hair, cloth) every frame.
+  useEffect(() => {
+    setRenderVRM(vrm);
+    return () => { setRenderVRM(null); };
+  }, [vrm]);
 
   useEffect(() => {
     return () => {

@@ -42,6 +42,10 @@ export function useTranslate() {
 
   const idCounter = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
+  // Generation counter — incremented on every translate() call.
+  // Any state update from a superseded call is discarded, even if stale SSE
+  // bytes slip through the AbortController before it fully cancels.
+  const generationRef = useRef(0);
 
   const wordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
   const charCount = inputText.length;
@@ -66,6 +70,10 @@ export function useTranslate() {
     const text = inputText.trim();
     if (!text) return;
 
+    // Stamp this call with a generation. Any state updates from an older
+    // generation are silently dropped even if abort didn't fully stop them.
+    const myGen = ++generationRef.current;
+
     // Abort any previous in-flight request
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -80,6 +88,8 @@ export function useTranslate() {
 
     try {
       for await (const event of translateStream(text, controller.signal)) {
+        // Superseded by a newer translate() call — stop immediately
+        if (generationRef.current !== myGen) break;
         if (event.event === "done") break;
 
         const data = event.data as TranslateApiResponse;
@@ -122,15 +132,19 @@ export function useTranslate() {
     } catch (err) {
       // If aborted (user typed new text), silently ignore
       if (err instanceof Error && err.name === "AbortError") return;
+      // Also drop if superseded
+      if (generationRef.current !== myGen) return;
 
       // Network error → fall back to fast (non-streaming) endpoint
       console.warn("Stream failed, trying fast endpoint:", err);
       try {
         const data = await translateFast(text, controller.signal);
+        if (generationRef.current !== myGen) return; // Check again after await
         const elapsed = performance.now() - startTime;
 
         setGlossText(data.gloss);
         setGlossTokens(toGlossTokens(data.tokens));
+        setTranslationPhase("rule_based");
         setDebugInfo({
           method: data.method,
           confidence: data.confidence,
@@ -144,14 +158,20 @@ export function useTranslate() {
         });
       } catch (fallbackErr) {
         if (fallbackErr instanceof Error && fallbackErr.name === "AbortError") return;
+        if (generationRef.current !== myGen) return;
         console.error("Translation failed:", fallbackErr);
         setGlossText("⚠ Translation unavailable — is the backend running?");
         setGlossTokens([]);
         setDebugInfo(null);
       }
     } finally {
-      setIsTranslating(false);
-      setActiveIndex(-1);
+      // Only update loading state for the current generation — a superseded
+      // call setting isTranslating(false) would prematurely fire the fallback
+      // play effect in page.tsx with stale tokens.
+      if (generationRef.current === myGen) {
+        setIsTranslating(false);
+        setActiveIndex(-1);
+      }
     }
   }, [inputText, toGlossTokens]);
 

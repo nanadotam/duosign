@@ -11,6 +11,7 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { ViewMode } from "@/entities/avatar/types";
+import { getRenderVRM } from "../lib/vrmRigger";
 
 interface CameraPreset {
   position: [number, number, number];
@@ -127,7 +128,18 @@ export function useAvatarRenderer(): UseAvatarRendererReturn {
     const animate = () => {
       rafRef.current = requestAnimationFrame(animate);
 
-      const delta = clockRef.current.getDelta();
+      const rawDelta = clockRef.current.getDelta();
+      // Cap delta at 50ms (20fps equivalent). Without this cap, tabbing away and
+      // back causes a large accumulated delta that makes VRM spring physics
+      // (hair, clothing) explode with physically incorrect motion.
+      const delta = Math.min(rawDelta, 0.05);
+
+      // Update VRM spring physics (hair, cloth) if a model is loaded.
+      // VRM must be ticked every frame or spring bones will not animate.
+      const currentVRM = getRenderVRM();
+      if (currentVRM) {
+        currentVRM.update(delta);
+      }
 
       // FPS counter
       fpsFrames.current++;

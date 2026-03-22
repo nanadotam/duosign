@@ -23,13 +23,42 @@ import type { AvatarDisplayMode } from "@/entities/avatar/types";
 import GlossChip from "@/shared/ui/GlossChip";
 import Link from "next/link";
 
-
+// Outer shell — provides context, then delegates to inner component
 export default function TranslatePage() {
+  return (
+    <LoadingProvider>
+      <ToastProvider>
+        <TranslatePageContent />
+      </ToastProvider>
+    </LoadingProvider>
+  );
+}
+
+// Inner component — all logic lives here so it's inside ToastProvider context
+function TranslatePageContent() {
   const [displayMode, setDisplayMode] = useState<AvatarDisplayMode>("avatar");
   const [showExportModal, setShowExportModal] = useState(false);
   const searchParams = useSearchParams();
   const autoplayPending = useRef(false);
   const exportPending = useRef(false);
+
+  // Ref: text captured at translate-click time, cleared once play is triggered
+  const pendingPlayTextRef = useRef<string | null>(null);
+
+  // ─── Network connectivity detection ────────────────────────────────────────
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== "undefined" ? navigator.onLine : true
+  );
+  useEffect(() => {
+    const up = () => setIsOnline(true);
+    const down = () => setIsOnline(false);
+    window.addEventListener("online", up);
+    window.addEventListener("offline", down);
+    return () => {
+      window.removeEventListener("online", up);
+      window.removeEventListener("offline", down);
+    };
+  }, []);
 
   const {
     inputText,
@@ -37,6 +66,7 @@ export default function TranslatePage() {
     glossTokens,
     glossText,
     isTranslating,
+    translationPhase,
     translate,
     clearInput,
     wordCount,
@@ -103,25 +133,59 @@ export default function TranslatePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Once inputText is set and autoplay/export is pending, trigger translate + play
+  // Once inputText is set and autoplay/export is pending, trigger translate
+  // (play is triggered by the glossTokens effect below, not a raw timeout)
   useEffect(() => {
     if (autoplayPending.current && inputText) {
       autoplayPending.current = false;
       setTimeout(() => {
+        pendingPlayTextRef.current = inputText.trim();
         translate();
-        setTimeout(() => play(), 400);
       }, 50);
     }
-  }, [inputText, translate, play]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputText]);
 
   // Once glossTokens are ready and export is pending, open the export modal
   useEffect(() => {
     if (exportPending.current && glossTokens.length > 0) {
       exportPending.current = false;
-      // Small delay so the avatar has started playing before the modal mounts
       setTimeout(() => setShowExportModal(true), 800);
     }
   }, [glossTokens]);
+
+  // ─── Network-aware playback trigger ────────────────────────────────────────
+  // Online:  wait for llm_quality before signing (rule_based is just a preview)
+  // Offline: sign as soon as rule_based arrives (LLM unreachable anyway)
+  useEffect(() => {
+    if (pendingPlayTextRef.current === null) return;
+    if (glossTokens.length === 0) return;
+
+    // Online and still waiting for LLM: hold off
+    if (isOnline && translationPhase === "rule_based") return;
+
+    // Either offline (sign with rule_based) or LLM arrived (sign with llm_quality)
+    const text = pendingPlayTextRef.current;
+    pendingPlayTextRef.current = null;
+
+    addEntry(text, glossTokens.map((t) => t.text), "typed");
+    play();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [glossTokens, translationPhase]);
+
+  // ─── Fallback: stream ended without an LLM result (online but LLM skipped) ─
+  useEffect(() => {
+    if (isTranslating) return;                        // still in flight
+    if (pendingPlayTextRef.current === null) return;  // already played
+    if (glossTokens.length === 0) return;             // nothing to play
+
+    const text = pendingPlayTextRef.current;
+    pendingPlayTextRef.current = null;
+
+    addEntry(text, glossTokens.map((t) => t.text), "typed");
+    play();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTranslating]);
 
   // TODO: Guest User - Guest users may translate up to five words or gloss tokens before being prompted to log in or create an account.
   // TODO: Guest User - Access the system from any modern browser without installing additional software or creating an account, subject to a configurable per-session translation limit.
@@ -130,16 +194,15 @@ export default function TranslatePage() {
   const handleTranslate = useCallback(() => {
     const text = inputText.trim();
     if (!text) return;
+    reset();
+    pendingPlayTextRef.current = text;
     translate();
-    setTimeout(() => {
-      addEntry(text, glossTokens.map((t) => t.text), "typed");
-      play();
-    }, 350);
-  }, [translate, play, inputText, glossTokens, addEntry]);
+  }, [translate, reset, inputText]);
 
   const handleClear = useCallback(() => {
     clearInput();
     reset();
+    pendingPlayTextRef.current = null;
   }, [clearInput, reset]);
 
   const handleDeleteRecent = useCallback((id: string) => {
@@ -152,15 +215,24 @@ export default function TranslatePage() {
 
   const handleVoiceTranslate = useCallback((text: string) => {
     setInputText(text);
+    reset();
     setTimeout(() => {
+      pendingPlayTextRef.current = text;
       translate();
-      setTimeout(() => play(), 350);
     }, 50);
-  }, [setInputText, translate, play]);
+  }, [setInputText, translate, reset]);
+
+  // ─── Derive pipeline display phase for the status strip ────────────────────
+  // "waiting_for_llm" = rule_based arrived but we're online and still enhancing
+  const pipelineDisplayPhase: "idle" | "translating" | "waiting_for_llm" | "rule_based" | "llm_quality" =
+    translationPhase === "idle" ? "idle"
+    : translationPhase === "translating" ? "translating"
+    : translationPhase === "rule_based" && isTranslating && isOnline ? "waiting_for_llm"
+    : translationPhase === "rule_based" ? "rule_based"
+    : "llm_quality";
 
   return (
-    <LoadingProvider>
-    <ToastProvider>
+    <>
       {showExportModal && glossTokens.length > 0 && (
         <ExportVideoModal
           glossSequence={glossTokens.map((t) => t.text)}
@@ -206,6 +278,10 @@ export default function TranslatePage() {
                 onVoiceTranslate={handleVoiceTranslate}
                 glossText={glossText}
                 debugInfo={debugInfo}
+                pipelinePhase={pipelineDisplayPhase}
+                pipelineTokenCount={glossTokens.length}
+                isSigning={playbackState === "playing"}
+                isOnline={isOnline}
               />
               <RecentTranslations
                 entries={recentHistory}
@@ -363,11 +439,13 @@ export default function TranslatePage() {
               onVoiceTranslate={handleVoiceTranslate}
               glossText={glossText}
               debugInfo={debugInfo}
+              pipelinePhase={translationPhase}
+              pipelineTokenCount={glossTokens.length}
+              isSigning={playbackState === "playing"}
             />
           </div>
         </div>
       </div>
-    </ToastProvider>
-    </LoadingProvider>
+    </>
   );
 }

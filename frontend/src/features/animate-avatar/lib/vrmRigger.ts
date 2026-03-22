@@ -9,6 +9,15 @@
  *   - lookAt.applyer.lookAt()
  *
  * Only upper-body rigging — legs/hips position are locked for ASL signing.
+ *
+ * ─────────────────────────────────────────────────────────────────────
+ * SINGLE CONFIG SOURCE
+ * ─────────────────────────────────────────────────────────────────────
+ * RIG_CONFIG is the only place to tune animation parameters.
+ * retargetConfig.ts derives its values from here — do not edit it directly.
+ * Both the video engine (real-time MediaPipe) and the pose engine
+ * (pre-recorded .pose files) read from this config via the re-exports in
+ * retargetConfig.ts.
  */
 
 import * as THREE from "three";
@@ -54,20 +63,26 @@ export const RIG_CONFIG = {
     lerp: 0.4,       // forearm slightly faster than upper arm
   },
   hand: {
-    dampener: 1.0,
+    dampener: 1.0,   // MUST remain 1.0 — ASL signs like MY/PLEASE/SORRY require full wrist rotation range
     lerp: 0.6,       // wrists respond faster — need to hit signing targets
   },
   finger: {
-    dampener: 1.0,
+    dampener: 1.0,   // MUST remain 1.0 — any reduction prevents closed-fist handshapes (A, S, E, etc.)
     lerp: 0.75,      // fingers snap quickly — handshapes are crisp in ASL
   },
   thumb: {
-    dampener: 1.0,
+    dampener: 1.0,   // MUST remain 1.0 — thumb opposition distinguishes many ASL handshapes (A vs E, etc.)
     lerp: 0.7,
   },
   neck: {
     dampener: 0.7,
     lerp: 0.15,      // head nods are slow and deliberate in ASL grammar
+  },
+  head: {
+    lerp: 0.2,       // head rotation — used by face solve path
+  },
+  face: {
+    lerp: 0.4,       // blendshape / expression lerp
   },
 
   // Arm rotation limits (radians) — prevent arms crossing body center
@@ -81,6 +96,19 @@ export const RIG_CONFIG = {
     rightLowerArm: { xMin: -Math.PI * 0.9, xMax: 0.1 },
     leftLowerArm:  { xMin: -Math.PI * 0.9, xMax: 0.1 },
   },
+
+  // Proportion scaling applied to Kalidokit output before rigging.
+  // Compensates for differences between MediaPipe's normalized space and VRM bone lengths.
+  proportionScale: {
+    hipsWorldPosition: { x: 0.75, y: 0.75, z: 0.22 },
+    armExtension: 0.92,
+  },
+
+  // Pose engine physics / timing
+  hipsYOffset: 0,          // vertical offset applied to hips world position
+  restPoseSmoothing: 0.4,  // lerp speed when returning to rest pose between signs
+  restPoseFrames: 4,        // number of rAF frames spent lerping to rest pose
+  interSignSettleMs: 40,    // extra wait (ms) after rest-pose lerp before next sign
 };
 
 // Speed multiplier applied from user settings (animationSpeed / 100).
@@ -124,6 +152,10 @@ function clampRotation(
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
+// Track which bones have already triggered a missing-bone warning so we
+// don't spam the console every frame. One warning per bone per session.
+const warnedBones = new Set<string>();
+
 /**
  * Apply rotation to a VRM bone with dampening and interpolation.
  * VRM 0.x: uses VRMSchema.HumanoidBoneName + getBoneNode()
@@ -140,7 +172,15 @@ export function rigRotation(
   if (!humanBoneName) return;
 
   const node = vrm.humanoid?.getBoneNode(humanBoneName);
-  if (!node) return;
+  if (!node) {
+    // Warn once per missing bone in development so you know which bones
+    // are absent from this VRM model without spamming the console.
+    if (process.env.NODE_ENV === "development" && !warnedBones.has(boneName)) {
+      console.warn(`[DuoSign] Bone "${boneName}" not found in this VRM model.`);
+      warnedBones.add(boneName);
+    }
+    return;
+  }
 
   // Scale by dampener first, then clamp to anatomical limits
   const scaled = {
@@ -326,36 +366,71 @@ export function resetPose(vrm: VRM): void {
 
 /**
  * Neutral ASL signing stance.
- * Arms relaxed at sides, not full T-pose extension.
+ * Arms relaxed at sides, not T-pose extension.
  * Applied briefly between signs during inter-sign pauses.
  *
  * These values are in local bone space (relative to bind pose).
- * Tune if the rest pose looks stiff or unnatural.
+ *
+ * Upper arm Z values: VRM bind pose is T-pose (arms horizontal).
+ * z = ±1.2 rotates arms close to the sides — prevents T-pose artifact between signs.
+ * If arms cross the body on your model, reduce to ±1.0.
+ *
+ * NOTE: These values are the authoritative source. retargetConfig.ts derives
+ * its SIGNING_REST_POSE export from RIG_CONFIG (via this file).
  */
-const SIGNING_REST_POSE: Record<string, { x: number; y: number; z: number }> = {
-  RightUpperArm: { x: 0,    y: 0,    z: -0.4  }, // arms lowered to sides
-  LeftUpperArm:  { x: 0,    y: 0,    z:  0.4  },
-  RightLowerArm: { x: 0,    y: 0,    z: -0.1  },
-  LeftLowerArm:  { x: 0,    y: 0,    z:  0.1  },
+export const SIGNING_REST_POSE: Record<string, { x: number; y: number; z: number }> = {
+  RightUpperArm: { x: 0,    y: 0,    z: -1.2  }, // rotated from T-pose toward body side
+  LeftUpperArm:  { x: 0,    y: 0,    z:  1.2  },
+  RightLowerArm: { x: 0,    y: 0,    z:  0    }, // neutral — no elbow bend at rest
+  LeftLowerArm:  { x: 0,    y: 0,    z:  0    },
   RightHand:     { x: 0,    y: 0,    z:  0    },
   LeftHand:      { x: 0,    y: 0,    z:  0    },
   Spine:         { x: 0.02, y: 0,    z:  0    }, // very slight forward lean
   Hips:          { x: 0,    y: 0,    z:  0    },
 };
 
+// ── Global VRM registry ────────────────────────────────────────────
+//
+// Allows useAvatarRenderer (which manages the Three.js render loop) to
+// call vrm.update(delta) for spring physics without AvatarCanvas wiring.
+// Set by usePosePlayer and useVideoEngine when VRM is available.
+
+let _renderVRM: VRM | null = null;
+
+export function setRenderVRM(vrm: VRM | null): void {
+  _renderVRM = vrm;
+}
+
+export function getRenderVRM(): VRM | null {
+  return _renderVRM;
+}
+
 /**
  * Lerp the avatar toward the neutral signing rest pose over `frames` frames.
  * Call between signs during the inter-sign pause window.
  *
- * @param vrm - The loaded VRM instance
- * @param frames - How many animation frames to spend lerping (default 3 ≈ 50ms at 60fps)
+ * This is the single canonical implementation (the duplicate in applyPose.ts
+ * has been removed). Both signSequencer.ts and useVideoEngine.ts call this.
+ *
+ * Accepts null/undefined vrm and falls back to _renderVRM so callers that
+ * don't have direct VRM access (e.g. SignSequencer) can still use it.
+ *
+ * @param vrm - The loaded VRM instance, or null/undefined to use _renderVRM
+ * @param frames - How many animation frames to spend lerping (default: RIG_CONFIG.restPoseFrames)
  * @param onSettled - Optional callback when lerp is complete
  */
 export function lerpToRestPose(
-  vrm: VRM,
-  frames = 3,
+  vrm: VRM | null | undefined,
+  frames = RIG_CONFIG.restPoseFrames,
   onSettled?: () => void
 ): void {
+  const target = vrm ?? _renderVRM;
+  if (!target) {
+    // No VRM available — resolve immediately so the sequencer isn't blocked
+    onSettled?.();
+    return;
+  }
+
   let remaining = frames;
 
   const tick = () => {
@@ -364,8 +439,8 @@ export function lerpToRestPose(
       return;
     }
 
-    for (const [boneName, target] of Object.entries(SIGNING_REST_POSE)) {
-      rigRotation(vrm, boneName, target, 1.0, 0.35);
+    for (const [boneName, pose] of Object.entries(SIGNING_REST_POSE)) {
+      rigRotation(target, boneName, pose, 1.0, RIG_CONFIG.restPoseSmoothing);
     }
 
     remaining--;

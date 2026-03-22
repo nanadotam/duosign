@@ -6,14 +6,12 @@ import {
   BONE_CLAMPS,
   HIPS_Y_OFFSET,
   PROPORTION_SCALE,
-  REST_POSE_FRAMES,
-  REST_POSE_SMOOTHING,
-  SIGNING_REST_POSE,
   SMOOTHING,
   type BoneClamp,
 } from "./retargetConfig";
 import { FINGER_VRM_BONES } from "./fingerConfig";
 import { solveFingers, type FingerRotationMap, type Landmark3D } from "./fingerSolver";
+import { enhanceHandWithSpread, type LandmarkPoint } from "./fingerSpread";
 import { syncAvatarDebugOverlay } from "../ui/AvatarDebugOverlay";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -155,40 +153,6 @@ function updateLookTarget(vrm: VRM, x: number, y: number): void {
   (vrm.lookAt as any)?.applyer?.lookAt(lookTarget);
 }
 
-export function lerpToRestPose(
-  vrm: VRM | null = activeVRM,
-  frames = REST_POSE_FRAMES,
-  onSettled?: () => void
-): void {
-  if (!vrm) {
-    onSettled?.();
-    return;
-  }
-
-  let remaining = frames;
-
-  const tick = () => {
-    if (!vrm) {
-      onSettled?.();
-      return;
-    }
-
-    if (remaining <= 0) {
-      onSettled?.();
-      return;
-    }
-
-    for (const [boneName, target] of Object.entries(SIGNING_REST_POSE)) {
-      lerpBone(vrm, boneName, target, REST_POSE_SMOOTHING);
-    }
-
-    remaining -= 1;
-    requestAnimationFrame(tick);
-  };
-
-  requestAnimationFrame(tick);
-}
-
 export function applyPoseToVRM(
   vrm: VRM,
   frame: PoseFrameData,
@@ -203,12 +167,29 @@ export function applyPoseToVRM(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let riggedPose: any;
 
-  if (frame.poseWorldLandmarks && frame.poseLandmarks) {
-    riggedPose = kalidokit.Pose.solve(frame.poseWorldLandmarks, frame.poseLandmarks, {
-      runtime: "mediapipe",
-      imageSize,
-      enableLegs: false,
-    });
+  if (frame.poseLandmarks) {
+    // First arg: 3D world-space landmarks (metric space, used for depth/shoulder rotation).
+    // Second arg: 2D screen-space landmarks (normalized 0–1, used for 2D positions).
+    //
+    // If POSE_WORLD_LANDMARKS were stored in the .pose binary, use them.
+    // Otherwise, fall back to poseLandmarks with z=0 — this is still better than
+    // passing the same array twice because it signals to Kalidokit that the world
+    // arg is flat, preventing incorrect depth assumptions.
+    //
+    // TODO: re-run offline pipeline to store POSE_WORLD_LANDMARKS separately so
+    // shoulder and torso rotation compute correctly from true 3D metric space.
+    const worldLandmarks = frame.poseWorldLandmarks
+      ?? frame.poseLandmarks.map((lm) => ({ ...lm, z: 0 }));
+
+    riggedPose = kalidokit.Pose.solve(
+      worldLandmarks,         // 3D world-space (or flat approximation)
+      frame.poseLandmarks,    // 2D screen-space
+      {
+        runtime: "mediapipe",
+        imageSize,
+        enableLegs: false,
+      }
+    );
 
     if (riggedPose) {
       const hipsNode = getBoneNode(vrm, "hips");
@@ -273,7 +254,11 @@ export function applyPoseToVRM(
   }
 
   if (frame.rightHandLandmarks) {
-    const rightHand = kalidokit.Hand.solve(frame.rightHandLandmarks, "Right") as HandRig | null;
+    const rawRightHand = kalidokit.Hand.solve(frame.rightHandLandmarks, "Right") as HandRig | null;
+    // Augment with Y-axis spread computed from raw landmarks (partial Kalidokit mitigation)
+    const rightHand = rawRightHand
+      ? enhanceHandWithSpread(rawRightHand, frame.rightHandLandmarks as LandmarkPoint[], "Right")
+      : null;
     if (rightHand) {
       if (rightHand.RightWrist) {
         lerpBone(
@@ -297,7 +282,10 @@ export function applyPoseToVRM(
   }
 
   if (frame.leftHandLandmarks) {
-    const leftHand = kalidokit.Hand.solve(frame.leftHandLandmarks, "Left") as HandRig | null;
+    const rawLeftHand = kalidokit.Hand.solve(frame.leftHandLandmarks, "Left") as HandRig | null;
+    const leftHand = rawLeftHand
+      ? enhanceHandWithSpread(rawLeftHand, frame.leftHandLandmarks as LandmarkPoint[], "Left")
+      : null;
     if (leftHand) {
       if (leftHand.LeftWrist) {
         lerpBone(

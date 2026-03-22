@@ -1,5 +1,5 @@
 import { INTER_SIGN_SETTLE_MS, REST_POSE_FRAMES } from "./retargetConfig";
-import { lerpToRestPose } from "./applyPose";
+import { lerpToRestPose } from "./vrmRigger";
 
 export interface SignSequencerCallbacks {
   onGlossStart?: (gloss: string, index: number) => void;
