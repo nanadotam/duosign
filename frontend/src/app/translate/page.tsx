@@ -16,6 +16,7 @@ const ExportVideoModal = dynamic(
 import { useTranslate } from "@/features/translate-text/model/useTranslate";
 import { usePlayback } from "@/features/animate-avatar/model/usePlayback";
 import { useHistory } from "@/shared/hooks/useHistory";
+import { useSettings } from "@/shared/hooks/useSettings";
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import type { GlossToken } from "@/entities/gloss/types";
@@ -36,6 +37,7 @@ export default function TranslatePage() {
 
 // Inner component — all logic lives here so it's inside ToastProvider context
 function TranslatePageContent() {
+  const { settings } = useSettings();
   const [displayMode, setDisplayMode] = useState<AvatarDisplayMode>("avatar");
   const [showExportModal, setShowExportModal] = useState(false);
   const searchParams = useSearchParams();
@@ -140,7 +142,7 @@ function TranslatePageContent() {
       autoplayPending.current = false;
       setTimeout(() => {
         pendingPlayTextRef.current = inputText.trim();
-        translate();
+        translate(settings.translationEngine);
       }, 50);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -196,8 +198,8 @@ function TranslatePageContent() {
     if (!text) return;
     reset();
     pendingPlayTextRef.current = text;
-    translate();
-  }, [translate, reset, inputText]);
+    translate(settings.translationEngine);
+  }, [translate, reset, inputText, settings.translationEngine]);
 
   const handleClear = useCallback(() => {
     clearInput();
@@ -218,9 +220,39 @@ function TranslatePageContent() {
     reset();
     setTimeout(() => {
       pendingPlayTextRef.current = text;
-      translate();
+      translate(settings.translationEngine);
     }, 50);
-  }, [setInputText, translate, reset]);
+  }, [setInputText, translate, reset, settings.translationEngine]);
+
+  // ─── Loop & keyboard shortcuts ─────────────────────────────────────────────
+  const handlePlaybackComplete = useCallback(() => {
+    if (settings.loop) {
+      replay();
+    } else {
+      complete();
+      handleComplete();
+    }
+  }, [settings.loop, replay, complete, handleComplete]);
+
+  useEffect(() => {
+    if (!settings.keyboardShortcuts) return;
+
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT") return;
+
+      if (e.code === "Space" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        if (glossTokens.length > 0) togglePlay();
+      } else if (e.code === "Enter" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        handleTranslate();
+      }
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [settings.keyboardShortcuts, togglePlay, handleTranslate, glossTokens.length]);
 
   // ─── Derive pipeline display phase for the status strip ────────────────────
   // "waiting_for_llm" = rule_based arrived but we're online and still enhancing
@@ -282,6 +314,8 @@ function TranslatePageContent() {
                 pipelineTokenCount={glossTokens.length}
                 isSigning={playbackState === "playing"}
                 isOnline={isOnline}
+                showGloss={settings.showGloss}
+                autoPaste={settings.autoPaste}
               />
               <RecentTranslations
                 entries={recentHistory}
@@ -305,10 +339,7 @@ function TranslatePageContent() {
                 setCurrentIndex(index);
                 setActiveIndex(index);
               }}
-              onPlaybackComplete={() => {
-                complete();
-                handleComplete();
-              }}
+              onPlaybackComplete={handlePlaybackComplete}
             />
           </div>
         </main>
@@ -341,10 +372,7 @@ function TranslatePageContent() {
                 setCurrentIndex(index);
                 setActiveIndex(index);
               }}
-              onPlaybackComplete={() => {
-                complete();
-                handleComplete();
-              }}
+              onPlaybackComplete={handlePlaybackComplete}
             />
 
             {/* Gloss Output — card with rounded corners */}
@@ -442,6 +470,7 @@ function TranslatePageContent() {
               pipelinePhase={translationPhase}
               pipelineTokenCount={glossTokens.length}
               isSigning={playbackState === "playing"}
+              autoPaste={settings.autoPaste}
             />
           </div>
         </div>

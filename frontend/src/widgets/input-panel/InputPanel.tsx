@@ -31,6 +31,8 @@ interface InputPanelProps {
   pipelineTokenCount?: number;
   isSigning?: boolean;
   isOnline?: boolean;
+  showGloss?: boolean;
+  autoPaste?: boolean;
 }
 
 // TODO: Guest User - Input English text (up to 500 characters) and receive a corresponding ASL avatar animation.
@@ -53,6 +55,8 @@ export default function InputPanel({
   pipelineTokenCount = 0,
   isSigning = false,
   isOnline = true,
+  showGloss = true,
+  autoPaste = false,
 }: InputPanelProps) {
   const [micActive, setMicActive] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -96,6 +100,7 @@ export default function InputPanel({
           ref={textareaRef}
           value={inputText}
           onChange={handleInput}
+          onPaste={autoPaste ? () => { setTimeout(() => onTranslate(), 0); } : undefined}
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
               e.preventDefault();
@@ -252,8 +257,8 @@ export default function InputPanel({
         <GlossDisplay glossText={glossText} />
       </div>
 
-      {/* Gloss Strip — token chips — desktop only */}
-      <div className="hidden lg:block px-4 py-3 border-t border-border transition-colors duration-250">
+      {/* Gloss Strip — token chips — desktop only, hidden when showGloss is false */}
+      <div className={showGloss ? "hidden lg:block px-4 py-3 border-t border-border transition-colors duration-250" : "hidden"}>
         <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-2 transition-colors duration-250">
           Gloss Tokens
         </div>

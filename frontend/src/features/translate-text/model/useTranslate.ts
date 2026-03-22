@@ -65,8 +65,35 @@ export function useTranslate() {
     });
   }, []);
 
-  /** Main translate — uses SSE streaming for progressive updates */
-  const translate = useCallback(async () => {
+  type TranslationEngine = "Hybrid (Rule + LLM)" | "Rule-based only" | "LLM only";
+
+  /** Set state from a translateFast response (shared by rule-based path + fallback). */
+  const applyFastResult = useCallback(
+    (data: TranslateApiResponse, elapsed: number, text: string) => {
+      setGlossText(data.gloss);
+      setGlossTokens(toGlossTokens(data.tokens));
+      setTranslationPhase("rule_based");
+      setDebugInfo({
+        method: data.method,
+        confidence: data.confidence,
+        glossInternal: data.gloss_internal,
+        glossDisplay: data.gloss,
+        tokenCount: data.tokens.length,
+        processingTimeMs: elapsed,
+        inputWordCount: text.trim().split(/\s+/).length,
+        availableGlosses: data.tokens.filter((t) => !t.startsWith("IX-") && t !== "NOT"),
+        phases: [{ event: "rule_based", gloss: data.gloss, timestamp: elapsed }],
+      });
+    },
+    [toGlossTokens]
+  );
+
+  /** Main translate — engine param selects which backend path to use:
+   *  - "Rule-based only"   → POST /api/translate/fast  (<50ms, no LLM)
+   *  - "Hybrid (Rule+LLM)" → SSE stream, accept first result that arrives
+   *  - "LLM only"          → SSE stream, skip rule_based events, wait for llm_quality
+   */
+  const translate = useCallback(async (engine: TranslationEngine = "Hybrid (Rule + LLM)") => {
     const text = inputText.trim();
     if (!text) return;
 
@@ -84,6 +111,30 @@ export function useTranslate() {
     setDebugInfo(null);
 
     const startTime = performance.now();
+
+    // ── Rule-based only: bypass SSE, use fast endpoint directly ──────────────
+    if (engine === "Rule-based only") {
+      try {
+        const data = await translateFast(text, controller.signal);
+        if (generationRef.current !== myGen) return;
+        applyFastResult(data, performance.now() - startTime, text);
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        if (generationRef.current !== myGen) return;
+        console.error("Translation failed:", err);
+        setGlossText("⚠ Translation unavailable — is the backend running?");
+        setGlossTokens([]);
+        setDebugInfo(null);
+      } finally {
+        if (generationRef.current === myGen) {
+          setIsTranslating(false);
+          setActiveIndex(-1);
+        }
+      }
+      return;
+    }
+
+    // ── Hybrid / LLM only: use SSE stream ────────────────────────────────────
     const phases: DebugInfo["phases"] = [];
 
     try {
@@ -91,6 +142,9 @@ export function useTranslate() {
         // Superseded by a newer translate() call — stop immediately
         if (generationRef.current !== myGen) break;
         if (event.event === "done") break;
+
+        // LLM only mode: ignore the rule_based result, wait for llm_quality
+        if (engine === "LLM only" && event.event === "rule_based") continue;
 
         const data = event.data as TranslateApiResponse;
         const elapsed = performance.now() - startTime;
@@ -140,22 +194,7 @@ export function useTranslate() {
       try {
         const data = await translateFast(text, controller.signal);
         if (generationRef.current !== myGen) return; // Check again after await
-        const elapsed = performance.now() - startTime;
-
-        setGlossText(data.gloss);
-        setGlossTokens(toGlossTokens(data.tokens));
-        setTranslationPhase("rule_based");
-        setDebugInfo({
-          method: data.method,
-          confidence: data.confidence,
-          glossInternal: data.gloss_internal,
-          glossDisplay: data.gloss,
-          tokenCount: data.tokens.length,
-          processingTimeMs: elapsed,
-          inputWordCount: text.trim().split(/\s+/).length,
-          availableGlosses: data.tokens.filter((t) => !t.startsWith("IX-") && t !== "NOT"),
-          phases: [{ event: "rule_based", gloss: data.gloss, timestamp: elapsed }],
-        });
+        applyFastResult(data, performance.now() - startTime, text);
       } catch (fallbackErr) {
         if (fallbackErr instanceof Error && fallbackErr.name === "AbortError") return;
         if (generationRef.current !== myGen) return;
@@ -173,7 +212,7 @@ export function useTranslate() {
         setActiveIndex(-1);
       }
     }
-  }, [inputText, toGlossTokens]);
+  }, [inputText, toGlossTokens, applyFastResult]);
 
   const clearInput = useCallback(() => {
     abortRef.current?.abort();
