@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Input from "@/shared/ui/Input";
 import Button from "@/shared/ui/Button";
 import NavigationBar from "@/widgets/navigation-bar/NavigationBar";
+import { signUp } from "@/lib/auth-client";
 
 interface RegisterFormData {
   email: string;
@@ -14,11 +17,23 @@ interface RegisterFormData {
 }
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const [authError, setAuthError] = useState<string | null>(null);
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<RegisterFormData>();
 
   const onSubmit = async (data: RegisterFormData) => {
-    // TODO: integrate with API
-    console.log("Register:", data);
+    setAuthError(null);
+    const { error } = await signUp.email({
+      email: data.email,
+      password: data.password,
+      name: data.email.split("@")[0],
+      callbackURL: "/translate",
+    });
+    if (error) {
+      setAuthError(error.message ?? "Could not create account. Please try again.");
+    } else {
+      router.push("/translate");
+    }
   };
 
   return (
@@ -66,6 +81,9 @@ export default function RegisterPage() {
                 validate: (val) => val === watch("password") || "Passwords do not match",
               })}
             />
+            {authError && (
+              <p className="text-sm text-red-500 text-center">{authError}</p>
+            )}
             <Button type="submit" variant="primary" size="lg" className="w-full mt-2" isLoading={isSubmitting}>
               Create Account
             </Button>

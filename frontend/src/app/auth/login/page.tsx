@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Input from "@/shared/ui/Input";
 import Button from "@/shared/ui/Button";
 import NavigationBar from "@/widgets/navigation-bar/NavigationBar";
+import { signIn } from "@/lib/auth-client";
 
 interface LoginFormData {
   email: string;
@@ -13,11 +16,22 @@ interface LoginFormData {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [authError, setAuthError] = useState<string | null>(null);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormData>();
 
   const onSubmit = async (data: LoginFormData) => {
-    // TODO: integrate with API
-    console.log("Login:", data);
+    setAuthError(null);
+    const { error } = await signIn.email({
+      email: data.email,
+      password: data.password,
+      callbackURL: "/translate",
+    });
+    if (error) {
+      setAuthError(error.message ?? "Invalid email or password.");
+    } else {
+      router.push("/translate");
+    }
   };
 
   return (
@@ -55,6 +69,9 @@ export default function LoginPage() {
                 minLength: { value: 6, message: "Min 6 characters" },
               })}
             />
+            {authError && (
+              <p className="text-sm text-red-500 text-center">{authError}</p>
+            )}
             <Button type="submit" variant="primary" size="lg" className="w-full mt-2" isLoading={isSubmitting}>
               Sign In
             </Button>

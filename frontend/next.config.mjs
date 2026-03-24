@@ -3,8 +3,9 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: "/api/:path*",
-        destination: "http://localhost:8000/api/:path*",
+        // Proxy all /api/* routes EXCEPT /api/auth/* (handled by better-auth locally)
+        source: "/api/((?!auth).*)",
+        destination: "http://localhost:8000/api/$1",
       },
     ];
   },
