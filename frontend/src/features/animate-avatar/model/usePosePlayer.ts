@@ -119,8 +119,8 @@ export function usePosePlayer({
           };
 
           const poseConf  = avgConfidence(frame.poseLandmarks);
-          const leftConf  = avgConfidence(frame.leftHandLandmarks);
-          const rightConf = avgConfidence(frame.rightHandLandmarks);
+          const leftConf  = avgConfidence(frame.rightHandLandmarks);
+          const rightConf = avgConfidence(frame.leftHandLandmarks);
 
           setDebugStats((prev) => ({
             ...prev,
