@@ -4,8 +4,10 @@ import { useState, useCallback, useEffect } from "react";
 import NavigationBar from "@/widgets/navigation-bar/NavigationBar";
 import { useSettings } from "@/shared/hooks/useSettings";
 import { useHistory } from "@/shared/hooks/useHistory";
+import { useGuestLimit } from "@/shared/hooks/useGuestLimit";
+import { useSession } from "@/lib/auth-client";
 import Link from "next/link";
-import { AVATAR_MODELS } from "@/shared/constants";
+import { API_BASE_URL, AVATAR_MODELS } from "@/shared/constants";
 import { ACCENT_COLORS } from "@/shared/ui/SettingsApplicator";
 import VoiceRecordingPane from "@/features/translate-text/ui/VoiceRecordingPane";
 
@@ -150,6 +152,8 @@ export default function SettingsPage() {
   const [savedFlash, setSavedFlash] = useState(false);
   const { settings, updateSetting, isDirty, save, discard } = useSettings();
   const { clearAll: clearHistory } = useHistory();
+  const { data: session } = useSession();
+  const { isAuthenticated, remaining } = useGuestLimit();
 
   // Voice sheet
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -169,7 +173,7 @@ export default function SettingsPage() {
   // Fetch vocabulary stats when NLP section is active
   useEffect(() => {
     if (activeSection !== "nlp") return;
-    fetch("/api/vocabulary")
+    fetch(`${API_BASE_URL}/api/vocabulary`)
       .then((r) => r.json())
       .then((d) => { if (typeof d.total === "number") setLexiconSize(d.total); })
       .catch(() => {});
@@ -239,22 +243,41 @@ export default function SettingsPage() {
 
               <SettingsCard title="Personal Information" chip="identity">
                 <SettingRow label="Display Name" desc="How your name appears across DuoSign">
-                  <input type="text" defaultValue="Nana Amoako" className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
+                  <input key={`name-${session?.user?.id ?? "guest"}`} type="text" defaultValue={session?.user?.name ?? "Guest"} className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
                 </SettingRow>
                 <SettingRow label="Email Address" desc="Used for account recovery and notifications">
-                  <input type="email" defaultValue="nana@duosign.app" className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
+                  <input key={`email-${session?.user?.id ?? "guest"}`} type="email" defaultValue={session?.user?.email ?? "Guest mode"} className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
                 </SettingRow>
               </SettingsCard>
 
               <SettingsCard title="Session" chip="auth">
                 <SettingRow label="Account Status" desc="Your current authentication state">
-                  <span className="px-3 py-1 rounded-pill text-[11px] font-bold font-mono tracking-[0.06em] bg-[color-mix(in_srgb,var(--teal)_12%,var(--surface-3))] border border-[color-mix(in_srgb,var(--teal)_25%,transparent)] text-teal shadow-inset">
-                    Guest Mode
+                  <span className={[
+                    "px-3 py-1 rounded-pill text-[11px] font-bold font-mono tracking-[0.06em] shadow-inset",
+                    isAuthenticated
+                      ? "bg-[color-mix(in_srgb,var(--success)_12%,var(--surface-3))] border border-[color-mix(in_srgb,var(--success)_25%,transparent)] text-success"
+                      : "bg-[color-mix(in_srgb,var(--teal)_12%,var(--surface-3))] border border-[color-mix(in_srgb,var(--teal)_25%,transparent)] text-teal",
+                  ].join(" ")}>
+                    {isAuthenticated ? "Signed In" : "Guest Mode"}
                   </span>
                 </SettingRow>
                 <SettingRow label="Guest Translations Remaining" desc="Free translations available before sign-up">
-                  <span className="font-mono text-[14px] font-semibold text-accent">3 / 8</span>
+                  <span className="font-mono text-[14px] font-semibold text-accent">
+                    {isAuthenticated ? "Unlimited" : `${remaining} / 3`}
+                  </span>
                 </SettingRow>
+                {!isAuthenticated && (
+                  <SettingRow label="Upgrade Guest Session" desc="Create an account to unlock unlimited translations and cloud history">
+                    <div className="flex items-center gap-2">
+                      <Link href="/auth/login" className="px-3 py-[5px] rounded-btn border border-border-hi bg-surface-2 text-text-1 font-sans text-[12px] font-semibold no-underline shadow-raised-sm transition-all duration-120 hover:bg-surface-3">
+                        Log In
+                      </Link>
+                      <Link href="/auth/register" className="px-3 py-[5px] rounded-btn border border-accent bg-[color-mix(in_srgb,var(--accent)_12%,var(--surface-2))] text-accent font-sans text-[12px] font-semibold no-underline shadow-raised-sm transition-all duration-120 hover:brightness-110">
+                        Sign Up Free
+                      </Link>
+                    </div>
+                  </SettingRow>
+                )}
               </SettingsCard>
 
               <SettingsCard title="Danger Zone" chip="irreversible" danger>
@@ -321,7 +344,7 @@ export default function SettingsPage() {
               </SettingsCard>
 
               <SettingsCard title="Data" chip="storage" danger>
-                <SettingRow label="Clear Translation History" desc="Permanently removes all saved translations from browser storage" danger>
+                <SettingRow label="Clear Translation History" desc={isAuthenticated ? "Permanently removes all saved translations from your account history" : "Permanently removes all saved translations from this browser"} danger>
                   <button
                     onClick={() => {
                       if (window.confirm("Clear all translation history? This cannot be undone.")) {

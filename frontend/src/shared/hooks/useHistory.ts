@@ -1,24 +1,20 @@
 "use client";
 
 /**
- * useHistory — Translation history with localStorage persistence
- * ================================================================
- * Stores translation entries in localStorage with FIFO eviction at 100 entries.
- * Replaces hardcoded demo data across the app.
+ * useHistory — Translation history
+ * ================================
+ * Guests use localStorage. Authenticated users sync against the database API.
  */
 
 import { useState, useCallback, useEffect } from "react";
+import { useSession } from "@/lib/auth-client";
+import {
+  formatHistoryDate,
+  formatHistoryTime,
+  type HistoryEntry,
+} from "@/shared/lib/history";
 
-export interface HistoryEntry {
-  id: string;
-  text: string;
-  glossTokens: string[];
-  type: "typed" | "voiced" | "api";
-  date: string;       // e.g. "Today", "Yesterday", "Feb 23"
-  time: string;       // e.g. "2:14 PM"
-  timestamp: number;  // Date.now() for sorting
-  exported?: boolean; // true once the user has exported this entry
-}
+export type { HistoryEntry } from "@/shared/lib/history";
 
 const STORAGE_KEY = "duosign:history";
 const MAX_ENTRIES = 100;
@@ -43,87 +39,187 @@ function saveHistory(entries: HistoryEntry[]): void {
   }
 }
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-}
-
-function formatDate(date: Date): string {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today.getTime() - 86400000);
-  const entryDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-  if (entryDay.getTime() === today.getTime()) return "Today";
-  if (entryDay.getTime() === yesterday.getTime()) return "Yesterday";
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
 export function useHistory() {
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const { data: session, isPending } = useSession();
+  const isAuthenticated = Boolean(session?.user);
 
-  // Hydrate from localStorage
   useEffect(() => {
-    setEntries(loadHistory());
-    setHydrated(true);
-  }, []);
+    if (isPending) return;
+
+    let cancelled = false;
+
+    const hydrate = async () => {
+      if (!isAuthenticated) {
+        if (!cancelled) {
+          setEntries(loadHistory());
+          setHydrated(true);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/translations", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to load translations: ${response.status}`);
+        }
+
+        const data = (await response.json()) as HistoryEntry[];
+        if (!cancelled) {
+          setEntries(data);
+          setHydrated(true);
+        }
+      } catch {
+        if (!cancelled) {
+          setEntries([]);
+          setHydrated(true);
+        }
+      }
+    };
+
+    void hydrate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, isPending]);
 
   const addEntry = useCallback(
     (text: string, glossTokens: string[], type: "typed" | "voiced" | "api" = "typed") => {
       const now = new Date();
       const entry: HistoryEntry = {
-        id: `h-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        id: isAuthenticated
+          ? `temp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+          : `h-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         text,
         glossTokens,
         type,
-        date: formatDate(now),
-        time: formatTime(now),
+        date: formatHistoryDate(now),
+        time: formatHistoryTime(now),
         timestamp: Date.now(),
       };
 
-      setEntries((prev) => {
-        const next = [entry, ...prev].slice(0, MAX_ENTRIES);
-        saveHistory(next);
-        return next;
-      });
+      if (!isAuthenticated) {
+        setEntries((prev) => {
+          const next = [entry, ...prev].slice(0, MAX_ENTRIES);
+          saveHistory(next);
+          return next;
+        });
+        return entry;
+      }
+
+      setEntries((prev) => [entry, ...prev].slice(0, MAX_ENTRIES));
+
+      if (type === "api") {
+        return entry;
+      }
+
+      void fetch("/api/translations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text, glossTokens, type }),
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            throw new Error(`Failed to create translation: ${response.status}`);
+          }
+          const savedEntry = (await response.json()) as HistoryEntry;
+
+          let shouldPersistExport = false;
+          setEntries((prev) => prev.map((item) => {
+            if (item.id !== entry.id) return item;
+            shouldPersistExport = Boolean(item.exported);
+            return shouldPersistExport
+              ? { ...savedEntry, exported: true }
+              : savedEntry;
+          }));
+
+          if (shouldPersistExport) {
+            void fetch(`/api/translations/${savedEntry.id}`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ exported: true }),
+            }).catch(() => {});
+          }
+        })
+        .catch(() => {
+          setEntries((prev) => prev.filter((item) => item.id !== entry.id));
+        });
 
       return entry;
     },
-    []
+    [isAuthenticated]
   );
 
   const deleteEntry = useCallback((id: string) => {
-    setEntries((prev) => {
-      const next = prev.filter((e) => e.id !== id);
-      saveHistory(next);
-      return next;
-    });
-  }, []);
+    if (!isAuthenticated || id.startsWith("h-")) {
+      setEntries((prev) => {
+        const next = prev.filter((e) => e.id !== id);
+        saveHistory(next);
+        return next;
+      });
+      return;
+    }
+
+    if (id.startsWith("temp-")) {
+      setEntries((prev) => prev.filter((e) => e.id !== id));
+      return;
+    }
+
+    setEntries((prev) => prev.filter((e) => e.id !== id));
+    void fetch(`/api/translations/${id}`, { method: "DELETE" }).catch(() => {});
+  }, [isAuthenticated]);
 
   const clearAll = useCallback(() => {
     setEntries([]);
-    saveHistory([]);
-  }, []);
+
+    if (!isAuthenticated) {
+      saveHistory([]);
+      return;
+    }
+
+    void fetch("/api/translations", { method: "DELETE" }).catch(() => {});
+  }, [isAuthenticated]);
 
   const markExported = useCallback((id: string) => {
-    setEntries((prev) => {
-      const next = prev.map((e) => e.id === id ? { ...e, exported: true } : e);
-      saveHistory(next);
-      return next;
-    });
-  }, []);
+    if (!isAuthenticated || id.startsWith("h-")) {
+      setEntries((prev) => {
+        const next = prev.map((e) => e.id === id ? { ...e, exported: true } : e);
+        saveHistory(next);
+        return next;
+      });
+      return;
+    }
 
-  // Get recent entries (for translate page sidebar)
+    if (id.startsWith("temp-")) {
+      setEntries((prev) => prev.map((e) => e.id === id ? { ...e, exported: true } : e));
+      return;
+    }
+
+    setEntries((prev) => prev.map((e) => e.id === id ? { ...e, exported: true } : e));
+    void fetch(`/api/translations/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ exported: true }),
+    }).catch(() => {});
+  }, [isAuthenticated]);
+
   const getRecent = useCallback(
     (count = 3) => entries.slice(0, count),
     [entries]
   );
 
-  // Filter entries
   const getFiltered = useCallback(
     (filters?: {
       types?: Set<string>;
@@ -154,7 +250,6 @@ export function useHistory() {
     [entries]
   );
 
-  // Stats
   const stats = {
     total: entries.length,
     today: entries.filter((e) => e.date === "Today").length,
@@ -169,6 +264,7 @@ export function useHistory() {
   return {
     entries,
     hydrated,
+    isAuthenticated,
     addEntry,
     deleteEntry,
     clearAll,

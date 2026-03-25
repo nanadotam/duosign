@@ -93,8 +93,11 @@ export function useTranslate() {
    *  - "Hybrid (Rule+LLM)" → SSE stream, accept first result that arrives
    *  - "LLM only"          → SSE stream, skip rule_based events, wait for llm_quality
    */
-  const translate = useCallback(async (engine: TranslationEngine = "Hybrid (Rule + LLM)") => {
-    const text = inputText.trim();
+  const translate = useCallback(async (
+    engine: TranslationEngine = "Hybrid (Rule + LLM)",
+    overrideText?: string
+  ) => {
+    const text = (overrideText ?? inputText).trim();
     if (!text) return;
 
     // Stamp this call with a generation. Any state updates from an older

@@ -5,6 +5,8 @@
  * Supports SSE streaming for progressive rule-based → LLM updates.
  */
 
+import { API_BASE_URL } from "@/shared/constants";
+
 // ── Types ───────────────────────────────────────────────────────────
 
 export interface TranslateApiResponse {
@@ -32,7 +34,7 @@ export async function* translateStream(
   text: string,
   signal?: AbortSignal
 ): AsyncGenerator<SSEEvent> {
-  const res = await fetch("/api/translate/stream", {
+  const res = await fetch(`${API_BASE_URL}/api/translate/stream`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),
@@ -117,7 +119,7 @@ export async function translateFast(
   text: string,
   signal?: AbortSignal
 ): Promise<TranslateApiResponse> {
-  const res = await fetch("/api/translate/fast", {
+  const res = await fetch(`${API_BASE_URL}/api/translate/fast`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),

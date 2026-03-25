@@ -16,6 +16,7 @@ const ExportVideoModal = dynamic(
 import { useTranslate } from "@/features/translate-text/model/useTranslate";
 import { usePlayback } from "@/features/animate-avatar/model/usePlayback";
 import { useHistory } from "@/shared/hooks/useHistory";
+import { useGuestLimit } from "@/shared/hooks/useGuestLimit";
 import { useSettings } from "@/shared/hooks/useSettings";
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
@@ -23,6 +24,9 @@ import type { GlossToken } from "@/entities/gloss/types";
 import type { AvatarDisplayMode } from "@/entities/avatar/types";
 import GlossChip from "@/shared/ui/GlossChip";
 import Link from "next/link";
+import { useToast } from "@/shared/ui/Toast";
+import { useSession } from "@/lib/auth-client";
+import type { HistoryEntryType } from "@/shared/lib/history";
 
 // Outer shell — provides context, then delegates to inner component
 export default function TranslatePage() {
@@ -38,14 +42,17 @@ export default function TranslatePage() {
 // Inner component — all logic lives here so it's inside ToastProvider context
 function TranslatePageContent() {
   const { settings } = useSettings();
+  const { showToast } = useToast();
   const [displayMode, setDisplayMode] = useState<AvatarDisplayMode>("avatar");
   const [showExportModal, setShowExportModal] = useState(false);
   const searchParams = useSearchParams();
   const autoplayPending = useRef(false);
   const exportPending = useRef(false);
-
-  // Ref: text captured at translate-click time, cleared once play is triggered
-  const pendingPlayTextRef = useRef<string | null>(null);
+  const pendingPlayRef = useRef<{ text: string; type: HistoryEntryType } | null>(null);
+  const lastHistoryEntryIdRef = useRef<string | null>(null);
+  const { data: session } = useSession();
+  const isAuthenticated = Boolean(session?.user);
+  const { remaining: guestRemaining, consume } = useGuestLimit();
 
   // ─── Network connectivity detection ────────────────────────────────────────
   const [isOnline, setIsOnline] = useState(
@@ -78,7 +85,7 @@ function TranslatePageContent() {
     debugInfo,
   } = useTranslate();
 
-  const { addEntry, getRecent, deleteEntry } = useHistory();
+  const { addEntry, getRecent, deleteEntry, markExported } = useHistory();
 
   // Convert history entries to the format RecentTranslations expects
   const recentHistory = useMemo(() => {
@@ -122,6 +129,39 @@ function TranslatePageContent() {
     onComplete: handleComplete,
   });
 
+  const attemptTranslate = useCallback(async (rawText: string, type: HistoryEntryType) => {
+    const text = rawText.trim();
+    if (!text) return false;
+
+    if (!isAuthenticated) {
+      try {
+        const guestUsage = await consume();
+        if (!guestUsage.allowed) {
+          showToast(
+            guestUsage.message ?? "Guest limit reached. Create an account to continue translating.",
+            "error"
+          );
+          return false;
+        }
+      } catch {
+        showToast("Could not verify your guest translation limit right now.", "error");
+        return false;
+      }
+    }
+
+    reset();
+    pendingPlayRef.current = { text, type };
+    void translate(settings.translationEngine, text);
+    return true;
+  }, [consume, isAuthenticated, reset, settings.translationEngine, showToast, translate]);
+
+  const handleOpenExport = useCallback(() => {
+    if (lastHistoryEntryIdRef.current) {
+      markExported(lastHistoryEntryIdRef.current);
+    }
+    setShowExportModal(true);
+  }, [markExported]);
+
   // Read URL params: ?text=, ?autoplay=true, ?export=true
   useEffect(() => {
     const text = searchParams.get("text");
@@ -140,37 +180,34 @@ function TranslatePageContent() {
   useEffect(() => {
     if (autoplayPending.current && inputText) {
       autoplayPending.current = false;
-      setTimeout(() => {
-        pendingPlayTextRef.current = inputText.trim();
-        translate(settings.translationEngine);
-      }, 50);
+      void attemptTranslate(inputText, "typed");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inputText]);
+  }, [attemptTranslate, inputText]);
 
   // Once glossTokens are ready and export is pending, open the export modal
   useEffect(() => {
     if (exportPending.current && glossTokens.length > 0) {
       exportPending.current = false;
-      setTimeout(() => setShowExportModal(true), 800);
+      setTimeout(() => handleOpenExport(), 800);
     }
-  }, [glossTokens]);
+  }, [glossTokens, handleOpenExport]);
 
   // ─── Network-aware playback trigger ────────────────────────────────────────
   // Online:  wait for llm_quality before signing (rule_based is just a preview)
   // Offline: sign as soon as rule_based arrives (LLM unreachable anyway)
   useEffect(() => {
-    if (pendingPlayTextRef.current === null) return;
+    if (pendingPlayRef.current === null) return;
     if (glossTokens.length === 0) return;
 
     // Online and still waiting for LLM: hold off
     if (isOnline && translationPhase === "rule_based") return;
 
     // Either offline (sign with rule_based) or LLM arrived (sign with llm_quality)
-    const text = pendingPlayTextRef.current;
-    pendingPlayTextRef.current = null;
+    const pendingPlay = pendingPlayRef.current;
+    pendingPlayRef.current = null;
 
-    addEntry(text, glossTokens.map((t) => t.text), "typed");
+    const entry = addEntry(pendingPlay.text, glossTokens.map((t) => t.text), pendingPlay.type);
+    lastHistoryEntryIdRef.current = entry.id;
     play();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [glossTokens, translationPhase]);
@@ -178,33 +215,26 @@ function TranslatePageContent() {
   // ─── Fallback: stream ended without an LLM result (online but LLM skipped) ─
   useEffect(() => {
     if (isTranslating) return;                        // still in flight
-    if (pendingPlayTextRef.current === null) return;  // already played
+    if (pendingPlayRef.current === null) return;      // already played
     if (glossTokens.length === 0) return;             // nothing to play
 
-    const text = pendingPlayTextRef.current;
-    pendingPlayTextRef.current = null;
+    const pendingPlay = pendingPlayRef.current;
+    pendingPlayRef.current = null;
 
-    addEntry(text, glossTokens.map((t) => t.text), "typed");
+    const entry = addEntry(pendingPlay.text, glossTokens.map((t) => t.text), pendingPlay.type);
+    lastHistoryEntryIdRef.current = entry.id;
     play();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTranslating]);
 
-  // TODO: Guest User - Guest users may translate up to five words or gloss tokens before being prompted to log in or create an account.
-  // TODO: Guest User - Access the system from any modern browser without installing additional software or creating an account, subject to a configurable per-session translation limit.
-  // TODO: Registered User - All capabilities available to Guest Users, without a translation limit.
-  // TODO: Registered User - Create an account and log in to unlock persistent access once the guest usage threshold is reached, without blocking translation during the registration prompt.
   const handleTranslate = useCallback(() => {
-    const text = inputText.trim();
-    if (!text) return;
-    reset();
-    pendingPlayTextRef.current = text;
-    translate(settings.translationEngine);
-  }, [translate, reset, inputText, settings.translationEngine]);
+    void attemptTranslate(inputText, "typed");
+  }, [attemptTranslate, inputText]);
 
   const handleClear = useCallback(() => {
     clearInput();
     reset();
-    pendingPlayTextRef.current = null;
+    pendingPlayRef.current = null;
   }, [clearInput, reset]);
 
   const handleDeleteRecent = useCallback((id: string) => {
@@ -217,12 +247,8 @@ function TranslatePageContent() {
 
   const handleVoiceTranslate = useCallback((text: string) => {
     setInputText(text);
-    reset();
-    setTimeout(() => {
-      pendingPlayTextRef.current = text;
-      translate(settings.translationEngine);
-    }, 50);
-  }, [setInputText, translate, reset, settings.translationEngine]);
+    void attemptTranslate(text, "voiced");
+  }, [attemptTranslate, setInputText]);
 
   // ─── Loop & keyboard shortcuts ─────────────────────────────────────────────
   const handlePlaybackComplete = useCallback(() => {
@@ -287,7 +313,7 @@ function TranslatePageContent() {
       */}
       <div className="min-h-screen flex flex-col">
         <NavigationBar />
-        <GuestBanner remaining={3} />
+        {!isAuthenticated && <GuestBanner remaining={guestRemaining} />}
 
         {/* ═══════════════════════════════════
             DESKTOP LAYOUT (≥ 1024px)
@@ -334,7 +360,7 @@ function TranslatePageContent() {
               glossSequence={glossTokens.map((t) => t.text)}
               displayMode={displayMode}
               onDisplayModeChange={setDisplayMode}
-              onExport={() => setShowExportModal(true)}
+              onExport={handleOpenExport}
               onActiveGlossChange={(index) => {
                 setCurrentIndex(index);
                 setActiveIndex(index);
@@ -367,7 +393,7 @@ function TranslatePageContent() {
               glossSequence={glossTokens.map((t) => t.text)}
               displayMode={displayMode}
               onDisplayModeChange={setDisplayMode}
-              onExport={() => setShowExportModal(true)}
+              onExport={handleOpenExport}
               onActiveGlossChange={(index) => {
                 setCurrentIndex(index);
                 setActiveIndex(index);
@@ -470,6 +496,7 @@ function TranslatePageContent() {
               pipelinePhase={translationPhase}
               pipelineTokenCount={glossTokens.length}
               isSigning={playbackState === "playing"}
+              isOnline={isOnline}
               autoPaste={settings.autoPaste}
             />
           </div>
