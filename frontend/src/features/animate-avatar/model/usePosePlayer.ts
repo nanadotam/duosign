@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { VRM } from "@pixiv/three-vrm";
 import type { AvatarDebugStats, ViewMode } from "@/entities/avatar/types";
-import { resetPose, lerpToRestPose, setRenderVRM } from "../lib/vrmRigger";
+import { resetPose, setRenderVRM } from "../lib/vrmRigger";
 import { loadPoseData } from "../lib/poseLoader";
 import { animatePose, type PoseAnimationHandle } from "../lib/animatePose";
 import { SignSequencer } from "../lib/signSequencer";

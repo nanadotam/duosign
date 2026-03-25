@@ -7,14 +7,14 @@ import path from "path";
  * GET /api/pose/[gloss]
  *
  * Serves binary .pose files from the bucket directory.
- * Falls back to poses-backup/ if primary not found.
+ * Priority: poses_v3 (contour-only, 60% smaller) → poses → poses-backup
  * Returns 404 if no pose file exists for the gloss.
  */
 
-const BUCKET_DIR = path.join(process.cwd(), "..", "bucket");
-const POSES_DIR = path.join(BUCKET_DIR, "best");
-const BACKUP_DIR = path.join(BUCKET_DIR, "poses-backup");
-const POSES_ALT_DIR = path.join(BUCKET_DIR, "poses");
+const BUCKET_DIR  = path.join(process.cwd(), "..", "bucket");
+const POSES_V3    = path.join(BUCKET_DIR, "poses_v3");
+const POSES_DIR   = path.join(BUCKET_DIR, "poses");
+const BACKUP_DIR  = path.join(BUCKET_DIR, "poses-backup");
 
 export async function GET(
   _request: NextRequest,
@@ -22,44 +22,25 @@ export async function GET(
 ) {
   const gloss = decodeURIComponent(params.gloss).toUpperCase().replace(/\s+/g, "_");
 
-  // Try primary poses directory first
-  const primaryPath = path.join(POSES_DIR, `${gloss}.pose`);
-  if (existsSync(primaryPath)) {
-    const data = await readFile(primaryPath);
-    return new NextResponse(data, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/octet-stream",
-        "Cache-Control": "public, max-age=86400, immutable",
-        "Content-Disposition": `inline; filename="${gloss}.pose"`,
-      },
-    });
-  }
+  const candidates = [
+    path.join(POSES_V3,   `${gloss}.pose`),      // contour-only, 60% smaller
+    path.join(POSES_DIR,  `${gloss}.pose`),       // original full mesh fallback
+    path.join(BACKUP_DIR, `${gloss}_2.pose`),
+    path.join(BACKUP_DIR, `${gloss}_3.pose`),
+  ];
 
-  // Try backup directory (first backup)
-  const backupPath = path.join(BACKUP_DIR, `${gloss}_2.pose`);
-  if (existsSync(backupPath)) {
-    const data = await readFile(backupPath);
-    return new NextResponse(data, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/octet-stream",
-        "Cache-Control": "public, max-age=86400, immutable",
-      },
-    });
-  }
-
-  // Try bucket/poses/ directory as fallback
-  const altPath = path.join(POSES_ALT_DIR, `${gloss}.pose`);
-  if (existsSync(altPath)) {
-    const data = await readFile(altPath);
-    return new NextResponse(data, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/octet-stream",
-        "Cache-Control": "public, max-age=86400, immutable",
-      },
-    });
+  for (const filePath of candidates) {
+    if (existsSync(filePath)) {
+      const data = await readFile(filePath);
+      return new NextResponse(data, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "Cache-Control": "public, max-age=86400, immutable",
+          "Content-Disposition": `inline; filename="${gloss}.pose"`,
+        },
+      });
+    }
   }
 
   return NextResponse.json(

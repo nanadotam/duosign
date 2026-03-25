@@ -359,7 +359,7 @@ Content-Type: application/json
               <P>
                 Skips all LLM paths including the mandatory fallback. Always responds in under 50ms.
                 Identical request/response shape to <Code>POST /api/translate</Code> with{" "}
-                <Code>method</Code> always <Code>"rule_based"</Code>.
+                <Code>method</Code> always <Code>&quot;rule_based&quot;</Code>.
               </P>
               <CodeBlock title="request">
 {`POST /api/translate/fast
@@ -541,8 +541,7 @@ data: {}`}
               />
               <P>
                 Returns the <Code>.mp4</Code> video file from <Code>bucket/videos/</Code>. Used by the
-                video engine fallback when pose data is unavailable. Returns 404 if the video doesn't
-                exist.
+                video engine fallback when pose data is unavailable. Returns 404 if the video doesn&apos;t exist.
               </P>
               <CodeBlock title="request">
 {`GET /api/video/HELLO`}

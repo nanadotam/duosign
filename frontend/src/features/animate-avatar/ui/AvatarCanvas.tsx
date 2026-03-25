@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useRef } from "react";
+import * as THREE from "three";
 import { useAvatarRenderer } from "../model/useAvatarRenderer";
 import { useVRM } from "../model/useVRM";
 import { usePosePlayer } from "../model/usePosePlayer";
@@ -33,6 +34,8 @@ interface AvatarCanvasProps {
   renderMode: AvatarDisplayMode;
   /** Playback speed multiplier (0.5 | 1 | 1.5 | 2) from the speed cycle button */
   speed?: number;
+  /** Solid background color for the Three.js scene (e.g. "#1a1a1a"). Null/undefined = transparent. */
+  backgroundColor?: string | null;
   onDebugStats?: (stats: AvatarDebugStats) => void;
   onViewModeChange?: (mode: ViewMode) => void;
   /** Fires once — after Three.js canvas exists AND VRM has fully loaded */
@@ -49,6 +52,7 @@ export default function AvatarCanvas({
   playbackState,
   renderMode = "avatar",
   speed = 1,
+  backgroundColor,
   onDebugStats,
   onCanvasReady,
   onPlaybackComplete,
@@ -101,6 +105,16 @@ export default function AvatarCanvas({
     syncRigSpeed(speed * 100);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [speed]);
+
+  // Set Three.js scene background for export recording (null = transparent)
+  useEffect(() => {
+    if (!scene) return;
+    if (backgroundColor) {
+      scene.background = new THREE.Color(backgroundColor);
+    } else {
+      scene.background = null;
+    }
+  }, [scene, backgroundColor]);
 
   const debugBonesEnabled =
     typeof window !== "undefined" &&

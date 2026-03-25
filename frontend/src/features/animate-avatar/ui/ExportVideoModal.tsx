@@ -14,6 +14,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useCanvasRecorder } from "../model/useCanvasRecorder";
 import { AVATAR_MODELS } from "@/shared/constants";
+import { useSettings } from "@/shared/hooks/useSettings";
 
 const AvatarCanvas = dynamic(() => import("./AvatarCanvas"), { ssr: false });
 
@@ -93,12 +94,24 @@ function useCyclingMessage(messages: string[], intervalMs = 2400, active = true)
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+const BACKGROUND_COLORS: Record<string, string | null> = {
+  "Transparent": null,
+  "Grid (Dark)": "#1a1a1a",
+  "Grid (Light)": "#f0f0f0",
+  "Studio White": "#f3f3f3",
+  "Studio Grey": "#4a4a4a",
+  "Dark Stage": "#111111",
+  "Gradient Blue": "#0f1b2d",
+};
+
 export default function ExportVideoModal({
   glossSequence,
   avatarPath,
   onClose,
 }: ExportVideoModalProps) {
+  const { settings } = useSettings();
   const modelPath = avatarPath ?? AVATAR_MODELS[0].path;
+  const exportBgColor = BACKGROUND_COLORS[settings.avatarBackground] ?? null;
 
   const glossNames = useMemo(
     () => glossSequence.map((g) => {
@@ -242,18 +255,26 @@ export default function ExportVideoModal({
           with devicePixelRatio=2 the backing canvas is 1344×756px which
           FFmpeg scales to a crisp 1280×720 output.
         */}
-        <div className="relative" style={{ aspectRatio: "16/9" }}>
-          {/* Grid background */}
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                "linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px)",
-              backgroundSize: "28px 28px",
-              maskImage: "var(--grid-fade)",
-              WebkitMaskImage: "var(--grid-fade)",
-            }}
-          />
+        <div
+          className="relative"
+          style={{
+            aspectRatio: "16/9",
+            background: exportBgColor ?? "var(--surface)",
+          }}
+        >
+          {/* Grid background — shown only when no solid bg is selected */}
+          {!exportBgColor && (
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage:
+                  "linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px)",
+                backgroundSize: "28px 28px",
+                maskImage: "var(--grid-fade)",
+                WebkitMaskImage: "var(--grid-fade)",
+              }}
+            />
+          )}
 
           {/* Three.js canvas — fills the container naturally */}
           <div className="absolute inset-0">
@@ -263,6 +284,7 @@ export default function ExportVideoModal({
               glossSequence={glossNames}
               playbackState={isPlaying ? "playing" : "idle"}
               renderMode="avatar"
+              backgroundColor={exportBgColor}
               onDebugStats={handleDebugStats}
               onCanvasReady={handleCanvasReady}
               onPlaybackComplete={handlePlaybackComplete}
