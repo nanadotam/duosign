@@ -22,10 +22,12 @@ import logging
 from pathlib import Path
 from contextlib import asynccontextmanager
 
+import os
 from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, FileResponse
 from pydantic import BaseModel, Field
@@ -51,6 +53,11 @@ logging.basicConfig(level=logging.INFO)
 TSV_PATH = Path(__file__).parent.parent / "data" / "glosses.tsv"
 LEXICON_DIR = Path(__file__).parent.parent / "public" / "lexicon" / "ase"
 BUCKET_DIR = Path(__file__).parent.parent.parent / "bucket"
+
+# When set, /api/video/* and /api/pose/* redirect to Supabase Storage instead
+# of serving local files. Set this env var on Render.
+# Format: https://<project>.supabase.co/storage/v1/object/public
+_SUPABASE_STORAGE = os.getenv("SUPABASE_STORAGE_URL", "").rstrip("/")
 
 
 # ── App lifecycle ────────────────────────────────────────────────────
@@ -353,7 +360,12 @@ async def search_vocab(q: str = "", limit: int = 50):
 
 @app.get("/api/video/{gloss}")
 async def serve_video(gloss: str):
-    """Serve a sign language video (.mp4) from the bucket."""
+    """Serve a sign language video (.mp4). Redirects to Supabase in prod."""
+    if _SUPABASE_STORAGE:
+        return RedirectResponse(
+            url=f"{_SUPABASE_STORAGE}/duosign-videos/{gloss}.mp4",
+            status_code=302,
+        )
     path = BUCKET_DIR / "videos" / f"{gloss}.mp4"
     if not path.exists():
         raise HTTPException(404, f"Video not found: {gloss}")
@@ -366,8 +378,13 @@ async def serve_video(gloss: str):
 
 @app.get("/api/pose/{gloss}")
 async def serve_pose(gloss: str):
-    """Serve a pose data file (.pose) from the bucket."""
-    path = BUCKET_DIR / "poses" / f"{gloss}.pose"
+    """Serve a pose data file (.pose). Redirects to Supabase in prod."""
+    if _SUPABASE_STORAGE:
+        return RedirectResponse(
+            url=f"{_SUPABASE_STORAGE}/duosign-poses/{gloss}.pose",
+            status_code=302,
+        )
+    path = BUCKET_DIR / "poses_v3" / f"{gloss}.pose"
     if not path.exists():
         raise HTTPException(404, f"Pose not found: {gloss}")
     return FileResponse(
