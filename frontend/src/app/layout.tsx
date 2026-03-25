@@ -37,9 +37,58 @@ const instrumentSans = Instrument_Sans({
   display: "swap",
 });
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://duosign.vercel.app";
+
 export const metadata: Metadata = {
-  title: "DuoSign — Text to Sign Language",
-  description: "Translate English text into ASL gloss tokens and animate a 3D avatar in real time.",
+  metadataBase: new URL(APP_URL),
+  title: {
+    default: "DuoSign — Text to Sign Language",
+    template: "%s · DuoSign",
+  },
+  description:
+    "DuoSign translates English text into ASL gloss and animates a 3D avatar signing in real time. Built for the Deaf and hard-of-hearing community.",
+  keywords: ["ASL", "sign language", "American Sign Language", "deaf", "accessibility", "gloss", "avatar", "translation"],
+  authors: [{ name: "Nana Kwaku Amoako" }],
+  creator: "Nana Kwaku Amoako",
+
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon.png", sizes: "1024x1024", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+    shortcut: "/favicon.svg",
+  },
+
+  openGraph: {
+    type: "website",
+    url: APP_URL,
+    siteName: "DuoSign",
+    title: "DuoSign — Text to Sign Language",
+    description:
+      "Translate English into ASL gloss and watch a 3D avatar sign it in real time.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1024,
+        height: 1024,
+        alt: "DuoSign — Text to Sign Language",
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary",
+    title: "DuoSign — Text to Sign Language",
+    description: "Translate English into ASL gloss and watch a 3D avatar sign it in real time.",
+    images: ["/og-image.png"],
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
