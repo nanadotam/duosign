@@ -150,7 +150,8 @@ function clampRotation(
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 // Track which bones have already triggered a missing-bone warning so we
 // don't spam the console every frame. One warning per bone per session.
@@ -311,8 +312,9 @@ interface RiggedFace {
   pupil: { x: number; y: number };
 }
 
-// Persistent lookTarget for pupil interpolation
-const oldLookTarget = new THREE.Euler();
+// Persistent lookTarget for pupil interpolation (reserved for future eye tracking)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _oldLookTarget = new THREE.Euler();
 
 /**
  * Apply face rigging — head rotation + locked neutral expression.

@@ -113,6 +113,8 @@ export default function AvatarPanel({
     () => AVATAR_MODELS.find((m) => m.id === settings.avatarModelId) ?? AVATAR_MODELS[0]
   );
   const [showStats, setShowStats] = useState(false);
+  const [showGloss, setShowGloss] = useState(true);
+  const [skeletonLoop, setSkeletonLoop] = useState({ current: 0, total: 0 });
   const [overlayVisible, setOverlayVisible] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [debugStats, setDebugStats] = useState<AvatarDebugStats>({
@@ -196,6 +198,10 @@ export default function AvatarPanel({
     [glossSequence]
   );
 
+  const handleGlossChange = useCallback((gloss: string, currentLoop: number, totalLoops: number) => {
+    setDebugStats((prev) => ({ ...prev, currentGloss: gloss }));
+    setSkeletonLoop({ current: currentLoop, total: totalLoops });
+  }, []);
 
   return (
     <div
@@ -323,8 +329,9 @@ export default function AvatarPanel({
             <SkeletonCanvas
               glossSequence={glossNames}
               playbackState={playbackState}
-              onDebugStats={handleDebugStats}
+              loopCount={3}
               onPlaybackComplete={onPlaybackComplete}
+              onGlossChange={handleGlossChange}
             />
           ) : (
             <AvatarCanvas
@@ -353,12 +360,15 @@ export default function AvatarPanel({
         )}
 
         {/* Gloss Subtitle Bar — part of overlay */}
-        {debugStats.currentGloss && overlayVisible && (
+        {debugStats.currentGloss && overlayVisible && showGloss && (
           <div className="absolute bottom-14 lg:bottom-16 left-1/2 -translate-x-1/2 z-10 px-4 py-1.5 rounded-pill border border-border-hi backdrop-blur-[8px]"
             style={{ background: "color-mix(in srgb, var(--surface) 80%, transparent)" }}
           >
             <span className="font-mono text-[12px] lg:text-[14px] font-bold text-text-1 tracking-[0.05em]">
               {debugStats.currentGloss}
+              {isSkeleton && skeletonLoop.total > 0 && (
+                <span className="text-text-3 font-normal ml-1.5">· {skeletonLoop.current}/{skeletonLoop.total}</span>
+              )}
             </span>
           </div>
         )}
@@ -409,17 +419,6 @@ export default function AvatarPanel({
               </>
             )}
 
-            {/* Prev */}
-            <button
-              onClick={onPrev}
-              className="w-[26px] h-[26px] lg:w-[30px] lg:h-[30px] rounded-full border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:scale-[0.93]"
-              title="Previous"
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </button>
-
             {/* Play/Pause */}
             <button
               onClick={onTogglePlay}
@@ -440,17 +439,6 @@ export default function AvatarPanel({
                   <polygon points="5 3 19 12 5 21 5 3" />
                 </svg>
               )}
-            </button>
-
-            {/* Next */}
-            <button
-              onClick={onNext}
-              className="w-[26px] h-[26px] lg:w-[30px] lg:h-[30px] rounded-full border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:scale-[0.93]"
-              title="Next"
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
             </button>
 
             {/* Divider */}
@@ -474,6 +462,20 @@ export default function AvatarPanel({
               className="px-1.5 py-0.5 rounded-[5px] font-mono text-[9px] lg:text-[10px] font-medium bg-surface-3 border border-border text-text-3 cursor-pointer shadow-inset transition-all duration-100 hover:text-text-2 active:shadow-inset-press active:translate-y-px"
             >
               {SPEED_LABELS[speed]}
+            </button>
+
+            {/* CC Toggle — show/hide gloss subtitle */}
+            <button
+              onClick={() => setShowGloss((prev) => !prev)}
+              className={[
+                "px-1.5 py-0.5 rounded-[5px] font-mono text-[9px] lg:text-[10px] font-bold border cursor-pointer shadow-inset transition-all duration-100 active:shadow-inset-press active:translate-y-px",
+                showGloss
+                  ? "bg-accent/15 border-accent/40 text-accent"
+                  : "bg-surface-3 border-border text-text-3 hover:text-text-2",
+              ].join(" ")}
+              title={showGloss ? "Hide captions" : "Show captions"}
+            >
+              CC
             </button>
 
           </div>

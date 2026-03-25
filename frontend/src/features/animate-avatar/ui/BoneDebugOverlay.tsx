@@ -42,8 +42,6 @@ const WATCHED_BONES = [
   "LeftThumbProximal",
 ] as const;
 
-type BoneName = typeof WATCHED_BONES[number];
-
 export function BoneDebugOverlay({ vrm, enabled = false }: Props) {
   const [rotations, setRotations] = useState<Record<string, string>>({});
   const [fps, setFps] = useState(0);

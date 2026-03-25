@@ -69,7 +69,8 @@ const BONE_NAME_MAP: Record<string, keyof typeof VRMSchema.HumanoidBoneName> = {
   leftLittleDistal: "LeftLittleDistal",
 };
 
-let activeVRM: VRM | null = null;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+let _activeVRM: VRM | null = null;
 const previousFingerRotations: Partial<Record<"Right" | "Left", FingerRotationMap>> = {};
 const oldLookTarget = new THREE.Euler();
 
@@ -161,7 +162,7 @@ export function applyPoseToVRM(
 ): number {
   const start = performance.now();
   const imageSize = options.imageSize ?? { width: 1280, height: 720 };
-  activeVRM = vrm;
+  _activeVRM = vrm;
   syncAvatarDebugOverlay(vrm);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
