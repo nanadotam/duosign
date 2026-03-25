@@ -20,6 +20,10 @@ const nextConfig = {
         source: "/api/video/:path*",
         destination: `${BACKEND_URL}/api/video/:path*`,
       },
+      {
+        source: "/api/pose/:path*",
+        destination: `${BACKEND_URL}/api/pose/:path*`,
+      },
     ];
   },
   webpack: (config, { isServer }) => {
