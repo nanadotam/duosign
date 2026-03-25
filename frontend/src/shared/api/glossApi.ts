@@ -5,6 +5,8 @@
  * Supports SSE streaming for progressive rule-based → LLM updates.
  */
 
+import { API_BASE_URL } from "@/shared/constants";
+
 // ── Types ───────────────────────────────────────────────────────────
 
 export interface TranslateApiResponse {
@@ -32,7 +34,7 @@ export async function* translateStream(
   text: string,
   signal?: AbortSignal
 ): AsyncGenerator<SSEEvent> {
-  const res = await fetch("/api/translate/stream", {
+  const res = await fetch(`${API_BASE_URL}/api/translate/stream`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),
@@ -46,28 +48,42 @@ export async function* translateStream(
   const reader = res.body?.getReader();
   if (!reader) throw new Error("No response body");
 
+  // Eagerly cancel the reader the moment the signal fires so buffered SSE
+  // bytes from a previous request don't slip through between reads.
+  const onAbort = () => reader.cancel();
+  signal?.addEventListener("abort", onAbort, { once: true });
+
   const decoder = new TextDecoder();
   let buffer = "";
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+  try {
+    while (true) {
+      // Check before every read — prevents processing buffered stale data
+      if (signal?.aborted) break;
+      const { done, value } = await reader.read();
+      if (done) break;
 
-    buffer += decoder.decode(value, { stream: true });
+      buffer += decoder.decode(value, { stream: true });
 
-    // Parse SSE events from buffer
-    const parts = buffer.split("\n\n");
-    // Keep last (potentially incomplete) chunk in buffer
-    buffer = parts.pop() ?? "";
+      // Parse SSE events from buffer
+      const parts = buffer.split("\n\n");
+      // Keep last (potentially incomplete) chunk in buffer
+      buffer = parts.pop() ?? "";
 
-    for (const part of parts) {
-      const event = parseSSE(part);
-      if (event) yield event;
+      for (const part of parts) {
+        // Check between events too in case a chunk contains multiple events
+        if (signal?.aborted) return;
+        const event = parseSSE(part);
+        if (event) yield event;
+      }
     }
+  } finally {
+    signal?.removeEventListener("abort", onAbort);
+    reader.releaseLock();
   }
 
-  // Flush remaining buffer
-  if (buffer.trim()) {
+  // Flush remaining buffer (only if not aborted)
+  if (!signal?.aborted && buffer.trim()) {
     const event = parseSSE(buffer);
     if (event) yield event;
   }
@@ -103,7 +119,7 @@ export async function translateFast(
   text: string,
   signal?: AbortSignal
 ): Promise<TranslateApiResponse> {
-  const res = await fetch("/api/translate/fast", {
+  const res = await fetch(`${API_BASE_URL}/api/translate/fast`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),

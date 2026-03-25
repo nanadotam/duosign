@@ -101,6 +101,38 @@
 }
 
 /* ═══════════════════════════════════════
+   ACCESSIBILITY OVERRIDES
+═══════════════════════════════════════ */
+
+/* High Contrast — dark mode: push text toward pure white, sharpen borders */
+[data-theme="dark"].high-contrast {
+  --text-1: #ffffff;
+  --text-2: #dde3ff;
+  --text-3: #a0a8cc;
+  --border: #5a5f80;
+  --border-hi: #8890b0;
+}
+
+/* High Contrast — light mode: push text toward pure black, darken borders */
+[data-theme="light"].high-contrast {
+  --text-1: #000000;
+  --text-2: #1a1c28;
+  --text-3: #3a3f5a;
+  --border: #707070;
+  --border-hi: #404040;
+}
+
+/* Reduce Motion: collapse all animations and transitions */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ═══════════════════════════════════════
    BASE
 ═══════════════════════════════════════ */
 *,

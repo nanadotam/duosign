@@ -1,6 +1,9 @@
 import type { AvatarModel } from "@/entities/avatar/types";
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ??
+  (process.env.NODE_ENV === "development" ? "http://localhost:8000" : "");
 
 export const AVATAR_MODELS: AvatarModel[] = [
   { id: "ds-proto", name: "DS Proto", path: "/avatars/DS-Proto-2.1.vrm" },
@@ -11,7 +14,7 @@ export const AVATAR_MODELS: AvatarModel[] = [
 
 export const MAX_INPUT_LENGTH = 500;
 
-export const GUEST_TRANSLATION_LIMIT = 10;
+export const GUEST_TRANSLATION_LIMIT = 3;
 
 export const PLAYBACK_SPEEDS = [0.5, 1, 1.5, 2] as const;
 export const SPEED_LABELS: Record<number, string> = {

@@ -35,7 +35,7 @@ from spacy.tokens import Token
 
 from .vocabulary import VocabularyManager, NUMBER_WORDS
 from .llm import llm_translate
-from .fingerspell import fingerspell_word, is_fingerspelled, expand_tokens
+from .fingerspell import fingerspell_word, is_fingerspelled, expand_tokens, resolve_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -737,8 +737,7 @@ class TextToGloss:
             logger.warning(f"LLM quality check failed: {e}")
             return None
 
-    @staticmethod
-    def _apply_llm_result(result: GlossResult, llm_gloss: str, method: str) -> None:
+    def _apply_llm_result(self, result: GlossResult, llm_gloss: str, method: str) -> None:
         """Apply LLM gloss to an existing result, updating all fields.
 
         The LLM uses hyphenated notation for fingerspelling (N-A-N-A).
@@ -747,7 +746,7 @@ class TextToGloss:
         """
         result.gloss_internal = llm_gloss
         result.gloss = TextToGloss._to_display_form(llm_gloss)
-        result.tokens = expand_tokens(llm_gloss.split())
+        result.tokens = resolve_tokens(llm_gloss.split(), self.vocab)
         result.method = method
 
     # ── Other helpers ────────────────────────────────────────────────

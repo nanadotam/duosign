@@ -1,9 +1,15 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import NavigationBar from "@/widgets/navigation-bar/NavigationBar";
 import { useSettings } from "@/shared/hooks/useSettings";
 import { useHistory } from "@/shared/hooks/useHistory";
+import { useGuestLimit } from "@/shared/hooks/useGuestLimit";
+import { useSession } from "@/lib/auth-client";
+import Link from "next/link";
+import { API_BASE_URL, AVATAR_MODELS } from "@/shared/constants";
+import { ACCENT_COLORS } from "@/shared/ui/SettingsApplicator";
+import VoiceRecordingPane from "@/features/translate-text/ui/VoiceRecordingPane";
 
 /* ═══ SIDEBAR DATA ═══ */
 const SIDEBAR = [
@@ -12,7 +18,7 @@ const SIDEBAR = [
     items: [
       { id: "profile", label: "Profile", icon: "user" },
       { id: "preferences", label: "Preferences", icon: "settings" },
-      { id: "avatar", label: "Avatar", icon: "users" },
+      { id: "avatar", label: "Avatar & Theme", icon: "users" },
       { id: "accessibility", label: "Accessibility", icon: "smile" },
     ],
   },
@@ -36,15 +42,6 @@ const SIDEBAR = [
   },
 ];
 
-const SKIN_TONES = [
-  { bg: "linear-gradient(135deg,#FFDBB4,#E8A87C)", emoji: "👤" },
-  { bg: "linear-gradient(135deg,#C68642,#A0522D)", emoji: "👤" },
-  { bg: "linear-gradient(135deg,#8D5524,#5C3317)", emoji: "👤" },
-  { bg: "linear-gradient(135deg,#FFE0B2,#FFCC80)", emoji: "👤" },
-  { bg: "linear-gradient(135deg,#D0D0D0,#A8A8A8)", emoji: "👤" },
-];
-
-const ACCENT_COLORS = ["#5B8EF0", "#2DD4BF", "#4ADE80", "#A78BFA", "#FB923C"];
 
 function SIcon({ name }: { name: string }) {
   const icons: Record<string, React.ReactNode> = {
@@ -134,11 +131,12 @@ function SettingRow({ label, desc, children, danger, stack }: { label: string; d
   );
 }
 
-function Select({ options, defaultValue, onChange }: { options: string[]; defaultValue?: string; onChange?: () => void }) {
+function Select({ options, value, defaultValue, onChange }: { options: string[]; value?: string; defaultValue?: string; onChange?: (v: string) => void }) {
   return (
     <select
-      defaultValue={defaultValue}
-      onChange={onChange}
+      value={value}
+      defaultValue={value === undefined ? defaultValue : undefined}
+      onChange={(e) => onChange?.(e.target.value)}
       className="py-[5px] pl-[10px] pr-[28px] rounded-btn border border-border-hi bg-surface-2 font-sans text-[12.5px] font-medium text-text-1 cursor-pointer outline-none appearance-none min-w-[150px] shadow-raised-sm transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--raised-sm),0_0_0_3px_var(--accent-glow)]"
       style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234E5570' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 9px center" }}
     >
@@ -154,12 +152,17 @@ export default function SettingsPage() {
   const [savedFlash, setSavedFlash] = useState(false);
   const { settings, updateSetting, isDirty, save, discard } = useSettings();
   const { clearAll: clearHistory } = useHistory();
+  const { data: session } = useSession();
+  const { isAuthenticated, remaining } = useGuestLimit();
 
   // Voice sheet
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [micLive, setMicLive] = useState(false);
-  const barsRef = useRef<HTMLDivElement>(null);
-  const waveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Dynamic vocabulary stats from backend
+  const [lexiconSize, setLexiconSize] = useState<number | null>(null);
+
+  // Real microphone device list
+  const [micDevices, setMicDevices] = useState<string[]>(["System Default"]);
 
   const handleSave = useCallback(() => {
     save();
@@ -167,39 +170,27 @@ export default function SettingsPage() {
     setTimeout(() => setSavedFlash(false), 1800);
   }, [save]);
 
-  // Voice sheet waveform
+  // Fetch vocabulary stats when NLP section is active
   useEffect(() => {
-    if (sheetOpen && barsRef.current && barsRef.current.children.length === 0) {
-      for (let i = 0; i < 52; i++) {
-        const b = document.createElement("div");
-        b.className = "w-[2.5px] rounded-sm min-h-[3px] transition-all duration-75";
-        b.style.background = "var(--border-hi)";
-        b.style.height = "3px";
-        barsRef.current.appendChild(b);
-      }
-    }
-  }, [sheetOpen]);
+    if (activeSection !== "nlp") return;
+    fetch(`${API_BASE_URL}/api/vocabulary`)
+      .then((r) => r.json())
+      .then((d) => { if (typeof d.total === "number") setLexiconSize(d.total); })
+      .catch(() => {});
+  }, [activeSection]);
 
+  // Enumerate real microphones when voice section is active
   useEffect(() => {
-    if (!barsRef.current) return;
-    if (micLive) {
-      const bars = Array.from(barsRef.current.children) as HTMLElement[];
-      const mid = bars.length / 2;
-      waveTimerRef.current = setInterval(() => {
-        bars.forEach((b, i) => {
-          const dist = Math.abs(i - mid) / mid;
-          const h = Math.max(3, Math.round((1 - dist * 0.35) * Math.random() * 48));
-          b.style.height = h + "px";
-          b.style.background = "var(--accent)";
-        });
-      }, 85);
-    } else {
-      if (waveTimerRef.current) clearInterval(waveTimerRef.current);
-      const bars = barsRef.current ? Array.from(barsRef.current.children) as HTMLElement[] : [];
-      bars.forEach((b) => { b.style.height = "3px"; b.style.background = "var(--border-hi)"; });
-    }
-    return () => { if (waveTimerRef.current) clearInterval(waveTimerRef.current); };
-  }, [micLive]);
+    if (activeSection !== "voice") return;
+    if (!navigator.mediaDevices?.enumerateDevices) return;
+    navigator.mediaDevices.enumerateDevices().then((devices) => {
+      const mics = devices
+        .filter((d) => d.kind === "audioinput")
+        .map((d) => d.label || `Microphone ${d.deviceId.slice(0, 4)}`);
+      if (mics.length > 0) setMicDevices(["System Default", ...mics]);
+    }).catch(() => {});
+  }, [activeSection]);
+
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -252,22 +243,41 @@ export default function SettingsPage() {
 
               <SettingsCard title="Personal Information" chip="identity">
                 <SettingRow label="Display Name" desc="How your name appears across DuoSign">
-                  <input type="text" defaultValue="Nana Amoako" className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
+                  <input key={`name-${session?.user?.id ?? "guest"}`} type="text" defaultValue={session?.user?.name ?? "Guest"} className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
                 </SettingRow>
                 <SettingRow label="Email Address" desc="Used for account recovery and notifications">
-                  <input type="email" defaultValue="nana@duosign.app" className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
+                  <input key={`email-${session?.user?.id ?? "guest"}`} type="email" defaultValue={session?.user?.email ?? "Guest mode"} className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
                 </SettingRow>
               </SettingsCard>
 
               <SettingsCard title="Session" chip="auth">
                 <SettingRow label="Account Status" desc="Your current authentication state">
-                  <span className="px-3 py-1 rounded-pill text-[11px] font-bold font-mono tracking-[0.06em] bg-[color-mix(in_srgb,var(--teal)_12%,var(--surface-3))] border border-[color-mix(in_srgb,var(--teal)_25%,transparent)] text-teal shadow-inset">
-                    Guest Mode
+                  <span className={[
+                    "px-3 py-1 rounded-pill text-[11px] font-bold font-mono tracking-[0.06em] shadow-inset",
+                    isAuthenticated
+                      ? "bg-[color-mix(in_srgb,var(--success)_12%,var(--surface-3))] border border-[color-mix(in_srgb,var(--success)_25%,transparent)] text-success"
+                      : "bg-[color-mix(in_srgb,var(--teal)_12%,var(--surface-3))] border border-[color-mix(in_srgb,var(--teal)_25%,transparent)] text-teal",
+                  ].join(" ")}>
+                    {isAuthenticated ? "Signed In" : "Guest Mode"}
                   </span>
                 </SettingRow>
                 <SettingRow label="Guest Translations Remaining" desc="Free translations available before sign-up">
-                  <span className="font-mono text-[14px] font-semibold text-accent">3 / 8</span>
+                  <span className="font-mono text-[14px] font-semibold text-accent">
+                    {isAuthenticated ? "Unlimited" : `${remaining} / 3`}
+                  </span>
                 </SettingRow>
+                {!isAuthenticated && (
+                  <SettingRow label="Upgrade Guest Session" desc="Create an account to unlock unlimited translations and cloud history">
+                    <div className="flex items-center gap-2">
+                      <Link href="/auth/login" className="px-3 py-[5px] rounded-btn border border-border-hi bg-surface-2 text-text-1 font-sans text-[12px] font-semibold no-underline shadow-raised-sm transition-all duration-120 hover:bg-surface-3">
+                        Log In
+                      </Link>
+                      <Link href="/auth/register" className="px-3 py-[5px] rounded-btn border border-accent bg-[color-mix(in_srgb,var(--accent)_12%,var(--surface-2))] text-accent font-sans text-[12px] font-semibold no-underline shadow-raised-sm transition-all duration-120 hover:brightness-110">
+                        Sign Up Free
+                      </Link>
+                    </div>
+                  </SettingRow>
+                )}
               </SettingsCard>
 
               <SettingsCard title="Danger Zone" chip="irreversible" danger>
@@ -293,7 +303,7 @@ export default function SettingsPage() {
 
               <SettingsCard title="Translation" chip="engine">
                 <SettingRow label="Translation Engine" desc="Rule-based handles 75–85% of phrases in under 50ms. LLM fallback covers edge cases.">
-                  <Select options={["Hybrid (Rule + LLM)", "Rule-based only", "LLM only"]} defaultValue={settings.translationEngine} onChange={() => {}} />
+                  <Select options={["Hybrid (Rule + LLM)", "Rule-based only", "LLM only"]} value={settings.translationEngine} onChange={(v) => updateSetting("translationEngine", v as typeof settings.translationEngine)} />
                 </SettingRow>
                 <SettingRow label="Animation Speed" desc="Playback speed for signing animations">
                   <div className="flex items-center gap-[9px]">
@@ -334,8 +344,15 @@ export default function SettingsPage() {
               </SettingsCard>
 
               <SettingsCard title="Data" chip="storage" danger>
-                <SettingRow label="Clear Translation History" desc="Permanently removes all saved translations from browser storage" danger>
-                  <button onClick={clearHistory} className="px-3.5 py-[5px] rounded-btn border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,var(--surface-2))] text-error font-sans text-[12.5px] font-semibold cursor-pointer shadow-raised-sm transition-all duration-120 whitespace-nowrap hover:bg-[color-mix(in_srgb,var(--error)_16%,var(--surface-2))] active:shadow-inset-press active:translate-y-px">
+                <SettingRow label="Clear Translation History" desc={isAuthenticated ? "Permanently removes all saved translations from your account history" : "Permanently removes all saved translations from this browser"} danger>
+                  <button
+                    onClick={() => {
+                      if (window.confirm("Clear all translation history? This cannot be undone.")) {
+                        clearHistory();
+                      }
+                    }}
+                    className="px-3.5 py-[5px] rounded-btn border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,var(--surface-2))] text-error font-sans text-[12.5px] font-semibold cursor-pointer shadow-raised-sm transition-all duration-120 whitespace-nowrap hover:bg-[color-mix(in_srgb,var(--error)_16%,var(--surface-2))] active:shadow-inset-press active:translate-y-px"
+                  >
                     Clear History
                   </button>
                 </SettingRow>
@@ -355,42 +372,24 @@ export default function SettingsPage() {
               </div>
 
               <SettingsCard title="3D Avatar" chip="appearance">
-                <SettingRow label="Skin Tone" desc="Choose the avatar's skin tone for comfortable representation" stack>
+                <SettingRow label="Avatar Model" desc="Select the 3D avatar used for signing" stack>
                   <div className="flex gap-2 flex-wrap">
-                    {SKIN_TONES.map((st, i) => (
+                    {AVATAR_MODELS.map((model) => (
                       <button
-                        key={i}
-                        onClick={() => updateSetting("skinTone", i)}
+                        key={model.id}
+                        onClick={() => updateSetting("avatarModelId", model.id)}
                         className={[
-                          "w-12 h-12 rounded-[12px] border cursor-pointer flex items-center justify-center text-xl transition-all duration-120 shadow-raised-sm relative",
-                          settings.skinTone === i
-                            ? "border-accent shadow-[var(--raised-sm),0_0_0_2px_color-mix(in_srgb,var(--accent)_30%,transparent)]"
+                          "flex flex-col items-center justify-center gap-1 w-[82px] h-[60px] rounded-[12px] border cursor-pointer text-center transition-all duration-120 shadow-raised-sm px-2",
+                          settings.avatarModelId === model.id
+                            ? "border-accent bg-[color-mix(in_srgb,var(--accent)_10%,var(--surface-2))] shadow-[var(--raised-sm),0_0_0_2px_color-mix(in_srgb,var(--accent)_30%,transparent)]"
                             : "border-border-hi bg-surface-2 hover:border-accent hover:-translate-y-0.5 hover:shadow-raised",
                         ].join(" ")}
-                        style={{ background: st.bg }}
                       >
-                        {st.emoji}
-                        {settings.skinTone === i && <span className="absolute bottom-[2px] right-1 text-[8px] font-bold text-accent">✓</span>}
+                        <span className="text-[10px] font-bold text-text-2 leading-tight">{model.name}</span>
+                        {settings.avatarModelId === model.id && (
+                          <span className="text-[9px] font-semibold text-accent">Active</span>
+                        )}
                       </button>
-                    ))}
-                    <button className="w-12 h-12 rounded-[12px] border border-dashed border-border-hi text-text-3 text-lg flex items-center justify-center cursor-pointer hover:text-text-2 hover:border-border-hi bg-transparent transition-all">
-                      +
-                    </button>
-                  </div>
-                </SettingRow>
-                <SettingRow label="Avatar Style" desc="Realistic or stylized character rendering">
-                  <div className="flex bg-surface-3 border border-border rounded-[7px] p-[2px] shadow-inset transition-all duration-250">
-                    {["Realistic", "Stylized", "Minimal"].map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => updateSetting("avatarStyle", s as "Realistic" | "Stylized" | "Minimal")}
-                        className={[
-                          "px-[13px] py-1 rounded-[5px] text-[12px] font-medium cursor-pointer transition-all duration-100 border",
-                          settings.avatarStyle === s
-                            ? "bg-surface border-border-hi text-text-1 shadow-raised-sm"
-                            : "border-transparent text-text-3 hover:text-text-2",
-                        ].join(" ")}
-                      >{s}</button>
                     ))}
                   </div>
                 </SettingRow>
@@ -412,7 +411,7 @@ export default function SettingsPage() {
                   </div>
                 </SettingRow>
                 <SettingRow label="Background" desc="Scene backdrop behind the signing avatar">
-                  <Select options={["Transparent", "Grid (Dark)", "Grid (Light)", "Gradient Blue"]} defaultValue={settings.avatarBackground} onChange={() => updateSetting("avatarBackground", "Transparent")} />
+                  <Select options={["Transparent", "Studio White", "Studio Grey", "Dark Stage", "Gradient Blue"]} value={settings.avatarBackground} onChange={(v) => updateSetting("avatarBackground", v as typeof settings.avatarBackground)} />
                 </SettingRow>
               </SettingsCard>
             </>
@@ -431,7 +430,7 @@ export default function SettingsPage() {
 
               <SettingsCard title="Accessibility" chip="display">
                 <SettingRow label="Caption Size" desc="Font size for gloss and transcript captions">
-                  <Select options={["Small", "Medium", "Large", "Extra Large"]} defaultValue={settings.captionSize} onChange={() => {}} />
+                  <Select options={["Small", "Medium", "Large", "Extra Large"]} value={settings.captionSize} onChange={(v) => updateSetting("captionSize", v as typeof settings.captionSize)} />
                 </SettingRow>
                 <SettingRow label="High Contrast Mode" desc="Increase contrast ratios for better visibility">
                   <Toggle on={settings.highContrast} onChange={() => updateSetting("highContrast", !settings.highContrast)} />
@@ -459,7 +458,7 @@ export default function SettingsPage() {
 
               <SettingsCard title="Engine Configuration" chip="pipeline">
                 <SettingRow label="Translation Engine" desc="Rule-based handles 75–85% of phrases in under 50ms. LLM fallback covers edge cases.">
-                  <Select options={["Hybrid (Rule + LLM)", "Rule-based only", "LLM only"]} defaultValue={settings.translationEngine} onChange={() => {}} />
+                  <Select options={["Hybrid (Rule + LLM)", "Rule-based only", "LLM only"]} value={settings.translationEngine} onChange={(v) => updateSetting("translationEngine", v as typeof settings.translationEngine)} />
                 </SettingRow>
                 <SettingRow label="Fingerspelling Fallback" desc="Use fingerspelling when a sign is not in the lexicon">
                   <Toggle on={settings.fingerspell} onChange={() => updateSetting("fingerspell", !settings.fingerspell)} />
@@ -467,13 +466,10 @@ export default function SettingsPage() {
               </SettingsCard>
 
               <SettingsCard title="Performance" chip="metrics">
-                <SettingRow label="Cache Status" desc="Cached translation results for faster repeat queries">
-                  <span className="px-3 py-1 rounded-pill text-[11px] font-bold font-mono tracking-[0.06em] bg-[color-mix(in_srgb,var(--success)_12%,var(--surface-3))] border border-[color-mix(in_srgb,var(--success)_25%,transparent)] text-success shadow-inset">
-                    Active
+                <SettingRow label="Lexicon Size" desc="Total number of ASL signs loaded from the dataset">
+                  <span className="font-mono text-[14px] font-semibold text-accent">
+                    {lexiconSize !== null ? lexiconSize.toLocaleString() : "—"}
                   </span>
-                </SettingRow>
-                <SettingRow label="Lexicon Size" desc="Total number of ASL signs available in the dataset">
-                  <span className="font-mono text-[14px] font-semibold text-accent">2,000+</span>
                 </SettingRow>
               </SettingsCard>
             </>
@@ -492,15 +488,12 @@ export default function SettingsPage() {
 
               <SettingsCard title="Voice Input" chip="microphone">
                 <SettingRow label="Default Microphone" desc="Input device used for voice translation">
-                  <Select options={["System Default", "Built-in Microphone", "External Mic"]} defaultValue={settings.defaultMic} onChange={() => {}} />
+                  <Select options={micDevices} value={settings.defaultMic} onChange={(v) => updateSetting("defaultMic", v)} />
                 </SettingRow>
-                <SettingRow label="Recognition Language" desc="Language used for speech-to-text">
-                  <Select options={["English (US)", "English (UK)", "English (AU)"]} defaultValue={settings.recognitionLanguage} onChange={() => {}} />
+                <SettingRow label="Recognition Language" desc="Language used for speech-to-text (Whisper via Groq)">
+                  <span className="font-sans text-[12.5px] font-medium text-text-2">English (US)</span>
                 </SettingRow>
-                <SettingRow label="Noise Suppression" desc="Filter background noise during voice input">
-                  <Toggle on={settings.noiseSuppression} onChange={() => updateSetting("noiseSuppression", !settings.noiseSuppression)} />
-                </SettingRow>
-                <SettingRow label="Auto-send after silence" desc="Automatically translate after 1.5s of silence detected">
+                <SettingRow label="Auto-send after silence" desc="Automatically translate after recording stops">
                   <Toggle on={settings.autoSend} onChange={() => updateSetting("autoSend", !settings.autoSend)} />
                 </SettingRow>
               </SettingsCard>
@@ -595,14 +588,20 @@ export default function SettingsPage() {
               </div>
 
               <SettingsCard title="Quick Links" chip="resources">
-                <SettingRow label="Getting Started" desc="A brief walkthrough of DuoSign's features and how to translate text to ASL">
-                  <a href="#" className="text-[12.5px] font-medium text-accent hover:underline">View Guide →</a>
+                <SettingRow label="Getting Started" desc="Full DuoSign feature guide — translation, avatar, voice input">
+                  <Link href="/docs" className="text-[12.5px] font-medium text-accent hover:underline whitespace-nowrap">
+                    Open Docs →
+                  </Link>
                 </SettingRow>
-                <SettingRow label="API Documentation" desc="Reference docs for the text-to-gloss REST API">
-                  <a href="#" className="text-[12.5px] font-medium text-accent hover:underline">Open Docs →</a>
+                <SettingRow label="API Documentation" desc="Complete REST API reference with request/response examples">
+                  <Link href="/api-docs" className="text-[12.5px] font-medium text-accent hover:underline whitespace-nowrap">
+                    Open API Docs →
+                  </Link>
                 </SettingRow>
                 <SettingRow label="Keyboard Shortcuts" desc="Complete list of available keyboard shortcuts">
-                  <a href="#" className="text-[12.5px] font-medium text-accent hover:underline">View All →</a>
+                  <Link href="/docs#shortcuts" className="text-[12.5px] font-medium text-accent hover:underline whitespace-nowrap">
+                    View All →
+                  </Link>
                 </SettingRow>
               </SettingsCard>
 
@@ -648,58 +647,17 @@ export default function SettingsPage() {
       {/* VOICE SHEET */}
       {sheetOpen && (
         <>
-          <div className="fixed inset-0 bg-[rgba(7,8,14,0.7)] z-[200] backdrop-blur-sm" onClick={() => { setSheetOpen(false); setMicLive(false); }} />
+          <div className="fixed inset-0 bg-[rgba(7,8,14,0.7)] z-[200] backdrop-blur-sm" onClick={() => setSheetOpen(false)} />
           <div className="fixed bottom-0 left-0 right-0 z-[201] bg-surface border-t border-border-hi rounded-t-[22px] shadow-[0_-8px_48px_rgba(0,0,0,0.55),0_-1px_0_rgba(255,255,255,0.04)] animate-[toast-in_0.3s_ease]">
-            <div className="max-w-[680px] mx-auto px-6 pb-8">
-              <div className="w-9 h-[3px] rounded-sm bg-border-hi mx-auto mt-3 mb-[18px]" />
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <div className="font-serif text-xl text-text-1">Voice Input</div>
-                  <div className={[
-                    "inline-flex items-center gap-[5px] mt-[5px] px-[9px] py-[2px] rounded-pill bg-surface-3 border text-[10px] font-bold tracking-[0.08em] uppercase font-mono shadow-inset transition-all duration-200",
-                    micLive ? "text-success border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_8%,var(--surface-3))]" : "text-text-3 border-border",
-                  ].join(" ")}>
-                    <span className={["w-[5px] h-[5px] rounded-full transition-all", micLive ? "bg-success shadow-[0_0_6px_var(--success)] animate-[blink_1s_infinite]" : "bg-border-hi"].join(" ")} />
-                    {micLive ? "Listening…" : "Ready"}
-                  </div>
-                </div>
-                <button
-                  onClick={() => { setSheetOpen(false); setMicLive(false); }}
-                  className="w-7 h-7 rounded-[7px] border border-border-hi bg-surface-2 text-text-3 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:translate-y-px"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                </button>
-              </div>
-              {/* Waveform */}
-              <div ref={barsRef} className="h-16 bg-surface-2 border border-border rounded-[12px] shadow-inset flex items-center justify-center gap-[2.5px] px-4 mb-3.5 overflow-hidden transition-all duration-250" />
-              {/* Transcript */}
-              <div className="bg-surface-2 border border-border rounded-[12px] p-3 min-h-[50px] mb-4 text-[15px] text-text-1 leading-relaxed shadow-inset transition-all duration-250">
-                <span className="text-text-3 text-[13.5px] italic">Press the mic to start speaking…</span>
-              </div>
-              {/* Controls */}
-              <div className="flex items-center justify-center gap-3.5">
-                <button className="w-[42px] h-[42px] rounded-full border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:scale-[0.94]">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="M7 9h10M7 12h5M7 15h10" /></svg>
-                </button>
-                <button
-                  onClick={() => setMicLive((v) => !v)}
-                  className={[
-                    "w-16 h-16 rounded-full border flex items-center justify-center cursor-pointer transition-all duration-150",
-                    micLive
-                      ? "border-[color-mix(in_srgb,var(--error)_60%,var(--accent-dim))] bg-gradient-to-b from-[#F87171] to-[#DC4545] text-white shadow-[0_1px_0_rgba(255,255,255,0.2)_inset] animate-[mic-ring_1.4s_ease-in-out_infinite]"
-                      : "text-white hover:brightness-110 active:brightness-[0.92] active:scale-[0.95]",
-                  ].join(" ")}
-                  style={micLive ? undefined : {
-                    background: "linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%)",
-                    border: "1px solid var(--accent-dim)",
-                    boxShadow: "0 1px 0 rgba(255,255,255,0.2) inset, 0 4px 18px color-mix(in srgb, var(--accent) 35%, transparent)",
-                  }}
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
-                </button>
-                <button className="w-[42px] h-[42px] rounded-full border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:scale-[0.94]">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M9 6V4h6v2" /></svg>
-                </button>
+            <div className="max-w-[680px] mx-auto pt-3 pb-4">
+              <div className="w-9 h-[3px] rounded-sm bg-border-hi mx-auto mb-4" />
+              <div className="px-2">
+                <div className="font-serif text-xl text-text-1 px-4 mb-3">Voice Input Test</div>
+                <VoiceRecordingPane
+                  onDone={() => setSheetOpen(false)}
+                  onTranslate={() => setSheetOpen(false)}
+                  onClose={() => setSheetOpen(false)}
+                />
               </div>
             </div>
           </div>

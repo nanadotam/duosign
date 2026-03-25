@@ -14,6 +14,11 @@ Example:
 Author: Nana Kwaku Amoako
 """
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .vocabulary import VocabularyManager
+
 # All 26 letters of the ASL manual alphabet
 MANUAL_ALPHABET: frozenset[str] = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
@@ -84,3 +89,36 @@ def expand_tokens(tokens: list[str]) -> list[str]:
         else:
             expanded.append(token)
     return expanded
+
+
+def resolve_tokens(tokens: list[str], vocab: "VocabularyManager | None" = None) -> list[str]:
+    """
+    Normalize a gloss token list into concrete signable units.
+
+    Rules:
+      1. Expand hyphenated fingerspelling: N-A-N-A -> N A N A
+      2. Keep known glosses as-is
+      3. Force unknown alphabetic tokens into manual alphabet letters
+
+    This is the "foolproof" fallback used by the API response layer so
+    the frontend never has to guess whether NETFLIX should be fetched as
+    one asset or signed letter-by-letter.
+    """
+    resolved: list[str] = []
+
+    for token in expand_tokens(tokens):
+        normalized = token.upper().strip()
+        if not normalized:
+            continue
+
+        if vocab is None or vocab.has(normalized):
+            resolved.append(normalized)
+            continue
+
+        letters = fingerspell_word(normalized)
+        if letters:
+            resolved.extend(letters)
+        else:
+            resolved.append(normalized)
+
+    return resolved

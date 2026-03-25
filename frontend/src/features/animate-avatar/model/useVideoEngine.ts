@@ -18,7 +18,8 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { VRM } from "@pixiv/three-vrm";
 import type { AvatarDebugStats, ViewMode } from "@/entities/avatar/types";
-import { rigUpperBody, rigHands, rigFace, resetPose } from "../lib/vrmRigger";
+import { rigUpperBody, rigHands, rigFace, resetPose, lerpToRestPose, setRenderVRM } from "../lib/vrmRigger";
+import { enhanceHandWithSpread } from "../lib/fingerSpread";
 import {
   fetchVideoBlobUrl,
   prefetchVideos,
@@ -160,6 +161,11 @@ export function useVideoEngine({
   const speedRef = useRef(1);
   const framesProcessedRef = useRef(0);
   const fpsStartRef = useRef(0);
+  // Monotonicity guard: detectForVideo() requires timestamps to be strictly
+  // increasing. On some platforms performance.now() can return the same value
+  // twice (or even go backward during system sleep). This ref tracks the last
+  // timestamp passed to detectForVideo and ensures we always advance by ≥1ms.
+  const lastDetectTimestampRef = useRef(-1);
 
   // Refs for latest values (avoids stale closures in rAF loop)
   const vrmRef = useRef(vrm);
@@ -212,8 +218,13 @@ export function useVideoEngine({
     const startTime = performance.now();
 
     try {
-      // detectForVideo is SYNCHRONOUS — no callback needed
-      const result = landmarker.detectForVideo(video, performance.now());
+      // detectForVideo is SYNCHRONOUS — no callback needed.
+      // Guarantee strict monotonic timestamps — MediaPipe throws if the same
+      // timestamp is passed twice (can happen on fast loops or some platforms).
+      const detectNow = performance.now();
+      const timestamp = Math.max(detectNow, lastDetectTimestampRef.current + 1);
+      lastDetectTimestampRef.current = timestamp;
+      const result = landmarker.detectForVideo(video, timestamp);
 
       const faceLandmarks = result.faceLandmarks?.[0];
       // poseWorldLandmarks = 3D landmarks (replaces old results.ea)
@@ -251,10 +262,11 @@ export function useVideoEngine({
 
       // Left Hand
       if (leftHandLandmarks && riggedPose) {
-        const riggedLeftHand = Kalidokit.Hand.solve(
-          leftHandLandmarks,
-          "Left"
-        );
+        const rawLeftHand = Kalidokit.Hand.solve(leftHandLandmarks, "Left");
+        // Augment with Y-axis spread from raw landmarks (partial Kalidokit mitigation)
+        const riggedLeftHand = rawLeftHand
+          ? enhanceHandWithSpread(rawLeftHand, leftHandLandmarks, "Left")
+          : null;
         if (riggedLeftHand) {
           rigHands(currentVrm, riggedLeftHand, null, riggedPose);
         }
@@ -262,10 +274,10 @@ export function useVideoEngine({
 
       // Right Hand
       if (rightHandLandmarks && riggedPose) {
-        const riggedRightHand = Kalidokit.Hand.solve(
-          rightHandLandmarks,
-          "Right"
-        );
+        const rawRightHand = Kalidokit.Hand.solve(rightHandLandmarks, "Right");
+        const riggedRightHand = rawRightHand
+          ? enhanceHandWithSpread(rawRightHand, rightHandLandmarks, "Right")
+          : null;
         if (riggedRightHand) {
           rigHands(currentVrm, null, riggedRightHand, riggedPose);
         }
@@ -443,9 +455,11 @@ export function useVideoEngine({
             await new Promise((r) => setTimeout(r, 400));
           }
 
-          // Brief pause between signs (50ms transition gap)
-          if (playingRef.current && i < glosses.length - 1) {
-            await new Promise((r) => setTimeout(r, 50));
+          // Brief pause between signs with rest pose interpolation
+          if (playingRef.current && i < glosses.length - 1 && vrm) {
+            await new Promise<void>((resolve) => {
+              lerpToRestPose(vrm, 3, () => setTimeout(resolve, 20));
+            });
           }
         }
 
@@ -492,6 +506,13 @@ export function useVideoEngine({
     speedRef.current = speed;
     if (videoRef.current) videoRef.current.playbackRate = speed;
   }, []);
+
+  // Register VRM with the global render registry so useAvatarRenderer can
+  // call vrm.update(delta) for spring physics (hair, cloth) every frame.
+  useEffect(() => {
+    setRenderVRM(vrm);
+    return () => { setRenderVRM(null); };
+  }, [vrm]);
 
   // Cleanup on unmount
   useEffect(() => {

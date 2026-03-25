@@ -7,6 +7,7 @@ import GuestBanner from "@/widgets/guest-banner/GuestBanner";
 import GlossChip from "@/shared/ui/GlossChip";
 import { ToastProvider } from "@/shared/ui/Toast";
 import { useHistory } from "@/shared/hooks/useHistory";
+import { useGuestLimit } from "@/shared/hooks/useGuestLimit";
 import type { HistoryEntry } from "@/shared/hooks/useHistory";
 
 
@@ -48,6 +49,7 @@ function TypeIcon({ type }: { type: "typed" | "voiced" | "api" }) {
 export default function HistoryPage() {
   const router = useRouter();
   const { deleteEntry, markExported, getFiltered, stats } = useHistory();
+  const { isAuthenticated, remaining } = useGuestLimit();
 
   const [expandedId, setExpandedId]   = useState<string | null>(null);
   const [activeDate, setActiveDate]   = useState("All Time");
@@ -107,7 +109,7 @@ export default function HistoryPage() {
     <ToastProvider>
       <div className="min-h-screen flex flex-col">
         <NavigationBar />
-        <GuestBanner remaining={3} />
+        {!isAuthenticated && <GuestBanner remaining={remaining} />}
         <main className="flex-1 grid grid-cols-[280px_1fr] max-w-[1300px] w-full mx-auto p-5 gap-[18px]">
 
           {/* ═══ FILTER SIDEBAR ═══ */}

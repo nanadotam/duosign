@@ -309,7 +309,7 @@ export default function LandingPage() {
               { icon: "code", name: "REST API", desc: "POST English text, get back ASL gloss arrays and pose sequences. Simple JSON interface, fast response times.", orange: true },
               { icon: "chat", name: "Translation History", desc: "Every translation is logged with timestamps, source type, and replay. Filter by voice or typed input at a glance." },
               { icon: "globe", name: "2,000+ Signs", desc: "WLASL lexicon with 2,000+ ASL glosses, enriched with ASL-LEX phonological similarity data for intelligent fallback.", orange: true },
-              { icon: "user", name: "Guest Access", desc: "Jump in without an account. Guests get 10 free translations per session — sign up for unlimited access." },
+              { icon: "user", name: "Guest Access", desc: "Jump in without an account. Guests get 3 free translations per session — sign up for unlimited access." },
             ].map((f, i) => (
               <div key={f.name} className="l-feat-card l-reveal" style={{ transitionDelay: `${0.05 + i * 0.05}s` }}>
                 <div className={`l-feat-icon${f.orange ? " orange" : ""}`}>

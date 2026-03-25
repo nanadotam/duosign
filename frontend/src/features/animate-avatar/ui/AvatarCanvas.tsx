@@ -15,14 +15,24 @@ import { useAvatarRenderer } from "../model/useAvatarRenderer";
 import { useVRM } from "../model/useVRM";
 import { usePosePlayer } from "../model/usePosePlayer";
 import { useVideoEngine } from "../model/useVideoEngine";
-import type { ViewMode, AvatarDebugStats, AvatarDisplayMode } from "@/entities/avatar/types";
+import { syncRigSpeed } from "../lib/rigConfigSync";
+import { useSettings } from "@/shared/hooks/useSettings";
+import { BoneDebugOverlay } from "./BoneDebugOverlay";
+import type {
+  ViewMode,
+  AvatarDebugStats,
+  AvatarDisplayMode,
+  PlaybackState,
+} from "@/entities/avatar/types";
 
 interface AvatarCanvasProps {
   viewMode: ViewMode;
   avatarPath: string;
   glossSequence: string[];
-  isPlaying: boolean;
+  playbackState: PlaybackState;
   renderMode: AvatarDisplayMode;
+  /** Playback speed multiplier (0.5 | 1 | 1.5 | 2) from the speed cycle button */
+  speed?: number;
   onDebugStats?: (stats: AvatarDebugStats) => void;
   onViewModeChange?: (mode: ViewMode) => void;
   /** Fires once — after Three.js canvas exists AND VRM has fully loaded */
@@ -36,8 +46,9 @@ export default function AvatarCanvas({
   viewMode,
   avatarPath,
   glossSequence,
-  isPlaying,
+  playbackState,
   renderMode = "avatar",
+  speed = 1,
   onDebugStats,
   onCanvasReady,
   onPlaybackComplete,
@@ -45,6 +56,7 @@ export default function AvatarCanvas({
 }: AvatarCanvasProps) {
   const canvasReadyFiredRef = useRef(false);
   const engineWasPlayingRef = useRef(false);
+  const { settings } = useSettings();
   const {
     containerRef,
     scene,
@@ -78,6 +90,22 @@ export default function AvatarCanvas({
   // Pick active engine based on render mode
   const activeEngine = renderMode === "avatar" ? videoEngine : posePlayer;
 
+  // Sync animation speed from settings into the rig config whenever it changes
+  useEffect(() => {
+    syncRigSpeed(settings.animationSpeed);
+  }, [settings.animationSpeed]);
+
+  // Sync speed from playback bar cycle button into both engines
+  useEffect(() => {
+    videoEngine.setSpeed(speed);
+    syncRigSpeed(speed * 100);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [speed]);
+
+  const debugBonesEnabled =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("debug") === "bones";
+
   // Fire onCanvasReady once BOTH the Three.js canvas exists AND the VRM is loaded.
   // Waiting for vrm prevents starting recording while the avatar is in T-pose.
   useEffect(() => {
@@ -94,12 +122,11 @@ export default function AvatarCanvas({
   // Detect when the engine finishes playing naturally (sequence complete)
   useEffect(() => {
     if (!onPlaybackComplete) return;
-    if (engineWasPlayingRef.current && !activeEngine.isPlaying && isPlaying) {
-      // Engine stopped on its own while parent still thinks we're playing
+    if (engineWasPlayingRef.current && !activeEngine.isPlaying && playbackState === "playing") {
       onPlaybackComplete();
     }
     engineWasPlayingRef.current = activeEngine.isPlaying;
-  }, [activeEngine.isPlaying, isPlaying, onPlaybackComplete]);
+  }, [activeEngine.isPlaying, onPlaybackComplete, playbackState]);
 
   // Sync view mode from parent
   useEffect(() => {
@@ -115,12 +142,16 @@ export default function AvatarCanvas({
 
   // Handle playback trigger
   useEffect(() => {
-    if (isPlaying && glossSequence.length > 0 && vrm && !activeEngine.isPlaying) {
+    if (playbackState === "playing" && glossSequence.length > 0 && vrm && !activeEngine.isPlaying) {
       activeEngine.playSequence(glossSequence);
-    } else if (!isPlaying && activeEngine.isPlaying) {
+    } else if (playbackState === "paused" && activeEngine.isPlaying && !activeEngine.isPaused) {
+      activeEngine.pause();
+    } else if (playbackState === "playing" && activeEngine.isPlaying && activeEngine.isPaused) {
+      activeEngine.resume();
+    } else if ((playbackState === "idle" || playbackState === "complete") && activeEngine.isPlaying) {
       activeEngine.stop();
     }
-  }, [isPlaying, glossSequence, vrm, activeEngine]);
+  }, [activeEngine, glossSequence, playbackState, vrm]);
 
   return (
     <div
@@ -148,6 +179,9 @@ export default function AvatarCanvas({
           </div>
         </div>
       )}
+
+      {/* Bone debug overlay — enabled by ?debug=bones */}
+      <BoneDebugOverlay vrm={vrm} enabled={debugBonesEnabled} />
     </div>
   );
 }

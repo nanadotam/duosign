@@ -10,6 +10,8 @@ import DebugStats from "@/features/translate-text/ui/DebugStats";
 import type { GlossToken } from "@/entities/gloss/types";
 import type { DebugInfo } from "@/features/translate-text/ui/DebugStats";
 
+type PipelineDisplayPhase = "idle" | "translating" | "waiting_for_llm" | "rule_based" | "llm_quality";
+
 interface InputPanelProps {
   inputText: string;
   onInputChange: (text: string) => void;
@@ -25,6 +27,12 @@ interface InputPanelProps {
   onVoiceTranslate?: (text: string) => void;
   glossText?: string;
   debugInfo?: DebugInfo | null;
+  pipelinePhase?: PipelineDisplayPhase;
+  pipelineTokenCount?: number;
+  isSigning?: boolean;
+  isOnline?: boolean;
+  showGloss?: boolean;
+  autoPaste?: boolean;
 }
 
 // TODO: Guest User - Input English text (up to 500 characters) and receive a corresponding ASL avatar animation.
@@ -43,6 +51,12 @@ export default function InputPanel({
   onVoiceTranslate,
   glossText = "",
   debugInfo = null,
+  pipelinePhase = "idle",
+  pipelineTokenCount = 0,
+  isSigning = false,
+  isOnline = true,
+  showGloss = true,
+  autoPaste = false,
 }: InputPanelProps) {
   const [micActive, setMicActive] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -86,6 +100,7 @@ export default function InputPanel({
           ref={textareaRef}
           value={inputText}
           onChange={handleInput}
+          onPaste={autoPaste ? () => { setTimeout(() => onTranslate(), 0); } : undefined}
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
               e.preventDefault();
@@ -179,13 +194,71 @@ export default function InputPanel({
         </div>
       )}
 
+      {/* Pipeline Status Strip — desktop only */}
+      {(pipelinePhase !== "idle" || !isOnline) && (
+        <div className="hidden lg:flex items-center gap-2.5 px-4 py-2 border-t border-border bg-surface-2/40 transition-all duration-200">
+          {/* Offline badge — always visible when disconnected */}
+          {!isOnline && (
+            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-semibold tracking-[0.04em] flex-shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Offline
+            </span>
+          )}
+
+          {pipelinePhase === "translating" && (
+            <>
+              <div className="w-2.5 h-2.5 border-[1.5px] border-accent border-t-transparent rounded-full animate-[spin_0.7s_linear_infinite] flex-shrink-0" />
+              <span className="text-[11px] text-text-2 font-medium">
+                {isOnline ? "Translating…" : "Translating (offline — rule-based only)…"}
+              </span>
+            </>
+          )}
+
+          {pipelinePhase === "waiting_for_llm" && (
+            <>
+              <div className="w-2.5 h-2.5 border-[1.5px] border-accent border-t-transparent rounded-full animate-[spin_0.7s_linear_infinite] flex-shrink-0" />
+              <span className="text-[11px] text-text-2 font-medium">AI enhancing…</span>
+              <span className="text-[10px] text-text-3 font-mono">rule-based ready, waiting for model</span>
+            </>
+          )}
+
+          {pipelinePhase === "rule_based" && (
+            <>
+              <div className="w-2 h-2 rounded-full bg-teal-400 flex-shrink-0 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
+              <span className="text-[11px] text-text-2 font-medium">
+                Rule-based · {pipelineTokenCount} sign{pipelineTokenCount !== 1 ? "s" : ""}
+              </span>
+              {isSigning && (
+                <span className="ml-auto text-[11px] text-teal-400 font-semibold tracking-[0.02em] animate-pulse">
+                  Signing…
+                </span>
+              )}
+            </>
+          )}
+
+          {pipelinePhase === "llm_quality" && (
+            <>
+              <div className="w-2 h-2 rounded-full bg-accent flex-shrink-0 shadow-[0_0_6px_var(--accent-glow)]" />
+              <span className="text-[11px] text-text-2 font-medium">
+                AI-enhanced · {pipelineTokenCount} sign{pipelineTokenCount !== 1 ? "s" : ""}
+              </span>
+              {isSigning && (
+                <span className="ml-auto text-[11px] text-accent font-semibold tracking-[0.02em] animate-pulse">
+                  Signing…
+                </span>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       {/* Gloss Display — scramble animation — desktop only */}
       <div className="hidden lg:block">
         <GlossDisplay glossText={glossText} />
       </div>
 
-      {/* Gloss Strip — token chips — desktop only */}
-      <div className="hidden lg:block px-4 py-3 border-t border-border transition-colors duration-250">
+      {/* Gloss Strip — token chips — desktop only, hidden when showGloss is false */}
+      <div className={showGloss ? "hidden lg:block px-4 py-3 border-t border-border transition-colors duration-250" : "hidden"}>
         <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-2 transition-colors duration-250">
           Gloss Tokens
         </div>

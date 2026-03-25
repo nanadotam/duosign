@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useTheme } from "@/shared/hooks/useTheme";
 import SegmentedControl from "@/shared/ui/SegmentedControl";
 import Button from "@/shared/ui/Button";
+import { useSession } from "@/lib/auth-client";
 
 const NAV_ITEMS = [
   { label: "Translate", href: "/translate" },
@@ -18,6 +19,8 @@ export default function NavigationBar() {
   const pathname = usePathname();
   const { isDark, toggle } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { data: session, isPending } = useSession();
+  const isAuthenticated = Boolean(session?.user);
 
   const activeTab = NAV_ITEMS.find((item) => pathname.startsWith(item.href))?.label ?? "Translate";
 
@@ -64,12 +67,16 @@ export default function NavigationBar() {
               <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
             </svg>
           </button>
-          <Link href="/auth/login">
-            <Button variant="ghost" size="md">Log In</Button>
-          </Link>
-          <Link href="/auth/register">
-            <Button variant="primary" size="md">Sign Up Free</Button>
-          </Link>
+          {!isPending && !isAuthenticated && (
+            <>
+              <Link href="/auth/login">
+                <Button variant="ghost" size="md">Log In</Button>
+              </Link>
+              <Link href="/auth/register">
+                <Button variant="primary" size="md">Sign Up Free</Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -124,14 +131,16 @@ export default function NavigationBar() {
             >
               {isDark ? "☀️ Light Mode" : "🌙 Dark Mode"}
             </button>
-            <div className="mt-auto flex flex-col gap-2">
-              <Link href="/auth/login" onClick={() => setDrawerOpen(false)}>
-                <Button variant="ghost" size="lg" className="w-full">Log In</Button>
-              </Link>
-              <Link href="/auth/register" onClick={() => setDrawerOpen(false)}>
-                <Button variant="primary" size="lg" className="w-full">Sign Up Free</Button>
-              </Link>
-            </div>
+            {!isPending && !isAuthenticated && (
+              <div className="mt-auto flex flex-col gap-2">
+                <Link href="/auth/login" onClick={() => setDrawerOpen(false)}>
+                  <Button variant="ghost" size="lg" className="w-full">Log In</Button>
+                </Link>
+                <Link href="/auth/register" onClick={() => setDrawerOpen(false)}>
+                  <Button variant="primary" size="lg" className="w-full">Sign Up Free</Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}

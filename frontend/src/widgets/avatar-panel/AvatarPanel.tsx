@@ -14,6 +14,7 @@ import type {
 } from "@/entities/avatar/types";
 
 import { useLoading } from "@/shared/providers/LoadingProvider";
+import { useSettings } from "@/shared/hooks/useSettings";
 
 // Pronoun tokens -> actual sign file names that exist in the bucket.
 // Covers both raw IX markers (if they slip through) and display forms
@@ -26,6 +27,17 @@ const IX_TO_SIGN: Record<string, string> = {
   "IX-3+": "THEY",
   "HE/SHE": "SHE",  // IX_DISPLAY maps IX-3 → "HE/SHE" which breaks URLs
 };
+
+function expandGlossSequence(glosses: string[]): string[] {
+  return glosses.flatMap((gloss) => {
+    const upper = gloss.toUpperCase().replace(/\s+/g, "_");
+    if (upper.startsWith("IX-")) return [upper];
+
+    const parts = upper.split("-");
+    const isFingerToken = parts.length > 1 && parts.every((part) => part.length === 1 && /^[A-Z]$/.test(part));
+    return isFingerToken ? parts : [upper];
+  });
+}
 
 // Dynamic imports for Three.js components (avoid SSR)
 const LoadingOverlay = dynamic(
@@ -62,6 +74,8 @@ interface AvatarPanelProps {
   displayMode?: AvatarDisplayMode;
   onDisplayModeChange?: (mode: AvatarDisplayMode) => void;
   onExport?: () => void;
+  onActiveGlossChange?: (index: number) => void;
+  onPlaybackComplete?: () => void;
 }
 
 const VIEW_MODE_LABELS: Record<ViewMode, string> = {
@@ -84,16 +98,25 @@ export default function AvatarPanel({
   displayMode = "avatar",
   onDisplayModeChange,
   onExport,
+  onActiveGlossChange,
+  onPlaybackComplete,
 }: AvatarPanelProps) {
+  const { overallReady } = useLoading();
+  const { settings, updateSetting } = useSettings();
+
   const handleExport = useCallback(() => {
     onExport?.();
   }, [onExport]);
   const [viewMode, setViewMode] = useState<ViewMode>("interpreter");
   const isSkeleton = displayMode === "skeleton";
-  const [currentModel, setCurrentModel] = useState<AvatarModel>(AVATAR_MODELS[0]);
+  const [currentModel, setCurrentModel] = useState<AvatarModel>(
+    () => AVATAR_MODELS.find((m) => m.id === settings.avatarModelId) ?? AVATAR_MODELS[0]
+  );
   const [showStats, setShowStats] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const prevGlossKeyRef = useRef<string>("");
   const [debugStats, setDebugStats] = useState<AvatarDebugStats>({
     fps: 0,
     frameIndex: 0,
@@ -109,8 +132,6 @@ export default function AvatarPanel({
     totalGlosses: 0,
     currentGlossIndex: 0,
   });
-
-  const { overallReady } = useLoading();
   const panelRef = useRef<HTMLDivElement>(null);
   const isLive = playbackState === "playing";
   const isReady = hasTokens;
@@ -158,18 +179,37 @@ export default function AvatarPanel({
     setDebugStats(stats);
   }, []);
 
+  useEffect(() => {
+    if (!debugStats.currentGloss || !onActiveGlossChange) return;
+    onActiveGlossChange(debugStats.currentGlossIndex);
+  }, [debugStats.currentGloss, debugStats.currentGlossIndex, onActiveGlossChange]);
+
   const handleModelSelect = useCallback((model: AvatarModel) => {
     setCurrentModel(model);
-  }, []);
+    updateSetting("avatarModelId", model.id);
+  }, [updateSetting]);
 
   // Map IX pronoun markers to actual sign file names, then normalize
   const glossNames = useMemo(
-    () => glossSequence.map((g) => {
+    () => expandGlossSequence(glossSequence).map((g) => {
       const upper = g.toUpperCase().replace(/\s+/g, "_");
       return IX_TO_SIGN[upper] ?? upper;
     }),
     [glossSequence]
   );
+
+  // Fade-out → fade-in transition whenever a new gloss sequence arrives
+  useEffect(() => {
+    const key = glossNames.join(",");
+    if (!prevGlossKeyRef.current || key === prevGlossKeyRef.current) {
+      prevGlossKeyRef.current = key;
+      return;
+    }
+    prevGlossKeyRef.current = key;
+    setIsTransitioning(true);
+    const t = setTimeout(() => setIsTransitioning(false), 350);
+    return () => clearTimeout(t);
+  }, [glossNames]);
 
   return (
     <div
@@ -259,18 +299,27 @@ export default function AvatarPanel({
         </div>
       )}
 
-      {/* Avatar Canvas Area */}
+      {/* Avatar Canvas Area — locked to 4:3 so the avatar scales proportionally like an interpreter box */}
       <div
-        className="flex-1 flex items-center justify-center relative overflow-hidden transition-all duration-250"
+        className={[
+          "w-full relative overflow-hidden transition-all duration-250",
+          isFullscreen ? "flex-1" : "aspect-[4/3]",
+        ].join(" ")}
         style={{
-          background: "var(--av-glow), var(--surface)",
-          minHeight: isFullscreen ? "100vh" : "min(50dvh, 55vh)",
+          background: {
+            "Transparent": "var(--av-glow), var(--surface)",
+            "Studio White": "linear-gradient(160deg, #f8f8f8 0%, #efefef 100%)",
+            "Studio Grey": "linear-gradient(160deg, #5a5a5a 0%, #3d3d3d 100%)",
+            "Dark Stage": "linear-gradient(160deg, #1a1a1a 0%, #0d0d0d 100%)",
+            "Gradient Blue": "linear-gradient(160deg, #0f1b2d 0%, #1a3a5c 50%, #0a0f1a 100%)",
+          }[settings.avatarBackground] ?? "var(--av-glow), var(--surface)",
         }}
       >
-        {/* Grid Background */}
+        {/* Grid Background — only shown for Transparent mode */}
         <div
           className="absolute inset-0 transition-opacity duration-250"
           style={{
+            opacity: settings.avatarBackground === "Transparent" ? 1 : 0,
             backgroundImage:
               "linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px)",
             backgroundSize: "30px 30px",
@@ -283,21 +332,32 @@ export default function AvatarPanel({
         {!overallReady && <LoadingOverlay />}
 
         {/* Canvas — either Three.js avatar or 2D skeleton */}
-        <div className="absolute inset-0 z-[1]">
+        <div
+          className="absolute inset-0 z-[1]"
+          style={{
+            opacity: isTransitioning ? 0 : 1,
+            transition: isTransitioning
+              ? "opacity 180ms ease-out"
+              : "opacity 220ms ease-in",
+          }}
+        >
           {isSkeleton ? (
             <SkeletonCanvas
               glossSequence={glossNames}
-              isPlaying={isLive}
+              playbackState={playbackState}
               onDebugStats={handleDebugStats}
+              onPlaybackComplete={onPlaybackComplete}
             />
           ) : (
             <AvatarCanvas
               viewMode={viewMode}
               avatarPath={currentModel.path}
               glossSequence={glossNames}
-              isPlaying={isLive}
+              playbackState={playbackState}
               renderMode={displayMode}
+              speed={speed}
               onDebugStats={handleDebugStats}
+              onPlaybackComplete={onPlaybackComplete}
             />
           )}
         </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, createContext, useContext, useCallback, ReactNode } from "react";
 
-type ToastType = "success" | "error";
+export type ToastType = "success" | "error" | "info";
 
 interface Toast {
   id: string;
@@ -53,7 +53,10 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
     return () => { clearTimeout(timer); clearTimeout(removeTimer); };
   }, [toast.id, onRemove]);
 
-  const iconColor = toast.type === "success" ? "text-success" : "text-error";
+  const iconColor =
+    toast.type === "success" ? "text-success" :
+    toast.type === "info" ? "text-accent" :
+    "text-error";
 
   return (
     <div
@@ -69,6 +72,12 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
             <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+        ) : toast.type === "info" ? (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="16" x2="12" y2="12" />
+            <line x1="12" y1="8" x2="12.01" y2="8" />
           </svg>
         ) : (
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
