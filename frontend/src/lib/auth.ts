@@ -7,6 +7,11 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 8,
   },
+  user: {
+    deleteUser: {
+      enabled: true,
+    },
+  },
   trustedOrigins: [
     "https://duosign.vercel.app",
     "http://localhost:3000",

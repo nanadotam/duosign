@@ -22,15 +22,19 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     setAuthError(null);
-    const { error } = await signIn.email({
-      email: data.email,
-      password: data.password,
-      callbackURL: "/translate",
-    });
-    if (error) {
-      setAuthError(error.message ?? "Invalid email or password.");
-    } else {
-      router.push("/translate");
+    try {
+      const { error } = await signIn.email({
+        email: data.email,
+        password: data.password,
+        callbackURL: "/translate",
+      });
+      if (error) {
+        setAuthError(error.message ?? "Invalid email or password.");
+      } else {
+        router.push("/translate");
+      }
+    } catch {
+      setAuthError("Sign-in is unavailable right now. Check your auth URL and try again.");
     }
   };
 
