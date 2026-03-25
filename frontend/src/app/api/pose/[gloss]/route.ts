@@ -7,13 +7,14 @@ import path from "path";
  * GET /api/pose/[gloss]
  *
  * Serves binary .pose files from the bucket directory.
- * Falls back to poses-backup/ if primary not found.
+ * Priority: poses_v3 (contour-only, 60% smaller) → poses → poses-backup
  * Returns 404 if no pose file exists for the gloss.
  */
 
-const BUCKET_DIR = path.join(process.cwd(), "..", "bucket");
-const POSES_DIR = path.join(BUCKET_DIR, "poses");
-const BACKUP_DIR = path.join(BUCKET_DIR, "poses-backup");
+const BUCKET_DIR  = path.join(process.cwd(), "..", "bucket");
+const POSES_V3    = path.join(BUCKET_DIR, "poses_v3");
+const POSES_DIR   = path.join(BUCKET_DIR, "poses");
+const BACKUP_DIR  = path.join(BUCKET_DIR, "poses-backup");
 
 export async function GET(
   _request: NextRequest,
@@ -22,7 +23,8 @@ export async function GET(
   const gloss = decodeURIComponent(params.gloss).toUpperCase().replace(/\s+/g, "_");
 
   const candidates = [
-    path.join(POSES_DIR, `${gloss}.pose`),
+    path.join(POSES_V3,   `${gloss}.pose`),      // contour-only, 60% smaller
+    path.join(POSES_DIR,  `${gloss}.pose`),       // original full mesh fallback
     path.join(BACKUP_DIR, `${gloss}_2.pose`),
     path.join(BACKUP_DIR, `${gloss}_3.pose`),
   ];
