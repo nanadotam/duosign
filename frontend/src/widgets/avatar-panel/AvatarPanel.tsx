@@ -89,8 +89,7 @@ export default function AvatarPanel({
   playbackState,
   speed,
   onTogglePlay,
-  onPrev,
-  onNext,
+
   onReplay,
   onCycleSpeed,
   hasTokens,
@@ -209,7 +208,7 @@ export default function AvatarPanel({
       className={[
         "bg-surface border border-border rounded-panel",
         "shadow-[var(--raised),inset_0_1px_0_rgba(255,255,255,0.045)]",
-        "flex flex-col overflow-hidden transition-all duration-250 self-start",
+        "flex flex-col overflow-hidden transition-all duration-250 self-start w-full",
         isFullscreen ? "!fixed !inset-0 !z-50 !rounded-none !border-none" : "",
       ].join(" ")}
     >
