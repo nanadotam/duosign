@@ -7,6 +7,8 @@ import AvatarPanel from "@/widgets/avatar-panel/AvatarPanel";
 import RecentTranslations from "@/widgets/recent-translations/RecentTranslations";
 import { ToastProvider } from "@/shared/ui/Toast";
 import { LoadingProvider } from "@/shared/providers/LoadingProvider";
+import { TestingModeProvider, useTestingMode } from "@/features/testing-mode";
+import TestingModeOverlay from "@/features/testing-mode/ui/TestingModeOverlay";
 import dynamic from "next/dynamic";
 
 const ExportVideoModal = dynamic(
@@ -33,7 +35,9 @@ export default function TranslatePage() {
   return (
     <LoadingProvider>
       <ToastProvider>
-        <TranslatePageContent />
+        <TestingModeProvider>
+          <TranslatePageContent />
+        </TestingModeProvider>
       </ToastProvider>
     </LoadingProvider>
   );
@@ -43,6 +47,7 @@ export default function TranslatePage() {
 function TranslatePageContent() {
   const { settings } = useSettings();
   const { showToast } = useToast();
+  const { isTestingMode, session: testingSession, trackEvent, incrementTranslations } = useTestingMode();
   const [displayMode, setDisplayMode] = useState<AvatarDisplayMode>("avatar");
   const [showExportModal, setShowExportModal] = useState(false);
   const searchParams = useSearchParams();
@@ -53,6 +58,8 @@ function TranslatePageContent() {
   const { data: session } = useSession();
   const isAuthenticated = Boolean(session?.user);
   const { remaining: guestRemaining, consume } = useGuestLimit();
+  const [voiceInputUsed, setVoiceInputUsed] = useState(false);
+  const [firstTranslationDone, setFirstTranslationDone] = useState(false);
 
   // ─── Network connectivity detection ────────────────────────────────────────
   const [isOnline, setIsOnline] = useState(
@@ -158,9 +165,12 @@ function TranslatePageContent() {
 
     reset();
     pendingPlayRef.current = { text, type };
+    if (isTestingMode) {
+      trackEvent("translation_requested", { input_length: text.length, feature: type === "voiced" ? "voice_input" : "text_input" });
+    }
     void translate(settings.translationEngine, text);
     return true;
-  }, [consume, isAuthenticated, reset, settings.translationEngine, showToast, translate]);
+  }, [consume, isAuthenticated, reset, settings.translationEngine, showToast, translate, isTestingMode, trackEvent]);
 
   const handleOpenExport = useCallback(() => {
     if (lastHistoryEntryIdRef.current) {
@@ -215,6 +225,11 @@ function TranslatePageContent() {
 
     const entry = addEntry(pendingPlay.text, glossTokens.map((t) => t.text), pendingPlay.type);
     lastHistoryEntryIdRef.current = entry.id;
+    if (isTestingMode) {
+      trackEvent("translation_completed", { token_count: glossTokens.length });
+      incrementTranslations();
+      setFirstTranslationDone(true);
+    }
     play();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [glossTokens, translationPhase]);
@@ -230,6 +245,11 @@ function TranslatePageContent() {
 
     const entry = addEntry(pendingPlay.text, glossTokens.map((t) => t.text), pendingPlay.type);
     lastHistoryEntryIdRef.current = entry.id;
+    if (isTestingMode) {
+      trackEvent("translation_completed", { token_count: glossTokens.length });
+      incrementTranslations();
+      setFirstTranslationDone(true);
+    }
     play();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTranslating]);
@@ -250,12 +270,20 @@ function TranslatePageContent() {
 
   const handleVoiceDone = useCallback((text: string) => {
     setInputText(text);
-  }, [setInputText]);
+    if (isTestingMode) {
+      trackEvent("voice_input_completed", { text_length: text.length });
+      setVoiceInputUsed(true);
+    }
+  }, [setInputText, isTestingMode, trackEvent]);
 
   const handleVoiceTranslate = useCallback((text: string) => {
     setInputText(text);
+    if (isTestingMode) {
+      trackEvent("voice_input_completed", { text_length: text.length });
+      setVoiceInputUsed(true);
+    }
     void attemptTranslate(text, "voiced");
-  }, [attemptTranslate, setInputText]);
+  }, [attemptTranslate, setInputText, isTestingMode, trackEvent]);
 
   // ─── Loop & keyboard shortcuts ─────────────────────────────────────────────
   const MAX_LOOPS = 3;
@@ -302,6 +330,16 @@ function TranslatePageContent() {
 
   return (
     <>
+      {/* ─── Testing Mode Overlay ──────────────────────────────────────────── */}
+      {isTestingMode && (
+        <TestingModeOverlay
+          translationsCount={testingSession?.translationsCount ?? 0}
+          isTranslating={isTranslating}
+          voiceInputUsed={voiceInputUsed}
+          firstTranslationDone={firstTranslationDone}
+        />
+      )}
+
       {showExportModal && glossTokens.length > 0 && (
         <ExportVideoModal
           glossSequence={glossTokens.map((t) => t.text)}
