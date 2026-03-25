@@ -115,8 +115,6 @@ export default function AvatarPanel({
   const [showStats, setShowStats] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const prevGlossKeyRef = useRef<string>("");
   const [debugStats, setDebugStats] = useState<AvatarDebugStats>({
     fps: 0,
     frameIndex: 0,
@@ -198,18 +196,6 @@ export default function AvatarPanel({
     [glossSequence]
   );
 
-  // Fade-out → fade-in transition whenever a new gloss sequence arrives
-  useEffect(() => {
-    const key = glossNames.join(",");
-    if (!prevGlossKeyRef.current || key === prevGlossKeyRef.current) {
-      prevGlossKeyRef.current = key;
-      return;
-    }
-    prevGlossKeyRef.current = key;
-    setIsTransitioning(true);
-    const t = setTimeout(() => setIsTransitioning(false), 350);
-    return () => clearTimeout(t);
-  }, [glossNames]);
 
   return (
     <div
@@ -217,7 +203,7 @@ export default function AvatarPanel({
       className={[
         "bg-surface border border-border rounded-panel",
         "shadow-[var(--raised),inset_0_1px_0_rgba(255,255,255,0.045)]",
-        "flex flex-col overflow-hidden transition-all duration-250",
+        "flex flex-col overflow-hidden transition-all duration-250 self-start",
         isFullscreen ? "!fixed !inset-0 !z-50 !rounded-none !border-none" : "",
       ].join(" ")}
     >
@@ -332,15 +318,7 @@ export default function AvatarPanel({
         {!overallReady && <LoadingOverlay />}
 
         {/* Canvas — either Three.js avatar or 2D skeleton */}
-        <div
-          className="absolute inset-0 z-[1]"
-          style={{
-            opacity: isTransitioning ? 0 : 1,
-            transition: isTransitioning
-              ? "opacity 180ms ease-out"
-              : "opacity 220ms ease-in",
-          }}
-        >
+        <div className="absolute inset-0 z-[1]">
           {isSkeleton ? (
             <SkeletonCanvas
               glossSequence={glossNames}
@@ -361,6 +339,7 @@ export default function AvatarPanel({
             />
           )}
         </div>
+
 
         {/* Stats for Nerds overlay */}
         <StatsForNerds stats={debugStats} visible={showStats} />

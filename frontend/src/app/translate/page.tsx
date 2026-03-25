@@ -111,6 +111,8 @@ function TranslatePageContent() {
     [setActiveIndex]
   );
 
+  const loopCountRef = useRef(0);
+
   const {
     state: playbackState,
     speed,
@@ -128,6 +130,11 @@ function TranslatePageContent() {
     onTokenChange: handleTokenChange,
     onComplete: handleComplete,
   });
+
+  // Reset loop counter whenever a new translation arrives
+  useEffect(() => {
+    loopCountRef.current = 0;
+  }, [glossTokens]);
 
   const attemptTranslate = useCallback(async (rawText: string, type: HistoryEntryType) => {
     const text = rawText.trim();
@@ -251,10 +258,14 @@ function TranslatePageContent() {
   }, [attemptTranslate, setInputText]);
 
   // ─── Loop & keyboard shortcuts ─────────────────────────────────────────────
+  const MAX_LOOPS = 3;
+
   const handlePlaybackComplete = useCallback(() => {
-    if (settings.loop) {
+    if (settings.loop && loopCountRef.current < MAX_LOOPS - 1) {
+      loopCountRef.current += 1;
       replay();
     } else {
+      loopCountRef.current = 0;
       complete();
       handleComplete();
     }
