@@ -91,6 +91,9 @@ export const HIPS_Y_OFFSET         = RIG_CONFIG.hipsYOffset;
 export const REST_POSE_SMOOTHING   = RIG_CONFIG.restPoseSmoothing;
 export const REST_POSE_FRAMES      = RIG_CONFIG.restPoseFrames;
 export const INTER_SIGN_SETTLE_MS  = RIG_CONFIG.interSignSettleMs;
+export const PALM_PRONATION_SCALE  = RIG_CONFIG.palmOrientation.pronationScale;
+export const HAND_DEPTH_SCALE      = RIG_CONFIG.handDepth.scale;
+export const HAND_DEPTH_CLAMP      = RIG_CONFIG.handDepth.clamp;
 
 // ── Utility ──────────────────────────────────────────────────────────
 

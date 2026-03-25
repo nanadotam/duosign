@@ -66,6 +66,9 @@ export const RIG_CONFIG = {
     dampener: 1.0,   // MUST remain 1.0 — ASL signs like MY/PLEASE/SORRY require full wrist rotation range
     lerp: 0.6,       // wrists respond faster — need to hit signing targets
   },
+  palmOrientation: {
+    pronationScale: 0.85,
+  },
   finger: {
     dampener: 1.0,   // MUST remain 1.0 — any reduction prevents closed-fist handshapes (A, S, E, etc.)
     lerp: 0.75,      // fingers snap quickly — handshapes are crisp in ASL
@@ -102,6 +105,10 @@ export const RIG_CONFIG = {
   proportionScale: {
     hipsWorldPosition: { x: 0.75, y: 0.75, z: 0.22 },
     armExtension: 0.92,
+  },
+  handDepth: {
+    scale: 0.35,
+    clamp: 0.4,
   },
 
   // Pose engine physics / timing
@@ -362,6 +369,15 @@ export function resetPose(vrm: VRM): void {
       node.quaternion.slerp(identity, 0.15);
     }
   }
+
+  const rightHand = vrm.humanoid?.getBoneNode(VRMSchema.HumanoidBoneName.RightHand);
+  const leftHand = vrm.humanoid?.getBoneNode(VRMSchema.HumanoidBoneName.LeftHand);
+  if (rightHand) {
+    rightHand.position.z = THREE.MathUtils.lerp(rightHand.position.z, 0, 0.15);
+  }
+  if (leftHand) {
+    leftHand.position.z = THREE.MathUtils.lerp(leftHand.position.z, 0, 0.15);
+  }
 }
 
 // ── Signing Rest Pose ────────────────────────────────────────────────
@@ -443,6 +459,15 @@ export function lerpToRestPose(
 
     for (const [boneName, pose] of Object.entries(SIGNING_REST_POSE)) {
       rigRotation(target, boneName, pose, 1.0, RIG_CONFIG.restPoseSmoothing);
+    }
+
+    const rightHand = target.humanoid?.getBoneNode(VRMSchema.HumanoidBoneName.RightHand);
+    const leftHand = target.humanoid?.getBoneNode(VRMSchema.HumanoidBoneName.LeftHand);
+    if (rightHand) {
+      rightHand.position.z = THREE.MathUtils.lerp(rightHand.position.z, 0, RIG_CONFIG.restPoseSmoothing);
+    }
+    if (leftHand) {
+      leftHand.position.z = THREE.MathUtils.lerp(leftHand.position.z, 0, RIG_CONFIG.restPoseSmoothing);
     }
 
     remaining--;

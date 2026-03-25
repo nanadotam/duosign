@@ -4,13 +4,21 @@ import { VRMSchema } from "@pixiv/three-vrm";
 import type { PoseFrameData } from "./poseReader";
 import {
   BONE_CLAMPS,
+  HAND_DEPTH_CLAMP,
+  HAND_DEPTH_SCALE,
   HIPS_Y_OFFSET,
+  PALM_PRONATION_SCALE,
   PROPORTION_SCALE,
   SMOOTHING,
   type BoneClamp,
 } from "./retargetConfig";
 import { FINGER_VRM_BONES } from "./fingerConfig";
-import { solveFingers, type FingerRotationMap, type Landmark3D } from "./fingerSolver";
+import {
+  solveFingers,
+  solvePalmOrientation,
+  type FingerRotationMap,
+  type Landmark3D,
+} from "./fingerSolver";
 import { enhanceHandWithSpread, type LandmarkPoint } from "./fingerSpread";
 import { syncAvatarDebugOverlay } from "../ui/AvatarDebugOverlay";
 
@@ -124,6 +132,12 @@ function scaleRotation(rotation: Rotation, scale: number): Rotation {
   };
 }
 
+function lerpHandDepth(vrm: VRM, boneName: "rightHand" | "leftHand", targetZ: number): void {
+  const bone = getBoneNode(vrm, boneName);
+  if (!bone) return;
+  bone.position.z = THREE.MathUtils.lerp(bone.position.z, targetZ, SMOOTHING.hand);
+}
+
 function applyFingers(
   vrm: VRM,
   landmarks: Landmark3D[],
@@ -207,6 +221,28 @@ export function applyPoseToVRM(
         );
       }
 
+      if (frame.poseWorldLandmarks) {
+        const worldLandmarks = frame.poseWorldLandmarks;
+        const rightWristWorld = worldLandmarks[16];
+        const rightShoulderWorld = worldLandmarks[12];
+        if (rightWristWorld && rightShoulderWorld) {
+          const rawDepth = (rightWristWorld.z - rightShoulderWorld.z) * HAND_DEPTH_SCALE;
+          const clampedDepth = clamp(rawDepth, -HAND_DEPTH_CLAMP, HAND_DEPTH_CLAMP);
+          lerpHandDepth(vrm, "rightHand", clampedDepth);
+        }
+
+        const leftWristWorld = worldLandmarks[15];
+        const leftShoulderWorld = worldLandmarks[11];
+        if (leftWristWorld && leftShoulderWorld) {
+          const rawDepth = (leftWristWorld.z - leftShoulderWorld.z) * HAND_DEPTH_SCALE;
+          const clampedDepth = clamp(rawDepth, -HAND_DEPTH_CLAMP, HAND_DEPTH_CLAMP);
+          lerpHandDepth(vrm, "leftHand", clampedDepth);
+        }
+      } else {
+        lerpHandDepth(vrm, "rightHand", 0);
+        lerpHandDepth(vrm, "leftHand", 0);
+      }
+
       if (riggedPose.Hips?.rotation) {
         lerpBone(vrm, "hips", riggedPose.Hips.rotation, SMOOTHING.hips);
       }
@@ -262,10 +298,16 @@ export function applyPoseToVRM(
       : null;
     if (rightHand) {
       if (rightHand.RightWrist) {
+        const wristBase = scaleRotation(rightHand.RightWrist, PROPORTION_SCALE.armExtension);
+        const palmRoll = solvePalmOrientation(frame.rightHandLandmarks as Landmark3D[], "Right");
         lerpBone(
           vrm,
           "rightHand",
-          scaleRotation(rightHand.RightWrist, PROPORTION_SCALE.armExtension),
+          {
+            x: wristBase.x,
+            y: wristBase.y,
+            z: palmRoll !== null ? palmRoll * PALM_PRONATION_SCALE : wristBase.z,
+          },
           SMOOTHING.hand
         );
       }
@@ -289,10 +331,16 @@ export function applyPoseToVRM(
       : null;
     if (leftHand) {
       if (leftHand.LeftWrist) {
+        const wristBase = scaleRotation(leftHand.LeftWrist, PROPORTION_SCALE.armExtension);
+        const palmRoll = solvePalmOrientation(frame.leftHandLandmarks as Landmark3D[], "Left");
         lerpBone(
           vrm,
           "leftHand",
-          scaleRotation(leftHand.LeftWrist, PROPORTION_SCALE.armExtension),
+          {
+            x: wristBase.x,
+            y: wristBase.y,
+            z: palmRoll !== null ? palmRoll * PALM_PRONATION_SCALE : wristBase.z,
+          },
           SMOOTHING.hand
         );
       }
