@@ -31,6 +31,8 @@ interface AvatarCanvasProps {
   glossSequence: string[];
   playbackState: PlaybackState;
   renderMode: AvatarDisplayMode;
+  /** Playback speed multiplier (0.5 | 1 | 1.5 | 2) from the speed cycle button */
+  speed?: number;
   onDebugStats?: (stats: AvatarDebugStats) => void;
   onViewModeChange?: (mode: ViewMode) => void;
   /** Fires once — after Three.js canvas exists AND VRM has fully loaded */
@@ -46,6 +48,7 @@ export default function AvatarCanvas({
   glossSequence,
   playbackState,
   renderMode = "avatar",
+  speed = 1,
   onDebugStats,
   onCanvasReady,
   onPlaybackComplete,
@@ -91,6 +94,13 @@ export default function AvatarCanvas({
   useEffect(() => {
     syncRigSpeed(settings.animationSpeed);
   }, [settings.animationSpeed]);
+
+  // Sync speed from playback bar cycle button into both engines
+  useEffect(() => {
+    videoEngine.setSpeed(speed);
+    syncRigSpeed(speed * 100);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [speed]);
 
   const debugBonesEnabled =
     typeof window !== "undefined" &&

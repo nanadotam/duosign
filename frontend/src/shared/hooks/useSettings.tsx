@@ -17,7 +17,7 @@ export interface AppSettings {
   accentColorIndex: number;
   avatarStyle: "Realistic" | "Stylized" | "Minimal";
   avatarModelId: string;
-  avatarBackground: "Transparent" | "Grid (Dark)" | "Grid (Light)" | "Gradient Blue";
+  avatarBackground: "Transparent" | "Studio White" | "Studio Grey" | "Dark Stage" | "Gradient Blue";
 
   // Translation
   translationEngine: "Hybrid (Rule + LLM)" | "Rule-based only" | "LLM only";

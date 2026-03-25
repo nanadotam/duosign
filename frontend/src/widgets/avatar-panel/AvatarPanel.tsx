@@ -14,6 +14,7 @@ import type {
 } from "@/entities/avatar/types";
 
 import { useLoading } from "@/shared/providers/LoadingProvider";
+import { useSettings } from "@/shared/hooks/useSettings";
 
 // Pronoun tokens -> actual sign file names that exist in the bucket.
 // Covers both raw IX markers (if they slip through) and display forms
@@ -100,12 +101,17 @@ export default function AvatarPanel({
   onActiveGlossChange,
   onPlaybackComplete,
 }: AvatarPanelProps) {
+  const { overallReady } = useLoading();
+  const { settings, updateSetting } = useSettings();
+
   const handleExport = useCallback(() => {
     onExport?.();
   }, [onExport]);
   const [viewMode, setViewMode] = useState<ViewMode>("interpreter");
   const isSkeleton = displayMode === "skeleton";
-  const [currentModel, setCurrentModel] = useState<AvatarModel>(AVATAR_MODELS[0]);
+  const [currentModel, setCurrentModel] = useState<AvatarModel>(
+    () => AVATAR_MODELS.find((m) => m.id === settings.avatarModelId) ?? AVATAR_MODELS[0]
+  );
   const [showStats, setShowStats] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -124,8 +130,6 @@ export default function AvatarPanel({
     totalGlosses: 0,
     currentGlossIndex: 0,
   });
-
-  const { overallReady } = useLoading();
   const panelRef = useRef<HTMLDivElement>(null);
   const isLive = playbackState === "playing";
   const isReady = hasTokens;
@@ -180,7 +184,8 @@ export default function AvatarPanel({
 
   const handleModelSelect = useCallback((model: AvatarModel) => {
     setCurrentModel(model);
-  }, []);
+    updateSetting("avatarModelId", model.id);
+  }, [updateSetting]);
 
   // Map IX pronoun markers to actual sign file names, then normalize
   const glossNames = useMemo(
@@ -283,14 +288,21 @@ export default function AvatarPanel({
       <div
         className="flex-1 flex items-center justify-center relative overflow-hidden transition-all duration-250"
         style={{
-          background: "var(--av-glow), var(--surface)",
+          background: {
+            "Transparent": "var(--av-glow), var(--surface)",
+            "Studio White": "linear-gradient(160deg, #f8f8f8 0%, #efefef 100%)",
+            "Studio Grey": "linear-gradient(160deg, #5a5a5a 0%, #3d3d3d 100%)",
+            "Dark Stage": "linear-gradient(160deg, #1a1a1a 0%, #0d0d0d 100%)",
+            "Gradient Blue": "linear-gradient(160deg, #0f1b2d 0%, #1a3a5c 50%, #0a0f1a 100%)",
+          }[settings.avatarBackground] ?? "var(--av-glow), var(--surface)",
           minHeight: isFullscreen ? 0 : "min(50dvh, 55vh)",
         }}
       >
-        {/* Grid Background */}
+        {/* Grid Background — only shown for Transparent mode */}
         <div
           className="absolute inset-0 transition-opacity duration-250"
           style={{
+            opacity: settings.avatarBackground === "Transparent" ? 1 : 0,
             backgroundImage:
               "linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px)",
             backgroundSize: "30px 30px",
@@ -318,6 +330,7 @@ export default function AvatarPanel({
               glossSequence={glossNames}
               playbackState={playbackState}
               renderMode={displayMode}
+              speed={speed}
               onDebugStats={handleDebugStats}
               onPlaybackComplete={onPlaybackComplete}
             />

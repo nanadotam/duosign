@@ -411,7 +411,7 @@ export default function SettingsPage() {
                   </div>
                 </SettingRow>
                 <SettingRow label="Background" desc="Scene backdrop behind the signing avatar">
-                  <Select options={["Transparent", "Grid (Dark)", "Grid (Light)", "Gradient Blue"]} value={settings.avatarBackground} onChange={(v) => updateSetting("avatarBackground", v as typeof settings.avatarBackground)} />
+                  <Select options={["Transparent", "Studio White", "Studio Grey", "Dark Stage", "Gradient Blue"]} value={settings.avatarBackground} onChange={(v) => updateSetting("avatarBackground", v as typeof settings.avatarBackground)} />
                 </SettingRow>
               </SettingsCard>
             </>
