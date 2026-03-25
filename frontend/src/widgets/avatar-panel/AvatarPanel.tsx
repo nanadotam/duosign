@@ -115,6 +115,8 @@ export default function AvatarPanel({
   const [showStats, setShowStats] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const prevGlossKeyRef = useRef<string>("");
   const [debugStats, setDebugStats] = useState<AvatarDebugStats>({
     fps: 0,
     frameIndex: 0,
@@ -195,6 +197,19 @@ export default function AvatarPanel({
     }),
     [glossSequence]
   );
+
+  // Fade-out → fade-in transition whenever a new gloss sequence arrives
+  useEffect(() => {
+    const key = glossNames.join(",");
+    if (!prevGlossKeyRef.current || key === prevGlossKeyRef.current) {
+      prevGlossKeyRef.current = key;
+      return;
+    }
+    prevGlossKeyRef.current = key;
+    setIsTransitioning(true);
+    const t = setTimeout(() => setIsTransitioning(false), 350);
+    return () => clearTimeout(t);
+  }, [glossNames]);
 
   return (
     <div
@@ -284,9 +299,12 @@ export default function AvatarPanel({
         </div>
       )}
 
-      {/* Avatar Canvas Area */}
+      {/* Avatar Canvas Area — locked to 4:3 so the avatar scales proportionally like an interpreter box */}
       <div
-        className="flex-1 flex items-center justify-center relative overflow-hidden transition-all duration-250"
+        className={[
+          "w-full relative overflow-hidden transition-all duration-250",
+          isFullscreen ? "flex-1" : "aspect-[4/3]",
+        ].join(" ")}
         style={{
           background: {
             "Transparent": "var(--av-glow), var(--surface)",
@@ -295,7 +313,6 @@ export default function AvatarPanel({
             "Dark Stage": "linear-gradient(160deg, #1a1a1a 0%, #0d0d0d 100%)",
             "Gradient Blue": "linear-gradient(160deg, #0f1b2d 0%, #1a3a5c 50%, #0a0f1a 100%)",
           }[settings.avatarBackground] ?? "var(--av-glow), var(--surface)",
-          minHeight: isFullscreen ? 0 : "min(50dvh, 55vh)",
         }}
       >
         {/* Grid Background — only shown for Transparent mode */}
@@ -315,7 +332,15 @@ export default function AvatarPanel({
         {!overallReady && <LoadingOverlay />}
 
         {/* Canvas — either Three.js avatar or 2D skeleton */}
-        <div className="absolute inset-0 z-[1]">
+        <div
+          className="absolute inset-0 z-[1]"
+          style={{
+            opacity: isTransitioning ? 0 : 1,
+            transition: isTransitioning
+              ? "opacity 180ms ease-out"
+              : "opacity 220ms ease-in",
+          }}
+        >
           {isSkeleton ? (
             <SkeletonCanvas
               glossSequence={glossNames}
