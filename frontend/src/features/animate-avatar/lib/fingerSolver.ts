@@ -132,6 +132,21 @@ function computePalmFrame(
   return { palmUp, palmRight, palmNormal };
 }
 
+/**
+ * Derive wrist pronation/supination from the palm normal vector.
+ * Falls back to null when the hand landmarks are insufficient.
+ */
+export function solvePalmOrientation(
+  landmarks: Landmark3D[],
+  side: "Right" | "Left"
+): number | null {
+  const frame = computePalmFrame(landmarks, side);
+  if (!frame) return null;
+
+  const pronation = Math.atan2(frame.palmNormal.y, -frame.palmNormal.z);
+  return Number.isFinite(pronation) ? pronation : null;
+}
+
 function solveFlexion(
   landmarks: Landmark3D[],
   parentIdx: number,

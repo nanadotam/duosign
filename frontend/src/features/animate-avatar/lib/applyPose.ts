@@ -4,15 +4,24 @@ import { VRMSchema } from "@pixiv/three-vrm";
 import type { PoseFrameData } from "./poseReader";
 import {
   BONE_CLAMPS,
+  HAND_DEPTH_CLAMP,
+  HAND_DEPTH_SCALE,
   HIPS_Y_OFFSET,
+  PALM_PRONATION_SCALE,
   PROPORTION_SCALE,
   SMOOTHING,
   type BoneClamp,
 } from "./retargetConfig";
 import { FINGER_VRM_BONES } from "./fingerConfig";
-import { solveFingers, type FingerRotationMap, type Landmark3D } from "./fingerSolver";
+import {
+  solveFingers,
+  solvePalmOrientation,
+  type FingerRotationMap,
+  type Landmark3D,
+} from "./fingerSolver";
 import { enhanceHandWithSpread, type LandmarkPoint } from "./fingerSpread";
 import { syncAvatarDebugOverlay } from "../ui/AvatarDebugOverlay";
+import { rigUpperBody } from "./vrmRigger";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type KalidokitModule = any;
@@ -124,6 +133,12 @@ function scaleRotation(rotation: Rotation, scale: number): Rotation {
   };
 }
 
+function lerpHandDepth(vrm: VRM, boneName: "rightHand" | "leftHand", targetZ: number): void {
+  const bone = getBoneNode(vrm, boneName);
+  if (!bone) return;
+  bone.position.z = THREE.MathUtils.lerp(bone.position.z, targetZ, SMOOTHING.hand);
+}
+
 function applyFingers(
   vrm: VRM,
   landmarks: Landmark3D[],
@@ -207,65 +222,56 @@ export function applyPoseToVRM(
         );
       }
 
-      if (riggedPose.Hips?.rotation) {
-        lerpBone(vrm, "hips", riggedPose.Hips.rotation, SMOOTHING.hips);
+      if (frame.poseWorldLandmarks) {
+        const worldLandmarks = frame.poseWorldLandmarks;
+        const rightWristWorld = worldLandmarks[16];
+        const rightShoulderWorld = worldLandmarks[12];
+        if (rightWristWorld && rightShoulderWorld) {
+          const rawDepth = (rightWristWorld.z - rightShoulderWorld.z) * HAND_DEPTH_SCALE;
+          const clampedDepth = clamp(rawDepth, -HAND_DEPTH_CLAMP, HAND_DEPTH_CLAMP);
+          lerpHandDepth(vrm, "rightHand", clampedDepth);
+        }
+
+        const leftWristWorld = worldLandmarks[15];
+        const leftShoulderWorld = worldLandmarks[11];
+        if (leftWristWorld && leftShoulderWorld) {
+          const rawDepth = (leftWristWorld.z - leftShoulderWorld.z) * HAND_DEPTH_SCALE;
+          const clampedDepth = clamp(rawDepth, -HAND_DEPTH_CLAMP, HAND_DEPTH_CLAMP);
+          lerpHandDepth(vrm, "leftHand", clampedDepth);
+        }
+      } else {
+        lerpHandDepth(vrm, "rightHand", 0);
+        lerpHandDepth(vrm, "leftHand", 0);
       }
 
-      if (riggedPose.Spine) {
-        lerpBone(vrm, "spine", riggedPose.Spine, SMOOTHING.spine);
-        lerpBone(vrm, "chest", riggedPose.Spine, SMOOTHING.spine);
-      }
-
-      if (riggedPose.RightUpperArm) {
-        lerpBone(
-          vrm,
-          "rightUpperArm",
-          scaleRotation(riggedPose.RightUpperArm, PROPORTION_SCALE.armExtension),
-          SMOOTHING.upperArm
-        );
-      }
-
-      if (riggedPose.LeftUpperArm) {
-        lerpBone(
-          vrm,
-          "leftUpperArm",
-          scaleRotation(riggedPose.LeftUpperArm, PROPORTION_SCALE.armExtension),
-          SMOOTHING.upperArm
-        );
-      }
-
-      if (riggedPose.RightLowerArm) {
-        lerpBone(
-          vrm,
-          "rightLowerArm",
-          scaleRotation(riggedPose.RightLowerArm, PROPORTION_SCALE.armExtension),
-          SMOOTHING.lowerArm
-        );
-      }
-
-      if (riggedPose.LeftLowerArm) {
-        lerpBone(
-          vrm,
-          "leftLowerArm",
-          scaleRotation(riggedPose.LeftLowerArm, PROPORTION_SCALE.armExtension),
-          SMOOTHING.lowerArm
-        );
-      }
+      rigUpperBody(vrm, riggedPose);
     }
   }
 
-  if (frame.rightHandLandmarks) {
-    const rawRightHand = kalidokit.Hand.solve(frame.rightHandLandmarks, "Right") as HandRig | null;
+  // Match the live MediaPipe path: playback landmarks are normalized from the
+  // viewer/image perspective, so remap them into signer handedness here before
+  // solving hand articulation.
+  const playbackLeftHandLandmarks = frame.rightHandLandmarks;
+  const playbackRightHandLandmarks = frame.leftHandLandmarks;
+
+  if (playbackRightHandLandmarks) {
+    const rawRightHand = kalidokit.Hand.solve(playbackRightHandLandmarks, "Right") as HandRig | null;
     // Augment with Y-axis spread computed from raw landmarks (partial Kalidokit mitigation)
     const rightHand = rawRightHand
-      ? enhanceHandWithSpread(rawRightHand, frame.rightHandLandmarks as LandmarkPoint[], "Right")
+      ? enhanceHandWithSpread(rawRightHand, playbackRightHandLandmarks as LandmarkPoint[], "Right")
       : null;
     if (rightHand) {
       if (rightHand.RightWrist) {
+        const wristBase = scaleRotation(rightHand.RightWrist, PROPORTION_SCALE.armExtension);
+        const palmRoll = solvePalmOrientation(playbackRightHandLandmarks as Landmark3D[], "Right");
         lerpBone(
           vrm,
           "rightHand",
-          scaleRotation(rightHand.RightWrist, PROPORTION_SCALE.armExtension),
+          {
+            x: wristBase.x,
+            y: wristBase.y,
+            z: palmRoll !== null ? palmRoll * PALM_PRONATION_SCALE : wristBase.z,
+          },
           SMOOTHING.hand
         );
       }
@@ -279,20 +285,26 @@ export function applyPoseToVRM(
         lerpBone(vrm, "rightThumbDistal", rightHand.RightThumbDistal, SMOOTHING.thumb);
       }
     }
-    applyFingers(vrm, frame.rightHandLandmarks as Landmark3D[], "Right");
+    applyFingers(vrm, playbackRightHandLandmarks as Landmark3D[], "Right");
   }
 
-  if (frame.leftHandLandmarks) {
-    const rawLeftHand = kalidokit.Hand.solve(frame.leftHandLandmarks, "Left") as HandRig | null;
+  if (playbackLeftHandLandmarks) {
+    const rawLeftHand = kalidokit.Hand.solve(playbackLeftHandLandmarks, "Left") as HandRig | null;
     const leftHand = rawLeftHand
-      ? enhanceHandWithSpread(rawLeftHand, frame.leftHandLandmarks as LandmarkPoint[], "Left")
+      ? enhanceHandWithSpread(rawLeftHand, playbackLeftHandLandmarks as LandmarkPoint[], "Left")
       : null;
     if (leftHand) {
       if (leftHand.LeftWrist) {
+        const wristBase = scaleRotation(leftHand.LeftWrist, PROPORTION_SCALE.armExtension);
+        const palmRoll = solvePalmOrientation(playbackLeftHandLandmarks as Landmark3D[], "Left");
         lerpBone(
           vrm,
           "leftHand",
-          scaleRotation(leftHand.LeftWrist, PROPORTION_SCALE.armExtension),
+          {
+            x: wristBase.x,
+            y: wristBase.y,
+            z: palmRoll !== null ? palmRoll * PALM_PRONATION_SCALE : wristBase.z,
+          },
           SMOOTHING.hand
         );
       }
@@ -306,7 +318,7 @@ export function applyPoseToVRM(
         lerpBone(vrm, "leftThumbDistal", leftHand.LeftThumbDistal, SMOOTHING.thumb);
       }
     }
-    applyFingers(vrm, frame.leftHandLandmarks as Landmark3D[], "Left");
+    applyFingers(vrm, playbackLeftHandLandmarks as Landmark3D[], "Left");
   }
 
   if (frame.faceLandmarks) {

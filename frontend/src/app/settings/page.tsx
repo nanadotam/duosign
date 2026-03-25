@@ -1,15 +1,18 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import NavigationBar from "@/widgets/navigation-bar/NavigationBar";
 import { useSettings } from "@/shared/hooks/useSettings";
 import { useHistory } from "@/shared/hooks/useHistory";
 import { useGuestLimit } from "@/shared/hooks/useGuestLimit";
-import { useSession } from "@/lib/auth-client";
+import { deleteUser, updateUser, useSession } from "@/lib/auth-client";
 import Link from "next/link";
 import { API_BASE_URL, AVATAR_MODELS } from "@/shared/constants";
 import { ACCENT_COLORS } from "@/shared/ui/SettingsApplicator";
 import VoiceRecordingPane from "@/features/translate-text/ui/VoiceRecordingPane";
+import Button from "@/shared/ui/Button";
+import Modal from "@/shared/ui/Modal";
 
 /* ═══ SIDEBAR DATA ═══ */
 const SIDEBAR = [
@@ -41,6 +44,8 @@ const SIDEBAR = [
     items: [{ id: "help", label: "Help & Docs", icon: "help" }],
   },
 ];
+
+const DELETE_ACCOUNT_PHRASE = "sudo delete account";
 
 
 function SIcon({ name }: { name: string }) {
@@ -148,12 +153,26 @@ function Select({ options, value, defaultValue, onChange }: { options: string[];
 }
 
 export default function SettingsPage() {
-  const [activeSection, setActiveSection] = useState("preferences");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedSection = searchParams.get("section");
+  const validSection = SIDEBAR.flatMap((group) => group.items).some((item) => item.id === requestedSection)
+    ? requestedSection
+    : null;
+  const [activeSection, setActiveSection] = useState(validSection ?? "preferences");
   const [savedFlash, setSavedFlash] = useState(false);
   const { settings, updateSetting, isDirty, save, discard } = useSettings();
   const { clearAll: clearHistory } = useHistory();
   const { data: session } = useSession();
   const { isAuthenticated, remaining } = useGuestLimit();
+  const [profileName, setProfileName] = useState("");
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [deleteModalStage, setDeleteModalStage] = useState<"closed" | "verify" | "confirm">("closed");
+  const [deletePhrase, setDeletePhrase] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   // Voice sheet
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -190,6 +209,84 @@ export default function SettingsPage() {
       if (mics.length > 0) setMicDevices(["System Default", ...mics]);
     }).catch(() => {});
   }, [activeSection]);
+
+  useEffect(() => {
+    if (validSection) {
+      setActiveSection(validSection);
+    }
+  }, [validSection]);
+
+  useEffect(() => {
+    setProfileName(session?.user?.name ?? "");
+  }, [session?.user?.name]);
+
+  const resetDeleteFlow = useCallback(() => {
+    setDeleteModalStage("closed");
+    setDeletePhrase("");
+    setDeleteError(null);
+    setIsDeletingAccount(false);
+  }, []);
+
+  const handleProfileSave = useCallback(async () => {
+    const trimmedName = profileName.trim();
+    if (!isAuthenticated) {
+      setProfileError("Sign in to update your display name.");
+      return;
+    }
+    if (!trimmedName) {
+      setProfileError("Display name cannot be empty.");
+      return;
+    }
+    if (trimmedName === (session?.user?.name ?? "").trim()) {
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 1500);
+      return;
+    }
+
+    setIsSavingProfile(true);
+    setProfileError(null);
+    setProfileSaved(false);
+    try {
+      const result = await updateUser({ name: trimmedName });
+      if (result?.error) {
+        setProfileError(result.error.message ?? "Could not update your display name.");
+        return;
+      }
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 1800);
+    } catch {
+      setProfileError("Could not update your display name right now.");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  }, [isAuthenticated, profileName, session?.user?.name]);
+
+  const handleDeleteAccount = useCallback(async () => {
+    if (!isAuthenticated) {
+      setDeleteError("You need to be signed in to delete an account.");
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    setDeleteError(null);
+    try {
+      const result = await deleteUser({ callbackURL: "/" });
+      if (result?.error) {
+        setDeleteError(
+          result.error.message ??
+          "Account deletion requires a fresh session. Sign in again and retry."
+        );
+        setIsDeletingAccount(false);
+        return;
+      }
+      resetDeleteFlow();
+      router.replace("/");
+      router.refresh();
+    } catch {
+      setDeleteError("Could not delete your account right now. Sign in again and retry.");
+      setIsDeletingAccount(false);
+    }
+  }, [isAuthenticated, resetDeleteFlow, router]);
 
 
   return (
@@ -242,11 +339,46 @@ export default function SettingsPage() {
               </div>
 
               <SettingsCard title="Personal Information" chip="identity">
-                <SettingRow label="Display Name" desc="How your name appears across DuoSign">
-                  <input key={`name-${session?.user?.id ?? "guest"}`} type="text" defaultValue={session?.user?.name ?? "Guest"} className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
+                <SettingRow label="Display Name" desc="How your name appears across DuoSign" stack>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <input
+                      type="text"
+                      value={profileName}
+                      onChange={(e) => {
+                        setProfileName(e.target.value);
+                        if (profileError) setProfileError(null);
+                        if (profileSaved) setProfileSaved(false);
+                      }}
+                      disabled={!isAuthenticated || isSavingProfile}
+                      placeholder={isAuthenticated ? "Enter your display name" : "Sign in to set a display name"}
+                      className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-1 w-[240px] outline-none shadow-inset transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      isLoading={isSavingProfile}
+                      disabled={!isAuthenticated || profileName.trim().length === 0}
+                      onClick={() => void handleProfileSave()}
+                    >
+                      {profileSaved ? "Saved" : "Save Name"}
+                    </Button>
+                  </div>
+                  {profileError && (
+                    <p className="text-[12px] text-error">{profileError}</p>
+                  )}
+                  {!profileError && profileSaved && (
+                    <p className="text-[12px] text-success">Display name updated.</p>
+                  )}
                 </SettingRow>
                 <SettingRow label="Email Address" desc="Used for account recovery and notifications">
-                  <input key={`email-${session?.user?.id ?? "guest"}`} type="email" defaultValue={session?.user?.email ?? "Guest mode"} className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
+                  <input
+                    key={`email-${session?.user?.id ?? "guest"}`}
+                    type="email"
+                    value={session?.user?.email ?? "Guest mode"}
+                    readOnly
+                    disabled
+                    className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-2 w-[240px] outline-none shadow-inset opacity-80 cursor-not-allowed"
+                  />
                 </SettingRow>
               </SettingsCard>
 
@@ -282,7 +414,15 @@ export default function SettingsPage() {
 
               <SettingsCard title="Danger Zone" chip="irreversible" danger>
                 <SettingRow label="Delete Account" desc="Permanently deletes your account and all associated data" danger>
-                  <button className="px-3.5 py-[5px] rounded-btn border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,var(--surface-2))] text-error font-sans text-[12.5px] font-semibold cursor-pointer shadow-raised-sm transition-all duration-120 whitespace-nowrap hover:bg-[color-mix(in_srgb,var(--error)_16%,var(--surface-2))] active:shadow-inset-press active:translate-y-px">
+                  <button
+                    onClick={() => {
+                      setDeleteError(null);
+                      setDeletePhrase("");
+                      setDeleteModalStage("verify");
+                    }}
+                    disabled={!isAuthenticated}
+                    className="px-3.5 py-[5px] rounded-btn border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,var(--surface-2))] text-error font-sans text-[12.5px] font-semibold cursor-pointer shadow-raised-sm transition-all duration-120 whitespace-nowrap hover:bg-[color-mix(in_srgb,var(--error)_16%,var(--surface-2))] active:shadow-inset-press active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
+                  >
                     Delete Account
                   </button>
                 </SettingRow>
@@ -643,6 +783,94 @@ export default function SettingsPage() {
           >{savedFlash ? "✓ Saved" : "Save Changes"}</button>
         </div>
       </div>
+
+      <Modal
+        isOpen={deleteModalStage === "verify"}
+        onClose={resetDeleteFlow}
+        title="Delete Account"
+        footer={
+          <>
+            <Button variant="ghost" size="sm" onClick={resetDeleteFlow}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={deletePhrase !== DELETE_ACCOUNT_PHRASE}
+              onClick={() => {
+                setDeleteError(null);
+                setDeleteModalStage("confirm");
+              }}
+            >
+              Continue
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-[13px] text-text-2 leading-relaxed">
+            This permanently removes your DuoSign account, history, and active sessions.
+          </p>
+          <div className="rounded-[14px] border border-border-hi bg-surface-2 px-3 py-3">
+            <div className="text-[11px] font-bold tracking-[0.08em] uppercase text-text-3">Type this phrase to continue</div>
+            <div className="mt-2 font-mono text-[13px] text-text-1">{DELETE_ACCOUNT_PHRASE}</div>
+          </div>
+          <input
+            autoFocus
+            type="text"
+            value={deletePhrase}
+            onChange={(e) => {
+              setDeletePhrase(e.target.value);
+              if (deleteError) setDeleteError(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && deletePhrase === DELETE_ACCOUNT_PHRASE) {
+                e.preventDefault();
+                setDeleteModalStage("confirm");
+              }
+            }}
+            placeholder="Type the phrase exactly"
+            className="w-full py-2.5 px-3 rounded-btn border border-border-hi bg-surface-3 font-mono text-[13px] text-text-1 outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--error)_45%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_rgba(248,113,113,0.16)]"
+          />
+          {deleteError && (
+            <p className="text-[12px] text-error">{deleteError}</p>
+          )}
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={deleteModalStage === "confirm"}
+        onClose={resetDeleteFlow}
+        title="Final Confirmation"
+        footer={
+          <>
+            <Button variant="ghost" size="sm" onClick={resetDeleteFlow} disabled={isDeletingAccount}>
+              Keep Account
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              isLoading={isDeletingAccount}
+              onClick={() => void handleDeleteAccount()}
+            >
+              Delete Forever
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-[13px] text-text-2 leading-relaxed">
+            You are about to permanently delete <span className="text-text-1 font-semibold">{session?.user?.email ?? "this account"}</span>.
+          </p>
+          <div className="rounded-[14px] border border-[color-mix(in_srgb,var(--error)_28%,var(--border))] bg-[color-mix(in_srgb,var(--error)_7%,var(--surface-2))] px-3 py-3">
+            <div className="text-[12px] text-text-1 font-medium">This action cannot be undone.</div>
+            <div className="text-[11px] text-text-3 mt-1">Your profile, history, and active sessions will be removed.</div>
+          </div>
+          {deleteError && (
+            <p className="text-[12px] text-error">{deleteError}</p>
+          )}
+        </div>
+      </Modal>
 
       {/* VOICE SHEET */}
       {sheetOpen && (

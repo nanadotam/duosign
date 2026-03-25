@@ -23,16 +23,20 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormData) => {
     setAuthError(null);
-    const { error } = await signUp.email({
-      email: data.email,
-      password: data.password,
-      name: data.email.split("@")[0],
-      callbackURL: "/translate",
-    });
-    if (error) {
-      setAuthError(error.message ?? "Could not create account. Please try again.");
-    } else {
-      router.push("/translate");
+    try {
+      const { error } = await signUp.email({
+        email: data.email,
+        password: data.password,
+        name: data.email.split("@")[0],
+        callbackURL: "/translate",
+      });
+      if (error) {
+        setAuthError(error.message ?? "Could not create account. Please try again.");
+      } else {
+        router.push("/translate");
+      }
+    } catch {
+      setAuthError("Sign-up is unavailable right now. Check your auth URL and try again.");
     }
   };
 
