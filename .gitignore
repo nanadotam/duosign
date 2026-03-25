@@ -73,3 +73,8 @@ two.tex
 erds/
 skills
 docs
+backend/isolate/
+duosign-kalidokit-agent/
+.gitignore
+duosign-kalidokit-agent.zip
+code-assessment-agent.zip
