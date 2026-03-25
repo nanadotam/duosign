@@ -69,14 +69,15 @@ async def lifespan(app: FastAPI):
     logger.info(f"[DuoSign] BUCKET_DIR resolved to: {BUCKET_DIR.resolve()}")
 
     if not BUCKET_DIR.exists():
-        raise RuntimeError(
-            f"[DuoSign] BUCKET_DIR not found: {BUCKET_DIR.resolve()}\n"
-            f"Expected bucket/ directory at repo root. Run wlasl_pose_pipeline.py first."
+        logger.warning(
+            f"[DuoSign] BUCKET_DIR not found: {BUCKET_DIR.resolve()} — "
+            f"video/pose endpoints will return 404. "
+            f"Run wlasl_pose_pipeline.py locally and upload the bucket/ dir if needed."
         )
 
     tsv = TSV_PATH if TSV_PATH.exists() else None
     lex = LEXICON_DIR if LEXICON_DIR.exists() else None
-    poses = BUCKET_DIR / "poses" if (BUCKET_DIR / "poses").exists() else None
+    poses = BUCKET_DIR / "poses" if BUCKET_DIR.exists() and (BUCKET_DIR / "poses").exists() else None
 
     if not tsv and not lex and not poses:
         logger.warning(
