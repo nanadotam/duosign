@@ -3,7 +3,8 @@
 
 CREATE TABLE testing_participants (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name            TEXT NOT NULL,
+  participant_code TEXT NOT NULL UNIQUE,       -- e.g. "DS-7F3A", shown to participant
+  name            TEXT,                        -- optional, for participant convenience only
   participant_type TEXT NOT NULL CHECK (participant_type IN ('hearing', 'deaf_hoh')),
   device_type     TEXT CHECK (device_type IN ('mobile', 'desktop', 'tablet')),
   browser_ua      TEXT,

@@ -147,7 +147,8 @@ function TranslatePageContent() {
     const text = rawText.trim();
     if (!text) return false;
 
-    if (!isAuthenticated) {
+    // Testing mode participants get unlimited translations
+    if (!isAuthenticated && !isTestingMode) {
       try {
         const guestUsage = await consume();
         if (!guestUsage.allowed) {
@@ -362,7 +363,7 @@ function TranslatePageContent() {
       */}
       <div className="min-h-screen flex flex-col">
         <NavigationBar />
-        {!isAuthenticated && <GuestBanner remaining={guestRemaining} />}
+        {!isAuthenticated && !isTestingMode && <GuestBanner remaining={guestRemaining} />}
 
         {/* ═══════════════════════════════════
             DESKTOP LAYOUT (≥ 1024px)

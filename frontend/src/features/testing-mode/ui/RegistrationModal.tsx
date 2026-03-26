@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTestingMode } from "../model/TestingModeProvider";
 import Button from "@/shared/ui/Button";
 import Input from "@/shared/ui/Input";
@@ -14,8 +14,17 @@ function getDeviceLabel(): string {
   return "Desktop";
 }
 
+/** Generate a short, human-readable participant ID like "DS-7F3A" */
+function generateParticipantCode(): string {
+  const hex = Array.from(crypto.getRandomValues(new Uint8Array(2)))
+    .map((b) => b.toString(16).toUpperCase().padStart(2, "0"))
+    .join("");
+  return `DS-${hex}`;
+}
+
 export default function RegistrationModal() {
   const { isTestingMode, session, registerParticipant } = useTestingMode();
+  const participantCode = useMemo(generateParticipantCode, []);
   const [name, setName] = useState("");
   const [participantType, setParticipantType] = useState<"hearing" | "deaf_hoh">("hearing");
   const [consent, setConsent] = useState(false);
@@ -26,7 +35,7 @@ export default function RegistrationModal() {
   // Don't show if not in testing mode or already registered
   if (!isTestingMode || session) return null;
 
-  const canSubmit = name.trim().length > 0 && consent && !isSubmitting;
+  const canSubmit = consent && !isSubmitting;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -35,7 +44,8 @@ export default function RegistrationModal() {
 
     try {
       await registerParticipant({
-        name: name.trim(),
+        name: name.trim() || null,
+        participantCode,
         participantType,
       });
     } catch {
@@ -56,19 +66,38 @@ export default function RegistrationModal() {
             </h2>
           </div>
           <p className="text-xs text-text-3 leading-relaxed">
-            Welcome! You&apos;re about to help test a sign language translation tool.
-            Please fill in the details below to get started.
+            Welcome! You&apos;re about to help test a sign language translation
+            tool. Your participation is anonymous.
           </p>
         </div>
 
         {/* Form */}
         <div className="px-6 py-4 flex flex-col gap-4">
+          {/* Assigned Participant ID */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold tracking-wide uppercase text-text-3">
+              Your Participant ID
+            </label>
+            <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-btn bg-accent/8 border border-accent/25">
+              <span className="text-sm font-mono font-bold text-accent tracking-wider">
+                {participantCode}
+              </span>
+              <span className="text-[10px] text-text-3 ml-auto">
+                auto-assigned
+              </span>
+            </div>
+            <p className="text-[10px] text-text-3 leading-relaxed">
+              Please note this ID. It will be used to identify your session
+              anonymously.
+            </p>
+          </div>
+
+          {/* Optional Name */}
           <Input
-            label="Your Name"
-            placeholder="Enter your name"
+            label="Name (optional)"
+            placeholder="Enter your name if you'd like"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            autoFocus
           />
 
           {/* Participant Type */}
@@ -119,9 +148,9 @@ export default function RegistrationModal() {
               className="mt-0.5 w-4 h-4 rounded border-border accent-[var(--accent)] cursor-pointer"
             />
             <span className="text-xs text-text-3 leading-relaxed group-hover:text-text-2 transition-colors">
-              I understand my interactions will be recorded for academic research
-              at Ashesi University (DuoSign Study, Nana Kwaku Amoako). I can
-              withdraw at any time.
+              I understand my interactions will be recorded anonymously for
+              academic research at Ashesi University (DuoSign Study, Nana Kwaku
+              Amoako). I can withdraw at any time by closing this tab.
             </span>
           </label>
 

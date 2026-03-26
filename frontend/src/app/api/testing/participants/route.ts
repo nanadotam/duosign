@@ -4,21 +4,21 @@ import { pool } from "@/lib/db";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, participant_type, device_type, browser_ua } = body;
+    const { participant_code, name, participant_type, device_type, browser_ua } = body;
 
-    if (!name || !participant_type) {
+    if (!participant_code || !participant_type) {
       return NextResponse.json(
-        { error: "name and participant_type are required" },
+        { error: "participant_code and participant_type are required" },
         { status: 400 }
       );
     }
 
-    // Create participant
+    // Create participant (name is optional for anonymity)
     const participantResult = await pool.query<{ id: string }>(
-      `INSERT INTO testing_participants (name, participant_type, device_type, browser_ua, consent_given)
-       VALUES ($1, $2, $3, $4, TRUE)
+      `INSERT INTO testing_participants (participant_code, name, participant_type, device_type, browser_ua, consent_given)
+       VALUES ($1, $2, $3, $4, $5, TRUE)
        RETURNING id`,
-      [name, participant_type, device_type ?? null, browser_ua ?? null]
+      [participant_code, name ?? null, participant_type, device_type ?? null, browser_ua ?? null]
     );
 
     const participantId = participantResult.rows[0].id;

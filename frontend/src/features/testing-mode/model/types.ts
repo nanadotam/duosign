@@ -1,7 +1,7 @@
 export interface TestingSession {
   sessionId: string;
   participantId: string;
-  participantName: string;
+  participantCode: string;
   participantType: "hearing" | "deaf_hoh";
   startedAt: string;
   translationsCount: number;

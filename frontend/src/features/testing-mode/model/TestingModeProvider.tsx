@@ -19,7 +19,8 @@ interface TestingModeContextValue {
   isTestingMode: boolean;
   session: TestingSession | null;
   registerParticipant: (data: {
-    name: string;
+    name: string | null;
+    participantCode: string;
     participantType: "hearing" | "deaf_hoh";
   }) => Promise<void>;
   trackEvent: (
@@ -121,12 +122,13 @@ export function TestingModeProvider({ children }: { children: ReactNode }) {
   }, [session?.startedAt]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const registerParticipant = useCallback(
-    async (data: { name: string; participantType: "hearing" | "deaf_hoh" }) => {
+    async (data: { name: string | null; participantCode: string; participantType: "hearing" | "deaf_hoh" }) => {
       const deviceType = getDeviceType();
       const res = await fetch("/api/testing/participants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          participant_code: data.participantCode,
           name: data.name,
           participant_type: data.participantType,
           device_type: deviceType,
@@ -140,7 +142,7 @@ export function TestingModeProvider({ children }: { children: ReactNode }) {
       const newSession: TestingSession = {
         sessionId: session_id,
         participantId: participant_id,
-        participantName: data.name,
+        participantCode: data.participantCode,
         participantType: data.participantType,
         startedAt: new Date().toISOString(),
         translationsCount: 0,
