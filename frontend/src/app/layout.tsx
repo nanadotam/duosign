@@ -3,6 +3,7 @@ import { DM_Serif_Display, DM_Sans, JetBrains_Mono, Instrument_Serif, Instrument
 import { ThemeScript } from "@/shared/ui/ThemeScript";
 import { SettingsProvider } from "@/shared/providers/SettingsProvider";
 import { SettingsApplicator } from "@/shared/ui/SettingsApplicator";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const dmSerif = DM_Serif_Display({
@@ -111,6 +112,7 @@ export default function RootLayout({
         <SettingsProvider>
           <SettingsApplicator />
           {children}
+          <Analytics />
         </SettingsProvider>
       </body>
     </html>
