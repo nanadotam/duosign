@@ -13,6 +13,8 @@ export interface TestingSession {
   surveyCompleted: boolean;
 }
 
+export type FeedbackTriggerType = "widget" | "auto_nudge";
+
 export type TestingEventName =
   | "translation_requested"
   | "translation_completed"

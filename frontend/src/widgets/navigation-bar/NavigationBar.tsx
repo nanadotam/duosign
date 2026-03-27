@@ -3,11 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTheme } from "@/shared/hooks/useTheme";
 import SegmentedControl from "@/shared/ui/SegmentedControl";
 import Button from "@/shared/ui/Button";
 import { useSession } from "@/lib/auth-client";
+import { useTestingMode } from "@/features/testing-mode";
 
 const NAV_ITEMS = [
   { label: "Translate", href: "/translate" },
@@ -23,7 +24,16 @@ export default function NavigationBar() {
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const { data: session, isPending } = useSession();
+  const {
+    isTestingMode,
+    session: testingSession,
+    trackEvent,
+    openSurvey,
+    endSession,
+  } = useTestingMode();
   const isAuthenticated = Boolean(session?.user);
+  const isTranslateTestingPage =
+    pathname === "/translate" && isTestingMode && Boolean(testingSession);
 
   const activeTab = NAV_ITEMS.find((item) => pathname.startsWith(item.href))?.label ?? "Translate";
   const displayName = session?.user?.name?.trim() || "DuoSign Member";
@@ -73,6 +83,15 @@ export default function NavigationBar() {
     };
   }, [profileOpen]);
 
+  const handleFeedbackSurveyClick = useCallback(() => {
+    if (testingSession && !testingSession.surveyCompleted) {
+      trackEvent("sus_survey_opened");
+      openSurvey();
+      return;
+    }
+    void endSession();
+  }, [testingSession, trackEvent, openSurvey, endSession]);
+
   return (
     <>
       <nav className="h-[54px] flex items-center justify-between px-5 bg-[var(--nav-bg)] border-b border-border shadow-[0_1px_0_rgba(255,255,255,0.04),0_2px_10px_rgba(0,0,0,0.12)] sticky top-0 z-[100] backdrop-blur-[12px] transition-all duration-250 relative">
@@ -96,6 +115,16 @@ export default function NavigationBar() {
 
         {/* Right side */}
         <div className="hidden md:flex items-center gap-2">
+          {isTranslateTestingPage && (
+            <button
+              onClick={handleFeedbackSurveyClick}
+              className="h-[34px] px-3 rounded-[999px] border border-border-hi bg-surface-2 text-text-2 flex items-center gap-2 cursor-pointer shadow-raised-sm transition-all duration-150 hover:text-text-1 hover:border-border-hi active:shadow-inset-press active:translate-y-px"
+              title="Take feedback survey"
+            >
+              <span className="text-xs">🔬</span>
+              <span className="text-[12px] font-medium">Take Feedback Survey</span>
+            </button>
+          )}
           {/* Theme toggle */}
           <button
             onClick={toggle}
@@ -225,16 +254,28 @@ export default function NavigationBar() {
         </div>
 
         {/* Mobile hamburger */}
-        <button
-          onClick={() => setDrawerOpen(true)}
-          className="md:hidden w-[34px] h-[34px] rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
+        <div className="md:hidden flex items-center gap-2">
+          {isTranslateTestingPage && (
+            <button
+              onClick={handleFeedbackSurveyClick}
+              className="h-[34px] px-2.5 rounded-[999px] border border-border-hi bg-surface-2 text-text-2 flex items-center gap-1.5 cursor-pointer shadow-raised-sm transition-all duration-150"
+              title="Take feedback survey"
+            >
+              <span className="text-xs">🔬</span>
+              <span className="text-[11px] font-medium">Feedback Survey</span>
+            </button>
+          )}
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="w-[34px] h-[34px] rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+        </div>
       </nav>
 
       {/* Mobile Drawer */}

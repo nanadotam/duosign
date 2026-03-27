@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { useSearchParams } from "next/navigation";
-import type { TestingSession, TestingEventName } from "./types";
+import type { TestingSession, TestingEventName, FeedbackTriggerType } from "./types";
 import { queueEvent, flushBuffer, stopFlushTimer } from "./eventBuffer";
 
 const STORAGE_KEY = "duosign:testing_session";
@@ -36,6 +36,13 @@ interface TestingModeContextValue {
   markSurveyCompleted: () => void;
   endSession: () => Promise<void>;
   sessionDurationMinutes: number;
+  isFeedbackOpen: boolean;
+  feedbackTriggerType: FeedbackTriggerType;
+  openFeedback: (triggerType?: FeedbackTriggerType) => void;
+  closeFeedback: () => void;
+  isSurveyOpen: boolean;
+  openSurvey: () => void;
+  closeSurvey: () => void;
 }
 
 const TestingModeContext = createContext<TestingModeContextValue>({
@@ -52,6 +59,13 @@ const TestingModeContext = createContext<TestingModeContextValue>({
   markSurveyCompleted: () => {},
   endSession: async () => {},
   sessionDurationMinutes: 0,
+  isFeedbackOpen: false,
+  feedbackTriggerType: "widget",
+  openFeedback: () => {},
+  closeFeedback: () => {},
+  isSurveyOpen: false,
+  openSurvey: () => {},
+  closeSurvey: () => {},
 });
 
 export function useTestingMode() {
@@ -90,6 +104,10 @@ export function TestingModeProvider({ children }: { children: ReactNode }) {
   const isTestingMode = searchParams.has("testing");
   const [session, setSession] = useState<TestingSession | null>(null);
   const [sessionDurationMinutes, setSessionDurationMinutes] = useState(0);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [feedbackTriggerType, setFeedbackTriggerType] =
+    useState<FeedbackTriggerType>("widget");
+  const [isSurveyOpen, setIsSurveyOpen] = useState(false);
   const durationTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Restore session on mount
@@ -166,6 +184,27 @@ export function TestingModeProvider({ children }: { children: ReactNode }) {
     },
     [session]
   );
+
+  const openFeedback = useCallback(
+    (triggerType: FeedbackTriggerType = "widget") => {
+      setFeedbackTriggerType(triggerType);
+      setIsFeedbackOpen(true);
+      trackEvent("feedback_widget_opened", { trigger_type: triggerType });
+    },
+    [trackEvent]
+  );
+
+  const closeFeedback = useCallback(() => {
+    setIsFeedbackOpen(false);
+  }, []);
+
+  const openSurvey = useCallback(() => {
+    setIsSurveyOpen(true);
+  }, []);
+
+  const closeSurvey = useCallback(() => {
+    setIsSurveyOpen(false);
+  }, []);
 
   const updateSession = useCallback(
     (updater: (prev: TestingSession) => TestingSession) => {
@@ -257,6 +296,8 @@ export function TestingModeProvider({ children }: { children: ReactNode }) {
     }).catch(() => {});
 
     sessionStorage.removeItem(STORAGE_KEY);
+    setIsFeedbackOpen(false);
+    setIsSurveyOpen(false);
     setSession(null);
   }, [session]);
 
@@ -294,6 +335,13 @@ export function TestingModeProvider({ children }: { children: ReactNode }) {
         markSurveyCompleted,
         endSession,
         sessionDurationMinutes,
+        isFeedbackOpen,
+        feedbackTriggerType,
+        openFeedback,
+        closeFeedback,
+        isSurveyOpen,
+        openSurvey,
+        closeSurvey,
       }}
     >
       {children}

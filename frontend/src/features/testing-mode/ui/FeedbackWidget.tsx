@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useTestingMode } from "../model/TestingModeProvider";
+import type { FeedbackTriggerType } from "../model/types";
 import Button from "@/shared/ui/Button";
 import Modal from "@/shared/ui/Modal";
 
@@ -15,19 +16,15 @@ const TAG_OPTIONS = [
   "Crashed or errored",
 ] as const;
 
-export type FeedbackTriggerType = "widget" | "auto_nudge";
-
 interface FeedbackWidgetProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onLauncherClick: () => void;
   triggerType: FeedbackTriggerType;
 }
 
 export default function FeedbackWidget({
   isOpen,
   onOpenChange,
-  onLauncherClick,
   triggerType,
 }: FeedbackWidgetProps) {
   const { isTestingMode, session, trackEvent } =
@@ -223,31 +220,6 @@ export default function FeedbackWidget({
           </div>
         )}
       </Modal>
-
-      <button
-        type="button"
-        onClick={() => {
-          if (isOpen) {
-            onOpenChange(false);
-            return;
-          }
-          onLauncherClick();
-        }}
-        className={[
-          "fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-[280] flex items-center gap-2 rounded-full border px-4 py-2.5 shadow-raised sm:bottom-5 sm:right-5",
-          "text-sm font-medium cursor-pointer transition-all",
-          isOpen
-            ? "bg-accent/10 border-accent/40 text-accent"
-            : "bg-surface border-border text-text-2 hover:text-text-1 hover:border-border-hi",
-        ].join(" ")}
-      >
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-surface-2">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z" />
-          </svg>
-        </span>
-        Feedback
-      </button>
     </>
   );
 }

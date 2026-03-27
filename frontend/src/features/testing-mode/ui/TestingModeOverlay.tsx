@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTestingMode } from "../model/TestingModeProvider";
 import RegistrationModal from "./RegistrationModal";
 import OnboardingController from "./OnboardingController";
 import TaskHintController from "./TaskHintController";
-import FeedbackWidget, { type FeedbackTriggerType } from "./FeedbackWidget";
+import FeedbackWidget from "./FeedbackWidget";
 import SurveyModal from "./SurveyModal";
-import ResearchBadge from "./ResearchBadge";
 import { TestingToastItem, type TestingToastData } from "./TestingToast";
 
 interface TestingModeOverlayProps {
@@ -30,22 +29,18 @@ export default function TestingModeOverlay({
     markFeedbackNudgeSent,
     markSurveyPrompted,
     sessionDurationMinutes,
-    endSession,
+    isFeedbackOpen,
+    feedbackTriggerType,
+    openFeedback,
+    closeFeedback,
+    isSurveyOpen,
+    openSurvey,
+    closeSurvey,
   } = useTestingMode();
 
-  const [showSurvey, setShowSurvey] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [feedbackTriggerType, setFeedbackTriggerType] =
-    useState<FeedbackTriggerType>("widget");
   const [nudgeToast, setNudgeToast] = useState<TestingToastData | null>(null);
   const feedbackNudgeFired = useRef(false);
   const surveyPromptFired = useRef(false);
-
-  const openFeedback = useCallback((triggerType: FeedbackTriggerType) => {
-    setFeedbackTriggerType(triggerType);
-    setShowFeedback(true);
-    trackEvent("feedback_widget_opened", { trigger_type: triggerType });
-  }, [trackEvent]);
 
   // Auto-nudge feedback after 3 translations
   useEffect(() => {
@@ -94,7 +89,7 @@ export default function TestingModeOverlay({
         duration: 15000,
         onAction: () => {
           trackEvent("sus_survey_opened");
-          setShowSurvey(true);
+          openSurvey();
         },
         onSecondary: () => {
           // Re-prompt after 3 more minutes
@@ -109,16 +104,8 @@ export default function TestingModeOverlay({
     translationsCount,
     markSurveyPrompted,
     trackEvent,
+    openSurvey,
   ]);
-
-  const handleEndSession = useCallback(() => {
-    if (session && !session.surveyCompleted) {
-      trackEvent("sus_survey_opened");
-      setShowSurvey(true);
-    } else {
-      endSession();
-    }
-  }, [session, trackEvent, endSession]);
 
   if (!isTestingMode) return null;
 
@@ -140,17 +127,16 @@ export default function TestingModeOverlay({
           />
 
           <FeedbackWidget
-            isOpen={showFeedback}
-            onOpenChange={setShowFeedback}
-            onLauncherClick={() => openFeedback("widget")}
+            isOpen={isFeedbackOpen}
+            onOpenChange={(open) => {
+              if (!open) closeFeedback();
+            }}
             triggerType={feedbackTriggerType}
           />
 
-          <ResearchBadge onEndSession={handleEndSession} />
-
           <SurveyModal
-            isOpen={showSurvey}
-            onClose={() => setShowSurvey(false)}
+            isOpen={isSurveyOpen}
+            onClose={closeSurvey}
           />
 
           {/* Nudge toasts (feedback nudge, survey prompt) */}
