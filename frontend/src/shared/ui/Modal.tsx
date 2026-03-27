@@ -8,9 +8,31 @@ interface ModalProps {
   title?: string;
   children: ReactNode;
   footer?: ReactNode;
+  size?: "md" | "lg" | "xl";
+  fullScreenOnMobile?: boolean;
+  contentClassName?: string;
+  bodyClassName?: string;
+  footerClassName?: string;
 }
 
-export default function Modal({ isOpen, onClose, title, children, footer }: ModalProps) {
+const SIZE_CLASSES = {
+  md: "sm:max-w-md",
+  lg: "sm:max-w-lg",
+  xl: "sm:max-w-3xl",
+} as const;
+
+export default function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  footer,
+  size = "md",
+  fullScreenOnMobile = false,
+  contentClassName = "",
+  bodyClassName = "",
+  footerClassName = "",
+}: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,9 +50,21 @@ export default function Modal({ isOpen, onClose, title, children, footer }: Moda
     <div
       ref={overlayRef}
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-[toast-in_0.2s_ease]"
+      className={[
+        "fixed inset-0 z-[200] flex justify-center bg-black/50 backdrop-blur-sm animate-[toast-in_0.2s_ease] overflow-y-auto",
+        fullScreenOnMobile ? "items-stretch sm:items-center" : "items-center p-4",
+      ].join(" ")}
     >
-      <div className="bg-surface border border-border rounded-panel shadow-raised w-full max-w-md mx-4 overflow-hidden">
+      <div
+        className={[
+          "bg-surface border border-border shadow-raised w-full overflow-hidden flex flex-col",
+          SIZE_CLASSES[size],
+          fullScreenOnMobile
+            ? "min-h-[100dvh] rounded-none sm:min-h-0 sm:rounded-panel sm:max-h-[calc(100dvh-3rem)]"
+            : "rounded-panel max-h-[calc(100dvh-2rem)]",
+          contentClassName,
+        ].join(" ")}
+      >
         {title && (
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
             <h3 className="text-sm font-semibold text-text-1">{title}</h3>
@@ -45,9 +79,14 @@ export default function Modal({ isOpen, onClose, title, children, footer }: Moda
             </button>
           </div>
         )}
-        <div className="px-5 py-4">{children}</div>
+        <div className={["px-5 py-4 flex-1", bodyClassName].join(" ")}>{children}</div>
         {footer && (
-          <div className="px-5 py-3 border-t border-border bg-surface-2 flex items-center justify-end gap-2">
+          <div
+            className={[
+              "px-5 py-3 border-t border-border bg-surface-2 flex items-center justify-end gap-2",
+              footerClassName,
+            ].join(" ")}
+          >
             {footer}
           </div>
         )}
