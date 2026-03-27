@@ -5,7 +5,7 @@ import { useTestingMode } from "../model/TestingModeProvider";
 import RegistrationModal from "./RegistrationModal";
 import OnboardingController from "./OnboardingController";
 import TaskHintController from "./TaskHintController";
-import FeedbackWidget from "./FeedbackWidget";
+import FeedbackWidget, { type FeedbackTriggerType } from "./FeedbackWidget";
 import SurveyModal from "./SurveyModal";
 import ResearchBadge from "./ResearchBadge";
 import { TestingToastItem, type TestingToastData } from "./TestingToast";
@@ -34,9 +34,18 @@ export default function TestingModeOverlay({
   } = useTestingMode();
 
   const [showSurvey, setShowSurvey] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackTriggerType, setFeedbackTriggerType] =
+    useState<FeedbackTriggerType>("widget");
   const [nudgeToast, setNudgeToast] = useState<TestingToastData | null>(null);
   const feedbackNudgeFired = useRef(false);
   const surveyPromptFired = useRef(false);
+
+  const openFeedback = useCallback((triggerType: FeedbackTriggerType) => {
+    setFeedbackTriggerType(triggerType);
+    setShowFeedback(true);
+    trackEvent("feedback_widget_opened", { trigger_type: triggerType });
+  }, [trackEvent]);
 
   // Auto-nudge feedback after 3 translations
   useEffect(() => {
@@ -55,13 +64,12 @@ export default function TestingModeOverlay({
         actionLabel: "Give feedback",
         duration: 10000,
         onAction: () => {
-          // The feedback widget will handle opening
-          trackEvent("feedback_widget_opened");
+          openFeedback("auto_nudge");
         },
         onDismiss: () => {},
       });
     }
-  }, [session, translationsCount, markFeedbackNudgeSent, trackEvent]);
+  }, [session, translationsCount, markFeedbackNudgeSent, openFeedback]);
 
   // Post-session survey prompt
   useEffect(() => {
@@ -131,7 +139,12 @@ export default function TestingModeOverlay({
             voiceInputUsed={voiceInputUsed}
           />
 
-          <FeedbackWidget />
+          <FeedbackWidget
+            isOpen={showFeedback}
+            onOpenChange={setShowFeedback}
+            onLauncherClick={() => openFeedback("widget")}
+            triggerType={feedbackTriggerType}
+          />
 
           <ResearchBadge onEndSession={handleEndSession} />
 
