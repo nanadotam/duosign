@@ -5,22 +5,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DuoSign — Settings</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
+        rel="stylesheet" />
     <style>
         :root {
-            --bg: #0d0e13;
-            --surface: #14161d;
-            --surface-2: #1b1d26;
-            --border: #2a2d3a;
-            --border-hi: #363a4e;
-            --text-1: #edf0ff;
-            --text-2: #8b94b8;
-            --text-3: #4e5570;
-            --accent: #5b8ef0;
-            --teal: #2dd4bf;
-            --error: #f87171;
-            --success: #4ade80;
+            --bg: #ebebeb;
+            --surface: #f3f3f3;
+            --surface-2: #ececec;
+            --surface-3: #e3e3e3;
+            --border: #d4d4d4;
+            --border-hi: #c0c0c0;
+            --text-1: #1a1c28;
+            --text-2: #5a6080;
+            --text-3: #9ba3c0;
+            --accent: #3b6bd0;
+            --accent-dim: #2a55b8;
+            --accent-glow: rgba(59, 107, 208, 0.14);
+            --accent-btn-top: #5580e0;
+            --teal: #0d9488;
+            --success: #16a34a;
+            --error: #dc2626;
             --font-main: 'DM Sans', -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+            --inset: inset 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.07);
+            --raised-sm: 0 1px 0 rgba(255, 255, 255, 0.85), 0 2px 6px rgba(0, 0, 0, 0.08);
         }
 
         * {
@@ -39,15 +48,27 @@
         }
 
         .page {
-            max-width: 520px;
+            max-width: 540px;
             margin: 0 auto;
-            padding: 24px 20px;
+            padding: 28px 24px;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+
+        .logo-img {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
         }
 
         .page h1 {
             font-size: 20px;
             font-weight: 700;
-            margin-bottom: 4px;
         }
 
         .page .subtitle {
@@ -61,10 +82,10 @@
         }
 
         .section-title {
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 10.5px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
+            letter-spacing: 0.09em;
             color: var(--text-3);
             margin-bottom: 10px;
         }
@@ -74,6 +95,7 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 16px;
+            box-shadow: var(--raised-sm);
         }
 
         .field {
@@ -96,22 +118,30 @@
         .field select {
             width: 100%;
             padding: 8px 12px;
-            background: var(--surface-2);
+            background: #fff;
             border: 1px solid var(--border);
             border-radius: 8px;
             color: var(--text-1);
             font-family: var(--font-main);
             font-size: 13px;
             outline: none;
+            box-shadow: var(--inset);
         }
 
         .field input:focus,
         .field select:focus {
-            border-color: rgba(91, 142, 240, 0.5);
+            border-color: rgba(59, 107, 208, 0.5);
+            box-shadow: var(--inset), 0 0 0 3px var(--accent-glow);
         }
 
         .field select {
             cursor: pointer;
+        }
+
+        .field-hint {
+            font-size: 11px;
+            color: var(--text-3);
+            margin-top: 4px;
         }
 
         .save-btn {
@@ -121,18 +151,19 @@
             gap: 6px;
             width: 100%;
             padding: 10px;
-            background: linear-gradient(180deg, #6b9cf2, var(--accent));
+            background: linear-gradient(180deg, var(--accent-btn-top), var(--accent-dim));
             color: #fff;
             font-size: 13px;
             font-weight: 600;
-            border: none;
+            border: 1px solid var(--accent-dim);
             border-radius: 10px;
             cursor: pointer;
             transition: filter 0.15s;
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 4px 14px rgba(59, 107, 208, 0.25);
         }
 
         .save-btn:hover {
-            filter: brightness(1.08);
+            filter: brightness(1.06);
         }
 
         .toast {
@@ -142,13 +173,14 @@
             left: 50%;
             transform: translateX(-50%);
             background: var(--surface);
-            border: 1px solid rgba(45, 212, 191, 0.3);
+            border: 1px solid rgba(13, 148, 136, 0.3);
             border-radius: 8px;
             padding: 8px 18px;
             font-size: 12px;
             color: var(--teal);
             font-weight: 600;
             z-index: 100;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         }
 
         .toast.visible {
@@ -163,6 +195,117 @@
             }
         }
 
+        /* Shortcut section */
+        .shortcut-display {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 14px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: var(--inset);
+        }
+
+        .kbd {
+            background: var(--surface-3);
+            border: 1px solid var(--border-hi);
+            border-radius: 5px;
+            padding: 3px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            color: var(--text-1);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+        }
+
+        .shortcut-plus {
+            font-size: 11px;
+            color: var(--text-3);
+        }
+
+        .remap-link {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--accent);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .remap-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Auth section */
+        .auth-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+        }
+
+        .auth-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-2);
+        }
+
+        .auth-info {
+            flex: 1;
+        }
+
+        .auth-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .auth-email {
+            font-size: 12px;
+            color: var(--text-3);
+        }
+
+        .auth-login-text {
+            font-size: 13px;
+            color: var(--text-2);
+            flex: 1;
+        }
+
+        .logout-btn {
+            padding: 5px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: #fff;
+            border-radius: 6px;
+            color: var(--text-2);
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .login-btn {
+            padding: 6px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            background: linear-gradient(180deg, var(--accent-btn-top), var(--accent-dim));
+            color: #fff;
+            border: 1px solid var(--accent-dim);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
         /* Avatar management */
         .avatar-list {
             margin-top: 10px;
@@ -173,10 +316,11 @@
             align-items: center;
             gap: 10px;
             padding: 10px 12px;
-            background: var(--surface-2);
+            background: #fff;
             border: 1px solid var(--border);
             border-radius: 10px;
             margin-bottom: 6px;
+            box-shadow: var(--raised-sm);
         }
 
         .avatar-item .avatar-icon {
@@ -189,6 +333,7 @@
             justify-content: center;
             font-size: 14px;
             flex-shrink: 0;
+            color: #fff;
         }
 
         .avatar-item .avatar-info {
@@ -207,11 +352,12 @@
 
         .avatar-item .avatar-badge {
             font-size: 9px;
-            font-weight: 600;
+            font-weight: 700;
             padding: 2px 6px;
-            background: rgba(45, 212, 191, 0.1);
+            background: rgba(13, 148, 136, 0.08);
             color: var(--teal);
             border-radius: 4px;
+            letter-spacing: 0.04em;
         }
 
         .avatar-item button {
@@ -220,7 +366,7 @@
             font-weight: 600;
             border-radius: 6px;
             border: 1px solid var(--border);
-            background: var(--surface);
+            background: #fff;
             color: var(--text-2);
             cursor: pointer;
             transition: all 0.12s;
@@ -232,12 +378,12 @@
         }
 
         .avatar-item button.download-btn {
-            border-color: rgba(91, 142, 240, 0.3);
+            border-color: rgba(59, 107, 208, 0.3);
             color: var(--accent);
         }
 
         .avatar-item button.download-btn:hover {
-            background: rgba(91, 142, 240, 0.08);
+            background: rgba(59, 107, 208, 0.05);
         }
 
         .storage-info {
@@ -250,19 +396,48 @@
 
 <body>
     <div class="page">
-        <h1>⚙️ DuoSign Settings</h1>
-        <div class="subtitle">Customize your signing experience</div>
+        <div class="page-header">
+            <img class="logo-img" src="icons/DuoSign_logomark.svg" alt="DuoSign" />
+            <h1>DuoSign Settings</h1>
+        </div>
+        <div class="subtitle">Customise your signing experience</div>
 
-        <!-- User preferences -->
+        <!-- Account -->
         <div class="section">
-            <div class="section-title">User Preferences</div>
+            <div class="section-title">Account</div>
+            <div class="card">
+                <div class="auth-card" id="authCard">
+                    <span class="auth-login-text">Sign in to sync preferences</span>
+                    <button class="login-btn" id="loginBtn">Sign In</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Keyboard Shortcut -->
+        <div class="section">
+            <div class="section-title">Keyboard Shortcut</div>
+            <div class="card">
+                <div class="shortcut-display">
+                    <span class="kbd">⌘</span>
+                    <span class="shortcut-plus">+</span>
+                    <span class="kbd">⇧</span>
+                    <span class="shortcut-plus">+</span>
+                    <span class="kbd">P</span>
+                </div>
+                <a class="remap-link" id="remapLink">Change shortcut in Chrome settings →</a>
+            </div>
+        </div>
+
+        <!-- Preferences -->
+        <div class="section">
+            <div class="section-title">Preferences</div>
             <div class="card">
                 <div class="field">
-                    <label for="userName">Your Name</label>
+                    <label for="userName">Display Name</label>
                     <input type="text" id="userName" placeholder="Enter your name" />
                 </div>
                 <div class="field">
-                    <label for="avatarMode">Render Mode</label>
+                    <label for="avatarMode">Default Render Mode</label>
                     <select id="avatarMode">
                         <option value="skeleton">Skeleton 2D (Lightweight)</option>
                         <option value="avatar">Avatar 3D (VRM Model)</option>
@@ -285,22 +460,20 @@
             <div class="section-title">Avatar Management</div>
             <div class="card">
                 <p style="font-size: 12px; color: var(--text-3); margin-bottom: 10px;">
-                    Manage downloaded VRM avatars. Each avatar is ~20 MB.
+                    Manage downloaded VRM sign language avatars. Each is approximately 20 MB.
                 </p>
-                <div class="avatar-list" id="avatarList">
-                    <!-- Populated by JS -->
-                </div>
+                <div class="avatar-list" id="avatarList"></div>
                 <div class="storage-info" id="storageInfo">Calculating storage…</div>
             </div>
         </div>
 
-        <!-- Save -->
-        <button class="save-btn" id="saveBtn">💾 Save Settings</button>
+        <button class="save-btn" id="saveBtn">Save Settings</button>
     </div>
 
     <div class="toast" id="toast">✓ Settings saved</div>
 
     <script src="lib/asset-manager.js"></script>
+    <script src="lib/auth.js"></script>
     <script src="settings.js"></script>
 </body>
 

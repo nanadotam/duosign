@@ -1,8 +1,8 @@
 /**
  * DuoSign Extension — Settings Script
  * =====================================
- * Handles user preferences (name, render mode, speed)
- * and avatar management (list, download, delete).
+ * Handles user preferences, keyboard shortcut display,
+ * avatar management, and auth state.
  */
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -13,6 +13,41 @@ document.addEventListener("DOMContentLoaded", async () => {
   const toast = document.getElementById("toast");
   const avatarList = document.getElementById("avatarList");
   const storageInfo = document.getElementById("storageInfo");
+  const authCard = document.getElementById("authCard");
+  const loginBtn = document.getElementById("loginBtn");
+  const remapLink = document.getElementById("remapLink");
+
+  // ── Auth state ──────────────────────────────────────────────────
+  if (window.DuoSignAuth) {
+    const auth = await window.DuoSignAuth.checkAuthStatus();
+    if (auth.authenticated && auth.user) {
+      const initials = (auth.user.name || "U").charAt(0).toUpperCase();
+      authCard.innerHTML = `
+        <div class="auth-avatar">${initials}</div>
+        <div class="auth-info">
+          <div class="auth-name">${auth.user.name || "User"}</div>
+          <div class="auth-email">${auth.user.email || ""}</div>
+        </div>
+        <button class="logout-btn" id="logoutBtn">Sign Out</button>
+      `;
+      document
+        .getElementById("logoutBtn")
+        ?.addEventListener("click", async () => {
+          await window.DuoSignAuth.clearSession();
+          location.reload();
+        });
+    }
+  }
+
+  loginBtn?.addEventListener("click", () => {
+    window.DuoSignAuth?.openLoginPage();
+  });
+
+  // ── Shortcut remap link ─────────────────────────────────────────
+  remapLink?.addEventListener("click", (e) => {
+    e.preventDefault();
+    chrome.tabs.create({ url: "chrome://extensions/shortcuts" });
+  });
 
   // ── Load saved settings ─────────────────────────────────────────
   chrome.storage.sync.get(
@@ -50,7 +85,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     let totalSize = 0;
     avatarList.innerHTML = "";
 
-    // Show all available avatars
     for (const avatar of window.AVAILABLE_AVATARS) {
       const isDownloaded = storedKeys.has(avatar.key);
       const storedMeta = stored.find((a) => a.key === avatar.key)?.metadata;
@@ -84,9 +118,10 @@ document.addEventListener("DOMContentLoaded", async () => {
           dlBtn.textContent = "Downloading…";
           dlBtn.disabled = true;
           try {
-            const API_BASE = "https://duosign.onrender.com";
+            const SUPABASE_BASE =
+              "https://yqhuvnbgtrbjrfmykznk.supabase.co/storage/v1/object/public/duosign-avatars";
             await mgr.downloadAsset(
-              `${API_BASE}/avatars/${avatar.file}`,
+              `${SUPABASE_BASE}/${avatar.file}`,
               avatar.key,
               (loaded, total) => {
                 const pct = total > 0 ? Math.round((loaded / total) * 100) : 0;

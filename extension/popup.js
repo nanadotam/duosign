@@ -4,8 +4,8 @@
  * Handles:
  *  - First-install detection and download flow
  *  - Backend health check indicator
+ *  - Auth status display (signed in / sign-in prompt)
  *  - Mode button navigation
- *  - Settings gear navigation
  */
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -18,14 +18,38 @@ document.addEventListener("DOMContentLoaded", async () => {
   const downloadProgress = document.getElementById("downloadProgress");
   const downloadLabel = document.getElementById("downloadLabel");
   const downloadBar = document.getElementById("downloadBar");
+  const userSection = document.getElementById("userSection");
+  const loginBtn = document.getElementById("loginBtn");
 
-  // ── Load user name ──────────────────────────────────────────────
-  chrome.storage.sync.get("userName", (result) => {
-    const name = result.userName || "User";
-    greeting.textContent = `👋 Hello, ${name}!`;
+  // ── Auth status ─────────────────────────────────────────────────
+  if (window.DuoSignAuth) {
+    const auth = await window.DuoSignAuth.checkAuthStatus();
+    if (auth.authenticated && auth.user) {
+      const initials = (auth.user.name || "U").charAt(0).toUpperCase();
+      userSection.innerHTML = `
+        <div class="user-avatar">${initials}</div>
+        <div>
+          <div class="user-name">${auth.user.name || "User"}</div>
+          <div class="user-email">${auth.user.email || ""}</div>
+        </div>
+      `;
+      greeting.textContent = `👋 Hello, ${auth.user.name || "User"}!`;
+    } else {
+      // Try to extract session from the web app
+      const extracted = await window.DuoSignAuth.tryExtractSessionFromWebApp();
+      if (extracted.authenticated) {
+        location.reload(); // Reload to show user info
+        return;
+      }
+    }
+  }
+
+  // ── Login button ────────────────────────────────────────────────
+  loginBtn?.addEventListener("click", () => {
+    window.DuoSignAuth?.openLoginPage();
   });
 
-  // ── Settings button ─────────────────────────────────────────────
+  // ── Settings ────────────────────────────────────────────────────
   settingsBtn.addEventListener("click", () => {
     chrome.runtime.openOptionsPage();
   });
@@ -37,7 +61,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     if (result?.ok) {
       healthDot.classList.add("online");
-      healthLabel.textContent = `Connected — v${result.data.version}`;
+      healthLabel.textContent = `Connected — v${result.data.version || "1.0"}`;
     } else {
       healthDot.classList.add("offline");
       healthLabel.textContent = "Backend unreachable";
@@ -89,8 +113,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     btn.addEventListener("click", () => {
       const mode = btn.dataset.mode;
       chrome.storage.local.set({ activeMode: mode });
-
-      // Open the side panel
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs[0]) {
           chrome.sidePanel.open({ tabId: tabs[0].id });

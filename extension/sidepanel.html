@@ -11,24 +11,26 @@
         rel="stylesheet" />
     <style>
         :root {
-            --bg: #0d0e13;
-            --surface: #14161d;
-            --surface-2: #1b1d26;
-            --surface-3: #22252f;
-            --border: #2a2d3a;
-            --border-hi: #363a4e;
-            --text-1: #edf0ff;
-            --text-2: #8b94b8;
-            --text-3: #4e5570;
-            --accent: #5b8ef0;
-            --accent-btn-top: #6b9cf2;
-            --teal: #2dd4bf;
-            --success: #4ade80;
-            --error: #f87171;
+            --bg: #ebebeb;
+            --surface: #f3f3f3;
+            --surface-2: #ececec;
+            --surface-3: #e3e3e3;
+            --border: #d4d4d4;
+            --border-hi: #c0c0c0;
+            --text-1: #1a1c28;
+            --text-2: #5a6080;
+            --text-3: #9ba3c0;
+            --accent: #3b6bd0;
+            --accent-dim: #2a55b8;
+            --accent-glow: rgba(59, 107, 208, 0.14);
+            --accent-btn-top: #5580e0;
+            --teal: #0d9488;
+            --success: #16a34a;
+            --error: #dc2626;
             --font-main: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
-            --raised-sm: 0 1px 0 rgba(255, 255, 255, 0.045), 0 2px 6px rgba(0, 0, 0, 0.3);
-            --inset: inset 0 2px 5px rgba(0, 0, 0, 0.55), inset 0 1px 2px rgba(0, 0, 0, 0.35);
+            --inset: inset 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.07);
+            --raised-sm: 0 1px 0 rgba(255, 255, 255, 0.85), 0 2px 6px rgba(0, 0, 0, 0.08);
         }
 
         * {
@@ -49,7 +51,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* ── Header ────────────────────────────────────────────────── */
+        /* ── Header ──────────────────────────────────────────────── */
         .header {
             padding: 10px 16px;
             display: flex;
@@ -60,22 +62,15 @@
             flex-shrink: 0;
         }
 
-        .logo {
-            width: 24px;
-            height: 24px;
-            background: linear-gradient(135deg, var(--accent), var(--teal));
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 9px;
-            font-weight: 700;
+        .logo-img {
+            width: 22px;
+            height: 22px;
+            border-radius: 5px;
         }
 
         .header h1 {
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .mode-label {
@@ -84,12 +79,12 @@
             font-weight: 600;
             letter-spacing: 0.06em;
             color: var(--teal);
-            border: 1px solid rgba(45, 212, 191, 0.2);
+            border: 1px solid rgba(13, 148, 136, 0.2);
             border-radius: 6px;
             padding: 2px 8px;
         }
 
-        /* ── Status bar ────────────────────────────────────────────── */
+        /* ── Status ───────────────────────────────────────────────── */
         .status-bar {
             padding: 6px 16px;
             font-size: 11px;
@@ -99,14 +94,10 @@
             flex-shrink: 0;
         }
 
-        /* ── Input section ─────────────────────────────────────────── */
+        /* ── Input ────────────────────────────────────────────────── */
         .input-section {
             padding: 12px 16px;
             flex-shrink: 0;
-        }
-
-        .input-wrap {
-            position: relative;
         }
 
         .input-wrap textarea {
@@ -122,15 +113,17 @@
             font-size: 13px;
             resize: vertical;
             outline: none;
-        }
-
-        .input-wrap textarea:focus {
-            border-color: rgba(91, 142, 240, 0.5);
-            box-shadow: 0 0 0 3px rgba(91, 142, 240, 0.16);
+            box-shadow: var(--inset);
+            transition: all 0.15s;
         }
 
         .input-wrap textarea::placeholder {
             color: var(--text-3);
+        }
+
+        .input-wrap textarea:focus {
+            border-color: rgba(59, 107, 208, 0.5);
+            box-shadow: var(--inset), 0 0 0 3px var(--accent-glow);
         }
 
         .input-footer {
@@ -148,14 +141,14 @@
 
         .translate-btn {
             padding: 6px 18px;
-            border: none;
+            border: 1px solid var(--accent-dim);
             border-radius: 8px;
-            background: linear-gradient(180deg, var(--accent-btn-top), var(--accent));
+            background: linear-gradient(180deg, var(--accent-btn-top), var(--accent-dim));
             color: #fff;
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: var(--raised-sm);
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 4px 14px rgba(59, 107, 208, 0.25);
             transition: all 0.15s;
         }
 
@@ -168,7 +161,47 @@
             cursor: default;
         }
 
-        /* ── Gloss chips ───────────────────────────────────────────── */
+        /* ── Pipeline status ──────────────────────────────────────── */
+        .pipeline-strip {
+            display: none;
+            padding: 6px 16px;
+            align-items: center;
+            gap: 8px;
+            background: rgba(243, 243, 243, 0.6);
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+
+        .pipeline-strip.visible {
+            display: flex;
+        }
+
+        .pipeline-spinner {
+            width: 10px;
+            height: 10px;
+            border: 1.5px solid var(--accent);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .pipeline-label {
+            color: var(--text-2);
+            font-weight: 500;
+        }
+
+        .pipeline-method {
+            margin-left: auto;
+        }
+
+        /* ── Gloss chips ──────────────────────────────────────────── */
         .gloss-bar {
             padding: 0 16px 8px;
             display: flex;
@@ -179,27 +212,54 @@
         }
 
         .chip {
-            font-size: 11px;
-            font-weight: 600;
+            flex-shrink: 0;
+            padding: 3px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-hi);
             font-family: var(--font-mono);
-            padding: 3px 10px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+            letter-spacing: 0.03em;
             color: var(--text-2);
+            background: var(--surface-2);
+            box-shadow: var(--raised-sm);
             cursor: pointer;
-            transition: all 0.12s;
+            select: none;
+            opacity: 0;
+            transform: translateY(5px);
+            animation: chip-in 0.22s ease forwards;
+            transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+        }
+
+        @keyframes chip-in {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .chip:hover {
-            border-color: var(--border-hi);
-            color: var(--text-1);
+            border-color: rgba(59, 107, 208, 0.4);
         }
 
         .chip.active {
-            background: rgba(91, 142, 240, 0.12);
-            border-color: rgba(91, 142, 240, 0.3);
+            background: color-mix(in srgb, var(--accent) 13%, var(--surface-2));
+            border-color: var(--accent);
             color: var(--accent);
+            box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent), var(--raised-sm);
+        }
+
+        .chip.spelled::after {
+            content: "ABC";
+            margin-left: 6px;
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            padding: 1px 4px;
+            border-radius: 3px;
+            background: rgba(13, 148, 136, 0.12);
+            color: var(--teal);
+            vertical-align: middle;
         }
 
         .method-badge {
@@ -211,26 +271,25 @@
         }
 
         .method-badge.rule {
-            background: rgba(45, 212, 191, 0.1);
+            background: rgba(13, 148, 136, 0.08);
             color: var(--teal);
         }
 
         .method-badge.llm {
-            background: rgba(91, 142, 240, 0.1);
+            background: rgba(59, 107, 208, 0.08);
             color: var(--accent);
         }
 
-        /* ── Render mode toggle ────────────────────────────────────── */
+        /* ── Render toggle ────────────────────────────────────────── */
         .render-toggle-bar {
             padding: 0 16px 8px;
             display: flex;
-            gap: 4px;
             flex-shrink: 0;
         }
 
         .render-toggle {
             display: flex;
-            background: var(--surface-2);
+            background: var(--surface-3);
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 2px;
@@ -251,13 +310,13 @@
         }
 
         .render-toggle button.active {
-            background: var(--surface);
+            background: #fff;
             border: 1px solid var(--border-hi);
             color: var(--text-1);
             box-shadow: var(--raised-sm);
         }
 
-        /* ── Canvas area ───────────────────────────────────────────── */
+        /* ── Canvas ───────────────────────────────────────────────── */
         .canvas-area {
             flex: 1;
             position: relative;
@@ -299,6 +358,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            border: 1px solid var(--border);
         }
 
         .empty-state p {
@@ -324,14 +384,15 @@
             font-weight: 600;
             font-family: var(--font-mono);
             color: var(--accent);
-            background: rgba(14, 16, 29, 0.8);
+            background: rgba(255, 255, 255, 0.88);
             padding: 3px 12px;
             border-radius: 6px;
-            border: 1px solid rgba(91, 142, 240, 0.2);
+            border: 1px solid rgba(59, 107, 208, 0.2);
             pointer-events: none;
+            backdrop-filter: blur(4px);
         }
 
-        /* ── Playback controls ─────────────────────────────────────── */
+        /* ── Controls ──────────────────────────────────────────────── */
         .controls {
             padding: 10px 16px 14px;
             display: flex;
@@ -339,13 +400,14 @@
             justify-content: center;
             gap: 6px;
             flex-shrink: 0;
+            background: var(--surface);
         }
 
         .ctrl-btn {
             width: 34px;
             height: 34px;
             border: 1px solid var(--border);
-            background: var(--surface);
+            background: #fff;
             border-radius: 8px;
             color: var(--text-2);
             font-size: 14px;
@@ -354,6 +416,7 @@
             align-items: center;
             justify-content: center;
             transition: all 0.12s;
+            box-shadow: var(--raised-sm);
         }
 
         .ctrl-btn:hover {
@@ -362,23 +425,24 @@
         }
 
         .ctrl-btn.active {
-            background: rgba(91, 142, 240, 0.12);
-            border-color: rgba(91, 142, 240, 0.3);
+            background: color-mix(in srgb, var(--accent) 10%, #fff);
+            border-color: rgba(59, 107, 208, 0.3);
             color: var(--accent);
         }
 
         .ctrl-btn.play {
             width: 40px;
             height: 40px;
-            background: linear-gradient(180deg, var(--accent-btn-top), var(--accent));
-            border: none;
+            background: linear-gradient(180deg, var(--accent-btn-top), var(--accent-dim));
+            border: 1px solid var(--accent-dim);
             border-radius: 50%;
             color: #fff;
             font-size: 16px;
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 4px 14px rgba(59, 107, 208, 0.25);
         }
 
         .ctrl-btn.play:hover {
-            filter: brightness(1.1);
+            filter: brightness(1.08);
         }
 
         .speed-group {
@@ -390,7 +454,7 @@
         .speed-btn {
             padding: 4px 8px;
             border: 1px solid var(--border);
-            background: var(--surface);
+            background: #fff;
             border-radius: 6px;
             color: var(--text-3);
             font-size: 10px;
@@ -398,6 +462,7 @@
             font-family: var(--font-mono);
             cursor: pointer;
             transition: all 0.12s;
+            box-shadow: var(--raised-sm);
         }
 
         .speed-btn:hover {
@@ -406,8 +471,8 @@
         }
 
         .speed-btn.active {
-            background: rgba(91, 142, 240, 0.12);
-            border-color: rgba(91, 142, 240, 0.3);
+            background: color-mix(in srgb, var(--accent) 10%, #fff);
+            border-color: rgba(59, 107, 208, 0.3);
             color: var(--accent);
         }
     </style>
@@ -416,13 +481,20 @@
 <body>
     <!-- Header -->
     <div class="header">
-        <div class="logo">DS</div>
+        <img class="logo-img" src="icons/DuoSign_logomark.svg" alt="DS" />
         <h1>DuoSign</h1>
         <div class="mode-label" id="modeLabel">TEXT SELECTION</div>
     </div>
 
     <!-- Status -->
     <div class="status-bar" id="statusBar">● Ready — highlight text on any page to sign</div>
+
+    <!-- Pipeline status strip -->
+    <div class="pipeline-strip" id="pipelineStrip">
+        <div class="pipeline-spinner"></div>
+        <span class="pipeline-label" id="pipelineLabel">Translating…</span>
+        <span class="pipeline-method" id="pipelineMethod"></span>
+    </div>
 
     <!-- Input -->
     <div class="input-section">
@@ -432,7 +504,14 @@
         </div>
         <div class="input-footer">
             <span class="char-count" id="charCount">0/500</span>
-            <button class="translate-btn" id="translateBtn">Translate</button>
+            <button class="translate-btn" id="translateBtn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round"
+                    style="display:inline;vertical-align:middle;margin-right:4px">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                </svg>Translate
+            </button>
         </div>
     </div>
 
@@ -450,7 +529,7 @@
         </div>
     </div>
 
-    <!-- Canvas area -->
+    <!-- Canvas -->
     <div class="canvas-area">
         <canvas id="signCanvas"></canvas>
         <div id="avatarContainer"></div>

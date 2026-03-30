@@ -4,11 +4,25 @@
  * Manifest V3 service worker handling:
  *  - Context menu: "Send to DuoSign" on selected text
  *  - Message routing: relay API calls from content/popup/sidepanel
- *  - Keyboard shortcut: Ctrl+Shift+S
+ *  - Keyboard shortcut: Ctrl+Shift+P / ⌘+Shift+P
  *  - Side panel management
+ *  - Auth header injection for all API calls
  */
 
 const API_BASE_URL = "https://duosign.onrender.com";
+const AUTH_STORAGE_KEY = "duosign_auth_session";
+
+/** Get auth headers from stored session */
+async function getAuthHeaders() {
+  try {
+    const stored = await chrome.storage.local.get(AUTH_STORAGE_KEY);
+    const session = stored[AUTH_STORAGE_KEY];
+    if (session?.token) {
+      return { Authorization: `Bearer ${session.token}` };
+    }
+  } catch {}
+  return {};
+}
 
 // ── Context Menu ────────────────────────────────────────────────────
 
@@ -31,9 +45,7 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === "duosign-translate" && info.selectionText) {
-    // Open the side panel and send the text
     chrome.sidePanel.open({ tabId: tab.id }).then(() => {
-      // Small delay to let side panel mount
       setTimeout(() => {
         chrome.runtime.sendMessage({
           type: "TRANSLATE_TEXT",
@@ -47,8 +59,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 // ── Keyboard Shortcut ───────────────────────────────────────────────
 
 chrome.commands.onCommand.addListener((command, tab) => {
-  if (command === "translate-selection") {
-    // Ask content script for selected text
+  if (command === "send-to-duosign") {
     chrome.tabs.sendMessage(tab.id, { type: "GET_SELECTION" }, (response) => {
       if (response?.text) {
         chrome.sidePanel.open({ tabId: tab.id }).then(() => {
@@ -66,41 +77,53 @@ chrome.commands.onCommand.addListener((command, tab) => {
 
 // ── Message Routing (API Proxy) ─────────────────────────────────────
 // All API calls from extension pages are routed through here to bypass CORS.
+// Auth headers are automatically injected from stored session.
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   switch (msg.type) {
     case "TRANSLATE":
-      fetch(`${API_BASE_URL}/api/translate/fast`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: msg.text }),
-      })
-        .then((r) => r.json())
-        .then((data) => sendResponse({ ok: true, data }))
-        .catch((err) => sendResponse({ ok: false, error: err.message }));
-      return true; // async
+      (async () => {
+        const auth = await getAuthHeaders();
+        fetch(`${API_BASE_URL}/api/translate/fast`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...auth },
+          body: JSON.stringify({ text: msg.text }),
+        })
+          .then((r) => r.json())
+          .then((data) => sendResponse({ ok: true, data }))
+          .catch((err) => sendResponse({ ok: false, error: err.message }));
+      })();
+      return true;
 
     case "TRANSLATE_FULL":
-      fetch(`${API_BASE_URL}/api/translate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: msg.text }),
-      })
-        .then((r) => r.json())
-        .then((data) => sendResponse({ ok: true, data }))
-        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      (async () => {
+        const auth = await getAuthHeaders();
+        fetch(`${API_BASE_URL}/api/translate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...auth },
+          body: JSON.stringify({ text: msg.text }),
+        })
+          .then((r) => r.json())
+          .then((data) => sendResponse({ ok: true, data }))
+          .catch((err) => sendResponse({ ok: false, error: err.message }));
+      })();
       return true;
 
     case "FETCH_POSE":
-      fetch(`${API_BASE_URL}/api/pose/${encodeURIComponent(msg.gloss)}`)
-        .then((r) => {
-          if (!r.ok) throw new Error(`${r.status}`);
-          return r.arrayBuffer();
+      (async () => {
+        const auth = await getAuthHeaders();
+        fetch(`${API_BASE_URL}/api/pose/${encodeURIComponent(msg.gloss)}`, {
+          headers: auth,
         })
-        .then((buf) =>
-          sendResponse({ ok: true, data: Array.from(new Uint8Array(buf)) }),
-        )
-        .catch((err) => sendResponse({ ok: false, error: err.message }));
+          .then((r) => {
+            if (!r.ok) throw new Error(`${r.status}`);
+            return r.arrayBuffer();
+          })
+          .then((buf) =>
+            sendResponse({ ok: true, data: Array.from(new Uint8Array(buf)) }),
+          )
+          .catch((err) => sendResponse({ ok: false, error: err.message }));
+      })();
       return true;
 
     case "HEALTH_CHECK":
@@ -111,10 +134,28 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       return true;
 
     case "FETCH_VOCABULARY":
-      fetch(`${API_BASE_URL}/api/vocabulary`)
-        .then((r) => r.json())
-        .then((data) => sendResponse({ ok: true, data }))
-        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      (async () => {
+        const auth = await getAuthHeaders();
+        fetch(`${API_BASE_URL}/api/vocabulary`, { headers: auth })
+          .then((r) => r.json())
+          .then((data) => sendResponse({ ok: true, data }))
+          .catch((err) => sendResponse({ ok: false, error: err.message }));
+      })();
+      return true;
+
+    case "SAVE_AUTH_SESSION":
+      chrome.storage.local.set(
+        {
+          [AUTH_STORAGE_KEY]: msg.session,
+        },
+        () => sendResponse({ ok: true }),
+      );
+      return true;
+
+    case "CLEAR_AUTH_SESSION":
+      chrome.storage.local.remove(AUTH_STORAGE_KEY, () =>
+        sendResponse({ ok: true }),
+      );
       return true;
 
     default:

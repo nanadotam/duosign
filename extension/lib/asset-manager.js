@@ -15,9 +15,11 @@ const DB_NAME = "duosign-assets";
 const DB_VERSION = 1;
 const STORE_NAME = "assets";
 
-/** Default avatar to download on first install */
-const DEFAULT_AVATAR_URL = "/avatars/DS-Proto-2.1.vrm";
+/** Supabase storage base URL for avatars */
+const SUPABASE_AVATARS_BASE =
+  "https://yqhuvnbgtrbjrfmykznk.supabase.co/storage/v1/object/public/duosign-avatars";
 const DEFAULT_AVATAR_KEY = "vrm:DS-Proto-2.1";
+const DEFAULT_AVATAR_FILE = "DS-Proto-2.1.vrm";
 
 /** MediaPipe CDN URLs */
 const MEDIAPIPE_WASM_BASE =
@@ -208,9 +210,7 @@ class AssetManager {
    * @param {Function} onProgress — callback({ phase, loaded, total, label })
    */
   async runFirstInstall(onProgress = null) {
-    const API_BASE = "https://duosign.onrender.com";
-
-    // Phase 1: Download default avatar
+    // Phase 1: Download default avatar from Supabase storage
     if (!(await this.hasAsset(DEFAULT_AVATAR_KEY))) {
       if (onProgress)
         onProgress({
@@ -220,7 +220,7 @@ class AssetManager {
           label: "Downloading sign avatar…",
         });
       await this.downloadAsset(
-        `${API_BASE}${DEFAULT_AVATAR_URL}`,
+        `${SUPABASE_AVATARS_BASE}/${DEFAULT_AVATAR_FILE}`,
         DEFAULT_AVATAR_KEY,
         (loaded, total) => {
           if (onProgress)

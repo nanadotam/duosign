@@ -15,6 +15,7 @@ export const auth = betterAuth({
   trustedOrigins: [
     "https://duosign.vercel.app",
     "http://localhost:3000",
+    "chrome-extension://*",
   ],
 });
 
