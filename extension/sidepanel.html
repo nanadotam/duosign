@@ -21,18 +21,14 @@
             --text-2: #8b94b8;
             --text-3: #4e5570;
             --accent: #5b8ef0;
-            --accent-dim: #3b6bd0;
-            --accent-glow: rgba(91, 142, 240, 0.16);
             --accent-btn-top: #6b9cf2;
             --teal: #2dd4bf;
             --success: #4ade80;
             --error: #f87171;
-            --warning: #ffbd2e;
-            --inset: inset 0 2px 5px rgba(0, 0, 0, 0.55), inset 0 1px 2px rgba(0, 0, 0, 0.35);
-            --raised-sm: 0 1px 0 rgba(255, 255, 255, 0.045), 0 2px 6px rgba(0, 0, 0, 0.3);
-            --raised-press: 0 0px 0 rgba(255, 255, 255, 0.02), 0 1px 3px rgba(0, 0, 0, 0.5);
             --font-main: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+            --raised-sm: 0 1px 0 rgba(255, 255, 255, 0.045), 0 2px 6px rgba(0, 0, 0, 0.3);
+            --inset: inset 0 2px 5px rgba(0, 0, 0, 0.55), inset 0 1px 2px rgba(0, 0, 0, 0.35);
         }
 
         * {
@@ -41,240 +37,303 @@
             box-sizing: border-box;
         }
 
-        html,
-        body {
-            height: 100%;
-            overflow: hidden;
-        }
-
         body {
             font-family: var(--font-main);
             background: var(--bg);
             color: var(--text-1);
             font-size: 14px;
             line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
+            height: 100vh;
             display: flex;
             flex-direction: column;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* ── Header ────────────────────────────────────────────────────── */
-        .panel-header {
-            padding: 12px 14px;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
+        /* ── Header ────────────────────────────────────────────────── */
+        .header {
+            padding: 10px 16px;
             display: flex;
             align-items: center;
             gap: 8px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
             flex-shrink: 0;
         }
 
-        .panel-logo {
+        .logo {
             width: 24px;
             height: 24px;
             background: linear-gradient(135deg, var(--accent), var(--teal));
-            border-radius: 7px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: #fff;
             font-size: 9px;
             font-weight: 700;
-            color: #fff;
         }
 
-        .panel-title {
-            font-size: 13px;
+        .header h1 {
+            font-size: 14px;
             font-weight: 600;
         }
 
-        .mode-badge {
+        .mode-label {
             margin-left: auto;
-            font-size: 9px;
-            font-family: var(--font-mono);
+            font-size: 10px;
             font-weight: 600;
-            color: var(--teal);
-            background: rgba(45, 212, 191, 0.1);
-            border: 1px solid rgba(45, 212, 191, 0.2);
-            padding: 2px 8px;
-            border-radius: 999px;
-            text-transform: uppercase;
             letter-spacing: 0.06em;
+            color: var(--teal);
+            border: 1px solid rgba(45, 212, 191, 0.2);
+            border-radius: 6px;
+            padding: 2px 8px;
         }
 
-        /* ── Status Bar ────────────────────────────────────────────────── */
+        /* ── Status bar ────────────────────────────────────────────── */
         .status-bar {
-            padding: 8px 14px;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
+            padding: 6px 16px;
             font-size: 11px;
             color: var(--text-3);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-
-        .status-bar .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--text-3);
-            flex-shrink: 0;
-        }
-
-        .status-bar .dot.active {
-            background: var(--success);
-            animation: blink 1.8s ease-in-out infinite;
-        }
-
-        .status-bar .dot.error {
-            background: var(--error);
-        }
-
-        /* ── Text Input Area ───────────────────────────────────────────── */
-        .input-area {
-            padding: 12px 14px;
+            background: var(--surface);
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
         }
 
-        .input-area textarea {
+        /* ── Input section ─────────────────────────────────────────── */
+        .input-section {
+            padding: 12px 16px;
+            flex-shrink: 0;
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .input-wrap textarea {
             width: 100%;
-            background: var(--surface-2);
+            min-height: 56px;
+            max-height: 120px;
+            padding: 10px 12px;
+            background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 10px;
-            padding: 10px 12px;
-            font-size: 13px;
             color: var(--text-1);
             font-family: var(--font-main);
-            resize: none;
+            font-size: 13px;
+            resize: vertical;
             outline: none;
-            min-height: 60px;
-            max-height: 100px;
         }
 
-        .input-area textarea:focus {
+        .input-wrap textarea:focus {
             border-color: rgba(91, 142, 240, 0.5);
-            box-shadow: 0 0 0 3px var(--accent-glow);
+            box-shadow: 0 0 0 3px rgba(91, 142, 240, 0.16);
         }
 
-        .input-area textarea::placeholder {
+        .input-wrap textarea::placeholder {
             color: var(--text-3);
         }
 
-        .input-actions {
+        .input-footer {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            margin-top: 8px;
+            align-items: center;
+            margin-top: 6px;
         }
 
         .char-count {
-            font-size: 10px;
-            font-family: var(--font-mono);
+            font-size: 11px;
             color: var(--text-3);
+            font-family: var(--font-mono);
         }
 
         .translate-btn {
-            padding: 6px 16px;
-            background: linear-gradient(to bottom, var(--accent-btn-top), var(--accent));
-            border: 1px solid var(--accent);
+            padding: 6px 18px;
+            border: none;
             border-radius: 8px;
+            background: linear-gradient(180deg, var(--accent-btn-top), var(--accent));
             color: #fff;
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
+            box-shadow: var(--raised-sm);
             transition: all 0.15s;
         }
 
         .translate-btn:hover {
-            filter: brightness(1.1);
-        }
-
-        .translate-btn:active {
-            transform: translateY(1px);
+            filter: brightness(1.08);
         }
 
         .translate-btn:disabled {
             opacity: 0.5;
-            cursor: not-allowed;
-            filter: none;
+            cursor: default;
         }
 
-        /* ── Canvas Area ───────────────────────────────────────────────── */
+        /* ── Gloss chips ───────────────────────────────────────────── */
+        .gloss-bar {
+            padding: 0 16px 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .chip {
+            font-size: 11px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            padding: 3px 10px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-2);
+            cursor: pointer;
+            transition: all 0.12s;
+        }
+
+        .chip:hover {
+            border-color: var(--border-hi);
+            color: var(--text-1);
+        }
+
+        .chip.active {
+            background: rgba(91, 142, 240, 0.12);
+            border-color: rgba(91, 142, 240, 0.3);
+            color: var(--accent);
+        }
+
+        .method-badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: auto;
+        }
+
+        .method-badge.rule {
+            background: rgba(45, 212, 191, 0.1);
+            color: var(--teal);
+        }
+
+        .method-badge.llm {
+            background: rgba(91, 142, 240, 0.1);
+            color: var(--accent);
+        }
+
+        /* ── Render mode toggle ────────────────────────────────────── */
+        .render-toggle-bar {
+            padding: 0 16px 8px;
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .render-toggle {
+            display: flex;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 2px;
+            box-shadow: var(--inset);
+        }
+
+        .render-toggle button {
+            padding: 4px 12px;
+            font-size: 10px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-3);
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: var(--font-main);
+        }
+
+        .render-toggle button.active {
+            background: var(--surface);
+            border: 1px solid var(--border-hi);
+            color: var(--text-1);
+            box-shadow: var(--raised-sm);
+        }
+
+        /* ── Canvas area ───────────────────────────────────────────── */
         .canvas-area {
             flex: 1;
             position: relative;
-            background: radial-gradient(circle at center, rgba(91, 142, 240, 0.04), transparent 70%);
-            min-height: 200px;
             overflow: hidden;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
         }
 
         .canvas-area canvas {
-            position: absolute;
-            inset: 0;
             width: 100%;
             height: 100%;
+            display: block;
         }
 
-        /* ── Gloss Label ───────────────────────────────────────────────── */
-        .gloss-label {
+        #avatarContainer {
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+
+        .empty-state {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .empty-state .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+            background: var(--surface-2);
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-2);
+        }
+
+        .empty-state .sub {
+            font-size: 11px;
+            color: var(--text-3);
+            margin-top: 4px;
+            max-width: 220px;
+            text-align: center;
+        }
+
+        .current-gloss {
             position: absolute;
             bottom: 12px;
             left: 50%;
             transform: translateX(-50%);
-            font-family: var(--font-mono);
             font-size: 12px;
             font-weight: 600;
-            color: var(--accent);
-            background: rgba(13, 14, 19, 0.88);
-            border: 1px solid var(--border-hi);
-            padding: 4px 14px;
-            border-radius: 999px;
-            backdrop-filter: blur(8px);
-            white-space: nowrap;
-            z-index: 2;
-            transition: opacity 0.15s;
-        }
-
-        .gloss-label.hidden {
-            opacity: 0;
-        }
-
-        /* ── Gloss Sequence Display ─────────────────────────────────────── */
-        .gloss-sequence {
-            padding: 8px 14px;
-            border-top: 1px solid var(--border);
-            font-size: 11px;
             font-family: var(--font-mono);
-            color: var(--text-3);
-            max-height: 48px;
-            overflow-y: auto;
-            flex-shrink: 0;
-            word-break: break-all;
-        }
-
-        .gloss-sequence .gloss-token {
-            display: inline-block;
-            padding: 1px 5px;
-            margin: 1px 2px;
-            border-radius: 4px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            transition: all 0.15s;
-        }
-
-        .gloss-sequence .gloss-token.active {
-            background: rgba(91, 142, 240, 0.15);
-            border-color: var(--accent);
             color: var(--accent);
+            background: rgba(14, 16, 29, 0.8);
+            padding: 3px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(91, 142, 240, 0.2);
+            pointer-events: none;
         }
 
-        /* ── Controls ──────────────────────────────────────────────────── */
+        /* ── Playback controls ─────────────────────────────────────── */
         .controls {
-            padding: 10px 14px;
-            border-top: 1px solid var(--border);
-            background: var(--surface);
+            padding: 10px 16px 14px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -283,18 +342,18 @@
         }
 
         .ctrl-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
+            width: 34px;
+            height: 34px;
             border: 1px solid var(--border);
-            background: var(--surface-2);
+            background: var(--surface);
+            border-radius: 8px;
             color: var(--text-2);
+            font-size: 14px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            transition: all 0.15s;
+            transition: all 0.12s;
         }
 
         .ctrl-btn:hover {
@@ -302,224 +361,116 @@
             color: var(--text-1);
         }
 
+        .ctrl-btn.active {
+            background: rgba(91, 142, 240, 0.12);
+            border-color: rgba(91, 142, 240, 0.3);
+            color: var(--accent);
+        }
+
         .ctrl-btn.play {
-            width: 38px;
-            height: 38px;
-            background: linear-gradient(to bottom, var(--accent-btn-top), var(--accent));
-            border-color: var(--accent);
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(180deg, var(--accent-btn-top), var(--accent));
+            border: none;
+            border-radius: 50%;
             color: #fff;
-            font-size: 14px;
+            font-size: 16px;
         }
 
         .ctrl-btn.play:hover {
             filter: brightness(1.1);
         }
 
-        /* Speed selector */
-        .speed-selector {
-            margin-left: 12px;
+        .speed-group {
             display: flex;
-            align-items: center;
-            gap: 4px;
+            gap: 3px;
+            margin-left: 12px;
         }
 
         .speed-btn {
-            padding: 3px 8px;
-            font-size: 10px;
-            font-family: var(--font-mono);
-            font-weight: 600;
+            padding: 4px 8px;
             border: 1px solid var(--border);
+            background: var(--surface);
             border-radius: 6px;
-            background: var(--surface-2);
             color: var(--text-3);
+            font-size: 10px;
+            font-weight: 600;
+            font-family: var(--font-mono);
             cursor: pointer;
             transition: all 0.12s;
         }
 
         .speed-btn:hover {
-            color: var(--text-2);
+            border-color: var(--border-hi);
+            color: var(--text-1);
         }
 
         .speed-btn.active {
             background: rgba(91, 142, 240, 0.12);
-            border-color: var(--accent);
+            border-color: rgba(91, 142, 240, 0.3);
             color: var(--accent);
-        }
-
-        /* ── Empty State ───────────────────────────────────────────────── */
-        .empty-state {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 24px;
-        }
-
-        .empty-state .empty-icon {
-            width: 56px;
-            height: 56px;
-            background: rgba(91, 142, 240, 0.08);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            margin-bottom: 12px;
-        }
-
-        .empty-state .empty-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-1);
-            margin-bottom: 4px;
-        }
-
-        .empty-state .empty-desc {
-            font-size: 11px;
-            color: var(--text-3);
-            max-width: 240px;
-        }
-
-        /* ── Error State ───────────────────────────────────────────────── */
-        .error-banner {
-            padding: 8px 14px;
-            background: rgba(248, 113, 113, 0.06);
-            border-bottom: 1px solid rgba(248, 113, 113, 0.15);
-            font-size: 11px;
-            color: var(--error);
-            display: none;
-            align-items: flex-start;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-
-        .error-banner.visible {
-            display: flex;
-        }
-
-        .error-banner .retry-btn {
-            margin-left: auto;
-            padding: 2px 10px;
-            background: rgba(248, 113, 113, 0.15);
-            border: 1px solid rgba(248, 113, 113, 0.3);
-            border-radius: 6px;
-            color: var(--error);
-            font-size: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        /* ── Loading ────────────────────────────────────────────────────── */
-        .loading-bar {
-            height: 2px;
-            background: var(--surface);
-            overflow: hidden;
-            flex-shrink: 0;
-            display: none;
-        }
-
-        .loading-bar.visible {
-            display: block;
-        }
-
-        .loading-bar .bar {
-            height: 100%;
-            width: 30%;
-            background: linear-gradient(90deg, var(--accent), var(--teal));
-            animation: loading-slide 1.2s ease-in-out infinite;
-        }
-
-        /* ── Animations ────────────────────────────────────────────────── */
-        @keyframes blink {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.35;
-            }
-        }
-
-        @keyframes loading-slide {
-            0% {
-                transform: translateX(-100%);
-            }
-
-            100% {
-                transform: translateX(400%);
-            }
         }
     </style>
 </head>
 
 <body>
     <!-- Header -->
-    <div class="panel-header">
-        <div class="panel-logo">DS</div>
-        <div class="panel-title">DuoSign</div>
-        <div class="mode-badge" id="modeBadge">Text Selection</div>
+    <div class="header">
+        <div class="logo">DS</div>
+        <h1>DuoSign</h1>
+        <div class="mode-label" id="modeLabel">TEXT SELECTION</div>
     </div>
 
-    <!-- Status Bar -->
-    <div class="status-bar" id="statusBar">
-        <div class="dot" id="statusDot"></div>
-        <span id="statusText">Ready — highlight text on any page to sign</span>
-    </div>
+    <!-- Status -->
+    <div class="status-bar" id="statusBar">● Ready — highlight text on any page to sign</div>
 
-    <!-- Loading Bar -->
-    <div class="loading-bar" id="loadingBar">
-        <div class="bar"></div>
-    </div>
-
-    <!-- Error Banner -->
-    <div class="error-banner" id="errorBanner">
-        <span>⚠</span>
-        <span id="errorText">Translation failed</span>
-        <button class="retry-btn" id="retryBtn">Retry</button>
-    </div>
-
-    <!-- Text Input Area -->
-    <div class="input-area" id="inputArea">
-        <textarea id="textInput" placeholder="Type or paste text to translate to ASL..." rows="2"
-            maxlength="500"></textarea>
-        <div class="input-actions">
-            <span class="char-count"><span id="charCount">0</span>/500</span>
+    <!-- Input -->
+    <div class="input-section">
+        <div class="input-wrap">
+            <textarea id="textInput" placeholder="Type or paste text to translate to ASL…" maxlength="500"
+                rows="2"></textarea>
+        </div>
+        <div class="input-footer">
+            <span class="char-count" id="charCount">0/500</span>
             <button class="translate-btn" id="translateBtn">Translate</button>
         </div>
     </div>
 
-    <!-- Gloss Sequence -->
-    <div class="gloss-sequence" id="glossSequence"></div>
+    <!-- Gloss chips -->
+    <div class="gloss-bar">
+        <div id="glossChips"></div>
+        <span class="method-badge" id="methodBadge"></span>
+    </div>
 
-    <!-- Canvas Area -->
-    <div class="canvas-area" id="canvasArea">
-        <canvas id="skeletonCanvas"></canvas>
-        <div class="gloss-label hidden" id="glossLabel">Ready to sign</div>
-
-        <!-- Empty state -->
-        <div class="empty-state" id="emptyState">
-            <div class="empty-icon">🤟</div>
-            <div class="empty-title">Ready to Sign</div>
-            <div class="empty-desc">Highlight text on any web page, right-click and select "Send to DuoSign" to see the
-                ASL translation.</div>
+    <!-- Render mode toggle -->
+    <div class="render-toggle-bar">
+        <div class="render-toggle" id="renderToggle">
+            <button class="active" data-mode="skeleton">Skeleton 2D</button>
+            <button data-mode="avatar">Avatar 3D</button>
         </div>
     </div>
 
-    <!-- Playback Controls -->
-    <div class="controls" id="controlsBar">
-        <button class="ctrl-btn" id="btnPrev" title="Previous">◀</button>
-        <button class="ctrl-btn" id="btnStop" title="Stop">⬛</button>
-        <button class="ctrl-btn play" id="btnPlay" title="Play">▶</button>
-        <button class="ctrl-btn" id="btnNext" title="Next">▶</button>
-        <button class="ctrl-btn" id="btnReplay" title="Replay" style="margin-left: 6px;">↺</button>
+    <!-- Canvas area -->
+    <div class="canvas-area">
+        <canvas id="signCanvas"></canvas>
+        <div id="avatarContainer"></div>
+        <div class="empty-state" id="emptyState">
+            <div class="icon">🤟</div>
+            <p>Ready to Sign</p>
+            <div class="sub">Highlight text on any web page, right-click and select "Send to DuoSign" to see the ASL
+                translation.</div>
+        </div>
+        <div class="current-gloss" id="currentGloss"></div>
+    </div>
 
-        <div class="speed-selector">
+    <!-- Playback controls -->
+    <div class="controls">
+        <button class="ctrl-btn" id="prevBtn">◀</button>
+        <button class="ctrl-btn" id="stopBtn">◼</button>
+        <button class="ctrl-btn play" id="playBtn">▶</button>
+        <button class="ctrl-btn" id="nextBtn">▶</button>
+        <button class="ctrl-btn" id="loopBtn" title="Loop">↻</button>
+        <div class="speed-group">
             <button class="speed-btn" data-speed="0.5">0.5×</button>
             <button class="speed-btn active" data-speed="1">1×</button>
             <button class="speed-btn" data-speed="1.5">1.5×</button>
@@ -527,10 +478,12 @@
         </div>
     </div>
 
-    <!-- Scripts (loaded in order — parser first, then renderer, then player, then main) -->
+    <!-- Scripts -->
+    <script src="lib/asset-manager.js"></script>
     <script src="lib/pose-parser.js"></script>
     <script src="lib/skeleton-renderer.js"></script>
     <script src="lib/pose-player.js"></script>
+    <script src="lib/api.js"></script>
     <script src="sidepanel.js"></script>
 </body>
 
