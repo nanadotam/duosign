@@ -108,6 +108,8 @@ SCENARIOS = [
     ("K: Adjectives",             "The big red car is fast"),
     ("L: Numbers",                "I have three dogs"),
     ("M: Command",                "Please sit down"),
+    ("N: Greeting with name",     "Hi James, nice to meet you"),
+    ("O: Informal greeting",      "Hey Sarah how are you"),
 ]
 
 EXPECTED = {
@@ -123,6 +125,8 @@ EXPECTED = {
     "The big red car is fast":                              "CAR BIG RED FAST",
     "I have three dogs":                                    "I DOG THREE HAVE",
     "Please sit down":                                      "SIT",
+    "Hi James, nice to meet you":                          "HELLO J A M E S NICE MEET YOU",
+    "Hey Sarah how are you":                               "HELLO S A R A H YOU HOW",
 }
 
 

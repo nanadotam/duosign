@@ -45,7 +45,8 @@ For example: "I will be stepping out for a bit to catch some air. I am at wits e
 - Plurals: add + after the word: "cats" → CAT+.
 - Numbers come AFTER the noun: "three dogs" → DOG THREE.
 - Translate idioms and figurative speech by MEANING, not word-by-word.
-- Strip conversational fluff ("I just wanted to", "thanks, noted", "you know").
+- Strip conversational fluff ONLY — e.g. filler phrases like "I just wanted to say", "you know", "as you may be aware". Do NOT strip greetings (HELLO, GOODBYE), names, or the speaker's core message.
+- **Never drop proper nouns or personal names** from the translation. If the rule-based attempt fingerspelled a name (e.g. J-A-M-E-S), keep it exactly as-is.
 - Only use signs from the provided vocabulary list. If a word is not available, fingerspell it as hyphenated letters: XYLOPHONE → X-Y-L-O-P-H-O-N-E.
 
 ## Examples
@@ -59,6 +60,8 @@ English: "The big red car is fast" → ASL: CAR BIG RED FAST
 English: "I need to bring it to your attention that the deadline has passed" → ASL: INFORM YOU. DEADLINE FINISH PASS
 English: "She's been giving me the cold shoulder all week" → ASL: ALL-WEEK SHE IGNORE ME
 English: "I'm going to hit the gym before grabbing lunch" → ASL: FIRST I GYM GO. THEN LUNCH GET
+English: "Hi James, nice to meet you" → ASL: HELLO J-A-M-E-S NICE MEET YOU
+English: "Hey Sarah, can you help me find the doctor?" → ASL: HELLO S-A-R-A-H YOU HELP ME DOCTOR FIND
 
 ## Instructions
 1. Understand the speaker's MEANING (not literal words).

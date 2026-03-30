@@ -95,6 +95,41 @@ BE_LEMMAS: set[str] = {"be"}
 # Filler/politeness words to always drop
 FILLER_WORDS: set[str] = {"please", "just", "really", "very"}
 
+# Synonym → gloss remapping: words that have no direct gloss but map to a
+# sign that already exists in the vocabulary.
+# Applied in _glossify() BEFORE the fingerspell fallback.
+# The LLM receives these mapped glosses in its rule-based attempt, so it
+# also sees the canonical HELLO / GOODBYE sign and knows not to drop them.
+SYNONYM_MAP: dict[str, str] = {
+    # Greetings
+    "hi": "HELLO",
+    "hey": "HELLO",
+    "hiya": "HELLO",
+    "greetings": "HELLO",
+    "howdy": "HELLO",
+    "yo": "HELLO",
+    # Farewells
+    "bye": "GOODBYE",
+    "bye-bye": "GOODBYE",
+    "later": "GOODBYE",   # "catch you later"
+    "farewell": "GOODBYE",
+    # Gratitude
+    "thanks": "THANK-YOU",
+    "cheers": "THANK-YOU",
+    "thx": "THANK-YOU",
+    # Negation variants
+    "nope": "NO",
+    "nah": "NO",
+    "yep": "YES",
+    "yeah": "YES",
+    "yep": "YES",
+    # Common contractions / informal
+    "wanna": "WANT",
+    "gonna": "GO",
+    "gotta": "NEED",
+    "hafta": "NEED",
+}
+
 # Common idioms → ASL gloss
 IDIOM_MAP: dict[str, str] = {
     "raining cats and dogs": "RAIN HEAVY",
@@ -328,7 +363,8 @@ class TextToGloss:
                auxiliaries (by dep label), copular "be" verbs,
                particles, filler words, possessive pronouns, conjunctions.
         Keeps: nouns, verbs, adjectives, adverbs, pronouns, numbers,
-               negation words, WH-words.
+               negation words, WH-words, and synonym-mapped interjections
+               (hi→HELLO, hey→HELLO, bye→GOODBYE, etc.).
         """
         kept = []
         for token in doc:
@@ -339,6 +375,13 @@ class TextToGloss:
 
             # ALWAYS keep WH-words — no matter what POS spaCy assigns
             if word in WH_WORDS:
+                kept.append(token)
+                continue
+
+            # ALWAYS keep synonym-mapped words (greetings/farewells tagged as
+            # INTJ by spaCy — e.g. "hi", "hey", "bye" — would otherwise be
+            # dropped here because INTJ is not an explicitly kept POS)
+            if word in SYNONYM_MAP or lemma in SYNONYM_MAP:
                 kept.append(token)
                 continue
 
@@ -444,6 +487,14 @@ class TextToGloss:
             # "Nana", "Ghana"), fingerspell it as individual letter tokens.
             if pos in ("NOUN", "PROPN"):
                 base = lemma.upper()
+                # Synonym remap — e.g. "hi" → HELLO (before fingerspell fallback)
+                # SYNONYM_MAP keys are lowercase; use word/lemma not base (which is upper)
+                synonym_key = word if word in SYNONYM_MAP else (lemma if lemma in SYNONYM_MAP else None)
+                if synonym_key:
+                    mapped = SYNONYM_MAP[synonym_key]
+                    if self.vocab.has(mapped):
+                        glossed.append((mapped, token))
+                        continue
                 if not self.vocab.has(base):
                     # Unknown word — produce hyphenated fingerspell form
                     # (will be expanded to individual letters after glossify)
@@ -461,6 +512,14 @@ class TextToGloss:
             # Verbs → base form; fingerspell if not in vocabulary
             if pos == "VERB":
                 base = lemma.upper()
+                # Synonym remap — e.g. "gonna" → GO
+                # SYNONYM_MAP keys are lowercase
+                synonym_key = word if word in SYNONYM_MAP else (lemma if lemma in SYNONYM_MAP else None)
+                if synonym_key:
+                    mapped = SYNONYM_MAP[synonym_key]
+                    if self.vocab.has(mapped):
+                        glossed.append((mapped, token))
+                        continue
                 if not self.vocab.has(base):
                     letters = fingerspell_word(token.text)
                     gloss = "-".join(letters) if letters else base
@@ -472,6 +531,15 @@ class TextToGloss:
             # Adjectives, adverbs, everything else → lemmatize;
             # fingerspell if not in vocabulary
             base = lemma.upper()
+            # Synonym remap — catches "hi", "hey", "bye" when spaCy tags them
+            # as INTJ or ADV rather than NOUN (context-dependent).
+            # SYNONYM_MAP keys are lowercase; check word/lemma not base (upper)
+            synonym_key = word if word in SYNONYM_MAP else (lemma if lemma in SYNONYM_MAP else None)
+            if synonym_key:
+                mapped = SYNONYM_MAP[synonym_key]
+                if self.vocab.has(mapped):
+                    glossed.append((mapped, token))
+                    continue
             if not self.vocab.has(base):
                 letters = fingerspell_word(token.text)
                 gloss = "-".join(letters) if letters else base
