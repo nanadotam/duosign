@@ -1,0 +1,231 @@
+/*
+ * DuoSign YouTube Overlay Styles
+ * ================================
+ * Injected into YouTube pages. All selectors prefixed with "duosign-"
+ * to avoid conflicts with YouTube's own CSS.
+ */
+
+/* ── Detection Banner ──────────────────────────────────────────── */
+#duosign-yt-banner {
+  margin: 12px 0 0 0;
+  padding: 10px 14px;
+  background: #14161d;
+  border: 1px solid #2a2d3a;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family:
+    "Roboto",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  font-size: 13px;
+  animation: duosign-toast-in 0.2s ease;
+}
+
+.duosign-detect-icon {
+  width: 28px;
+  height: 28px;
+  background: rgba(45, 212, 191, 0.12);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.duosign-detect-text {
+  color: #8b94b8;
+}
+
+.duosign-detect-text strong {
+  color: #2dd4bf;
+  font-weight: 600;
+}
+
+.duosign-detect-action {
+  margin-left: auto;
+  padding: 6px 16px;
+  background: linear-gradient(to bottom, #6b9cf2, #5b8ef0);
+  border: 1px solid #5b8ef0;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.duosign-detect-action:hover {
+  filter: brightness(1.1);
+}
+
+/* ── Disclaimer ────────────────────────────────────────────────── */
+#duosign-yt-disclaimer {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 189, 46, 0.06);
+  border: 1px solid rgba(255, 189, 46, 0.15);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #ffbd2e;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-family:
+    "Roboto",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  line-height: 1.5;
+}
+
+.duosign-warn-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+/* ── PiP Overlay ───────────────────────────────────────────────── */
+#duosign-pip {
+  position: absolute;
+  bottom: 50px;
+  right: 16px;
+  width: 160px;
+  height: 160px;
+  background: #14161d;
+  border: 2px solid #363a4e;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  z-index: 100;
+  animation: duosign-pip-in 0.3s ease;
+  cursor: move;
+  display: none;
+}
+
+.duosign-pip-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
+  z-index: 2;
+}
+
+.duosign-pip-label {
+  font-size: 8px;
+  font-weight: 700;
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  color: #2dd4bf;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.duosign-pip-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #2dd4bf;
+  animation: duosign-blink 1.8s ease-in-out infinite;
+  display: inline-block;
+}
+
+.duosign-pip-close {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #4e5570;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.duosign-pip-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #edf0ff;
+}
+
+.duosign-pip-canvas-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(
+    circle at center,
+    rgba(91, 142, 240, 0.04),
+    transparent 70%
+  );
+}
+
+.duosign-pip-canvas-wrap canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.duosign-pip-gloss {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-size: 9px;
+  font-weight: 600;
+  color: #5b8ef0;
+  background: rgba(0, 0, 0, 0.65);
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #2a2d3a;
+  backdrop-filter: blur(4px);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* ── Animations ────────────────────────────────────────────────── */
+@keyframes duosign-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes duosign-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes duosign-pip-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

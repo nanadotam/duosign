@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DuoSign — Settings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0d0e13;
+            --surface: #14161d;
+            --surface-2: #1b1d26;
+            --surface-3: #22252f;
+            --border: #2a2d3a;
+            --border-hi: #363a4e;
+            --text-1: #edf0ff;
+            --text-2: #8b94b8;
+            --text-3: #4e5570;
+            --accent: #5b8ef0;
+            --accent-btn-top: #6b9cf2;
+            --teal: #2dd4bf;
+            --success: #4ade80;
+            --font-main: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+            --raised-sm: 0 1px 0 rgba(255, 255, 255, 0.045), 0 2px 6px rgba(0, 0, 0, 0.3);
+            --inset: inset 0 2px 5px rgba(0, 0, 0, 0.55), inset 0 1px 2px rgba(0, 0, 0, 0.35);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--bg);
+            color: var(--text-1);
+            font-size: 14px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+
+        .header {
+            padding: 16px 24px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--accent), var(--teal));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 10px;
+        }
+
+        .header h1 {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .header .subtitle {
+            font-size: 11px;
+            color: var(--text-3);
+            margin-left: auto;
+        }
+
+        .settings-container {
+            max-width: 480px;
+            margin: 24px auto;
+            padding: 0 24px;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 10px;
+        }
+
+        .section-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .setting-row {
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .setting-desc {
+            font-size: 11px;
+            color: var(--text-3);
+            margin-top: 2px;
+        }
+
+        .setting-row input[type="text"] {
+            width: 180px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 13px;
+            color: var(--text-1);
+            font-family: var(--font-main);
+            outline: none;
+        }
+
+        .setting-row input[type="text"]:focus {
+            border-color: rgba(91, 142, 240, 0.5);
+            box-shadow: 0 0 0 3px rgba(91, 142, 240, 0.16);
+        }
+
+        /* Toggle switch */
+        .toggle-wrap {
+            display: flex;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 2px;
+            box-shadow: var(--inset);
+        }
+
+        .toggle-wrap button {
+            padding: 5px 14px;
+            font-size: 11px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-3);
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: var(--font-main);
+        }
+
+        .toggle-wrap button.active {
+            background: var(--surface);
+            border: 1px solid var(--border-hi);
+            color: var(--text-1);
+            box-shadow: var(--raised-sm);
+        }
+
+        /* Speed slider */
+        .speed-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .speed-display input[type="range"] {
+            width: 100px;
+            accent-color: var(--accent);
+        }
+
+        .speed-value {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            min-width: 32px;
+            text-align: right;
+        }
+
+        /* Info callout */
+        .info-callout {
+            padding: 12px 16px;
+            background: rgba(91, 142, 240, 0.06);
+            border: 1px solid rgba(91, 142, 240, 0.12);
+            border-radius: 10px;
+            font-size: 12px;
+            color: var(--text-2);
+            line-height: 1.6;
+        }
+
+        .info-callout strong {
+            color: var(--text-1);
+        }
+
+        /* Save indicator */
+        .save-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: var(--surface);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--success);
+            display: none;
+            animation: toast-in 0.2s ease;
+        }
+
+        .save-indicator.visible {
+            display: block;
+        }
+
+        @keyframes toast-in {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="logo">DS</div>
+        <h1>DuoSign Settings</h1>
+        <span class="subtitle">v0.1.0</span>
+    </div>
+
+    <div class="settings-container">
+        <!-- Profile -->
+        <div class="section">
+            <div class="section-title">Profile</div>
+            <div class="section-card">
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label">Display Name</div>
+                        <div class="setting-desc">Shown in the popup greeting</div>
+                    </div>
+                    <input type="text" id="userName" placeholder="Your name" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Rendering -->
+        <div class="section">
+            <div class="section-title">Rendering</div>
+            <div class="section-card">
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label">Avatar Mode</div>
+                        <div class="setting-desc">2D skeleton is faster and lighter</div>
+                    </div>
+                    <div class="toggle-wrap" id="renderModeToggle">
+                        <button class="active" data-value="skeleton">Skeleton</button>
+                        <button data-value="vrm" disabled title="Coming soon">VRM 3D</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label">Animation Speed</div>
+                        <div class="setting-desc">How fast signs are played</div>
+                    </div>
+                    <div class="speed-display">
+                        <input type="range" id="speedSlider" min="0.5" max="2" step="0.5" value="1" />
+                        <span class="speed-value" id="speedValue">1×</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PDF Settings -->
+        <div class="section">
+            <div class="section-title">PDF Reader</div>
+            <div class="info-callout">
+                <strong>Local PDF files:</strong> To use DuoSign with local PDF files (file:// URLs),
+                go to <code>chrome://extensions</code>, find DuoSign, click "Details", and enable
+                <strong>"Allow access to file URLs"</strong>.
+            </div>
+        </div>
+
+        <!-- About -->
+        <div class="section">
+            <div class="section-title">About</div>
+            <div class="section-card">
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label">DuoSign Extension</div>
+                        <div class="setting-desc">Version 0.1.0 — ASL Translation for the Web</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="save-indicator" id="saveIndicator">✓ Settings saved</div>
+
+    <script src="settings.js"></script>
+</body>
+
+</html>
