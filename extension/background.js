@@ -9,7 +9,18 @@
  *  - Auth header injection for all API calls
  */
 
-const API_BASE_URL = "https://duosign.onrender.com";
+// ── Environment detection ────────────────────────────────────────────
+// Dev: points to local FastAPI + Next.js. Prod: Render + Vercel.
+const IS_DEV = !("update_url" in chrome.runtime.getManifest());
+
+const API_BASE_URL = IS_DEV
+  ? "http://localhost:8000"        // FastAPI dev server
+  : "https://duosign.onrender.com"; // FastAPI on Render
+
+const WEB_APP_URL = IS_DEV
+  ? "http://localhost:3000"
+  : "https://duosign.vercel.app";
+
 const AUTH_STORAGE_KEY = "duosign_auth_session";
 
 /** Get auth headers from stored session */
@@ -158,9 +169,57 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       );
       return true;
 
+    case "GET_AUTH_SESSION":
+      chrome.storage.local.get(AUTH_STORAGE_KEY, (stored) =>
+        sendResponse({ ok: true, session: stored[AUTH_STORAGE_KEY] ?? null }),
+      );
+      return true;
+
+    // Open the web-app sign-in page with extension context
+    case "OPEN_SIGN_IN": {
+      const signInUrl = `${WEB_APP_URL}/auth/sign-in?source=extension&ext_id=${chrome.runtime.id}`;
+      chrome.tabs.create({ url: signInUrl });
+      sendResponse({ ok: true });
+      return true;
+    }
+
     default:
       break;
   }
+});
+
+// ── External Messages (from web app pages) ──────────────────────────
+// The sign-in page at /auth/sign-in?source=extension posts the session
+// token via chrome.runtime.sendMessage(extId, msg) after successful login.
+// Requires "externally_connectable" in manifest.json.
+
+chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
+  // Only accept messages from trusted web origins
+  const trustedOrigins = [WEB_APP_URL, "http://localhost:3000"];
+  if (!trustedOrigins.some((o) => sender.url?.startsWith(o))) {
+    sendResponse({ ok: false, error: "Untrusted origin" });
+    return;
+  }
+
+  if (msg.type === "SAVE_AUTH_SESSION" && msg.session) {
+    chrome.storage.local.set({ [AUTH_STORAGE_KEY]: msg.session }, () => {
+      console.log("[DuoSign BG] Auth session saved from web app for", msg.session.email);
+      // Notify all extension pages that auth has changed
+      chrome.runtime.sendMessage({ type: "AUTH_CHANGED", session: msg.session }).catch(() => {});
+      sendResponse({ ok: true });
+    });
+    return true;
+  }
+
+  if (msg.type === "CLEAR_AUTH_SESSION") {
+    chrome.storage.local.remove(AUTH_STORAGE_KEY, () => {
+      chrome.runtime.sendMessage({ type: "AUTH_CHANGED", session: null }).catch(() => {});
+      sendResponse({ ok: true });
+    });
+    return true;
+  }
+
+  sendResponse({ ok: false, error: "Unknown message type" });
 });
 
 // ── Side Panel Config ───────────────────────────────────────────────

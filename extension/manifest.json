@@ -6,9 +6,17 @@
   "permissions": ["sidePanel", "contextMenus", "activeTab", "storage"],
   "host_permissions": [
     "https://duosign.onrender.com/*",
+    "https://duosign.vercel.app/*",
     "https://yqhuvnbgtrbjrfmykznk.supabase.co/*",
-    "http://localhost:3000/*"
+    "http://localhost:3000/*",
+    "http://localhost:8000/*"
   ],
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:3000/*",
+      "https://duosign.vercel.app/*"
+    ]
+  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
