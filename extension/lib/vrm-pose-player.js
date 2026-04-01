@@ -142,9 +142,12 @@ class VRMPosePlayer {
       fps: poseData.fps,
       onFrame: (frame, index) => {
         if (!this.vrm || !Kalidokit) return;
-        applyPoseToVRM(this.vrm, frame, Kalidokit, { smoothing: 0.8 });
+        try {
+          applyPoseToVRM(this.vrm, frame, Kalidokit, { smoothing: 0.8 });
+        } catch (err) {
+          console.warn("[VRMPosePlayer] applyPoseToVRM error:", err);
+        }
         this.progress = (index + 1) / poseData.frames.length;
-        this._notify();
       },
     });
 

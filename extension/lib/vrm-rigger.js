@@ -16,17 +16,20 @@ const RIG_CONFIG = {
   hips: { dampener: 0.7, lerp: 0.12 },
   chest: { dampener: 0.25, lerp: 0.15 },
   spine: { dampener: 0.45, lerp: 0.15 },
-  upperArm: { dampener: 0.85, lerp: 0.28 },
-  lowerArm: { dampener: 0.9, lerp: 0.3 },
-  hand: { dampener: 1.0, lerp: 0.4 },
-  head: { dampener: 0.35, lerp: 0.08 },
-  fingers: { dampener: 1.0, lerp: 0.55 },
+  upperArm: { dampener: 1.0, lerp: 0.35 },
+  lowerArm: { dampener: 1.0, lerp: 0.4 },
+  hand: { dampener: 1.0, lerp: 0.6 },
+  neck: { dampener: 0.7, lerp: 0.15 },
+  head: { dampener: 0.35, lerp: 0.2 },
+  finger: { dampener: 1.0, lerp: 0.75 },
+  thumb: { dampener: 1.0, lerp: 0.7 },
   face: { lerp: 0.4 },
+  // camelCase keys for clampRotation lookup
   armClamps: {
-    leftUpperArm: { zMin: -0.9, zMax: 1.6 },
-    rightUpperArm: { zMin: -1.6, zMax: 0.9 },
-    leftLowerArm: { zMin: -2.5, zMax: 0.3 },
-    rightLowerArm: { zMin: -0.3, zMax: 2.5 },
+    rightUpperArm: { zMin: -0.35, zMax: Math.PI, xMin: -Math.PI / 2, xMax: Math.PI / 2 },
+    leftUpperArm:  { zMin: -Math.PI, zMax: 0.35, xMin: -Math.PI / 2, xMax: Math.PI / 2 },
+    rightLowerArm: { xMin: -Math.PI * 0.9, xMax: 0.1 },
+    leftLowerArm:  { xMin: -Math.PI * 0.9, xMax: 0.1 },
   },
   restPoseSmoothing: 0.4,
   restPoseFrames: 4,
@@ -61,12 +64,14 @@ function _lerp(a, b, t) {
 const warnedBones = new Set();
 
 function clampRotation(rotation, boneName) {
-  const clamps = RIG_CONFIG.armClamps[boneName];
-  if (!clamps) return rotation;
+  // rigRotation receives PascalCase names; armClamps keys are camelCase
+  const key = boneName.charAt(0).toLowerCase() + boneName.slice(1);
+  const c = RIG_CONFIG.armClamps[key];
+  if (!c) return rotation;
   return {
-    x: rotation.x,
-    y: rotation.y,
-    z: Math.max(clamps.zMin, Math.min(clamps.zMax, rotation.z)),
+    x: c.xMin !== undefined ? Math.max(c.xMin, Math.min(c.xMax, rotation.x)) : rotation.x,
+    y: c.yMin !== undefined ? Math.max(c.yMin, Math.min(c.yMax, rotation.y)) : rotation.y,
+    z: c.zMin !== undefined ? Math.max(c.zMin, Math.min(c.zMax, rotation.z)) : rotation.z,
   };
 }
 
@@ -113,102 +118,17 @@ function rigUpperBody(vrm, riggedPose) {
 
   const cfg = RIG_CONFIG;
 
-  // Hips
-  if (riggedPose.Hips) {
-    if (riggedPose.Hips.rotation) {
-      rigRotation(
-        vrm,
-        "Hips",
-        riggedPose.Hips.rotation,
-        cfg.hips.dampener,
-        cfg.hips.lerp,
-      );
-    }
-    if (riggedPose.Hips.position) {
-      rigPosition(
-        vrm,
-        "Hips",
-        {
-          x: riggedPose.Hips.position.x,
-          y: riggedPose.Hips.position.y + 1,
-          z: -riggedPose.Hips.position.z,
-        },
-        1,
-        cfg.hips.lerp,
-      );
-    }
-  }
+  // Hips rotation — Kalidokit returns Hips.rotation (nested), not Hips directly
+  rigRotation(vrm, "Hips", riggedPose.Hips.rotation, cfg.hips.dampener, cfg.hips.lerp);
 
-  // Chest
-  if (riggedPose.Chest) {
-    rigRotation(
-      vrm,
-      "Chest",
-      riggedPose.Chest,
-      cfg.chest.dampener,
-      cfg.chest.lerp,
-    );
-  }
+  // Kalidokit does NOT return a separate Chest field — use Spine for both (matches frontend)
+  rigRotation(vrm, "Chest", riggedPose.Spine, cfg.chest.dampener, cfg.chest.lerp);
+  rigRotation(vrm, "Spine", riggedPose.Spine, cfg.spine.dampener, cfg.spine.lerp);
 
-  // Spine
-  if (riggedPose.Spine) {
-    rigRotation(
-      vrm,
-      "Spine",
-      riggedPose.Spine,
-      cfg.spine.dampener,
-      cfg.spine.lerp,
-    );
-  }
-
-  // Right upper arm
-  if (riggedPose.RightUpperArm) {
-    rigRotation(
-      vrm,
-      "RightUpperArm",
-      riggedPose.RightUpperArm,
-      cfg.upperArm.dampener,
-      cfg.upperArm.lerp,
-    );
-  }
-
-  // Right lower arm
-  if (riggedPose.RightLowerArm) {
-    rigRotation(
-      vrm,
-      "RightLowerArm",
-      riggedPose.RightLowerArm,
-      cfg.lowerArm.dampener,
-      cfg.lowerArm.lerp,
-    );
-  }
-
-  // Left upper arm
-  if (riggedPose.LeftUpperArm) {
-    rigRotation(
-      vrm,
-      "LeftUpperArm",
-      riggedPose.LeftUpperArm,
-      cfg.upperArm.dampener,
-      cfg.upperArm.lerp,
-    );
-  }
-
-  // Left lower arm
-  if (riggedPose.LeftLowerArm) {
-    rigRotation(
-      vrm,
-      "LeftLowerArm",
-      riggedPose.LeftLowerArm,
-      cfg.lowerArm.dampener,
-      cfg.lowerArm.lerp,
-    );
-  }
-
-  // Head
-  if (riggedPose.Head) {
-    rigRotation(vrm, "Head", riggedPose.Head, cfg.head.dampener, cfg.head.lerp);
-  }
+  rigRotation(vrm, "RightUpperArm", riggedPose.RightUpperArm, cfg.upperArm.dampener, cfg.upperArm.lerp);
+  rigRotation(vrm, "RightLowerArm", riggedPose.RightLowerArm, cfg.lowerArm.dampener, cfg.lowerArm.lerp);
+  rigRotation(vrm, "LeftUpperArm",  riggedPose.LeftUpperArm,  cfg.upperArm.dampener, cfg.upperArm.lerp);
+  rigRotation(vrm, "LeftLowerArm",  riggedPose.LeftLowerArm,  cfg.lowerArm.dampener, cfg.lowerArm.lerp);
 }
 
 // ── Hand Rig ────────────────────────────────────────────────────────
@@ -234,54 +154,35 @@ const FINGER_BONES = [
 function rigHands(vrm, riggedLeftHand, riggedRightHand, riggedPose) {
   const cfg = RIG_CONFIG;
 
-  // Wrist rotations from pose
-  if (riggedPose?.LeftHand) {
-    rigRotation(
-      vrm,
-      "LeftHand",
-      riggedPose.LeftHand,
-      cfg.hand.dampener,
-      cfg.hand.lerp,
-    );
-  }
-  if (riggedPose?.RightHand) {
-    rigRotation(
-      vrm,
-      "RightHand",
-      riggedPose.RightHand,
-      cfg.hand.dampener,
-      cfg.hand.lerp,
-    );
-  }
-
-  // Left hand finger articulation
+  // Wrist: combine pronation (Z) from pose solver with X/Y from hand solver — matches frontend
   if (riggedLeftHand) {
+    rigRotation(vrm, "LeftHand", {
+      z: riggedPose.LeftHand?.z ?? 0,
+      y: riggedLeftHand.LeftWrist?.y ?? 0,
+      x: riggedLeftHand.LeftWrist?.x ?? 0,
+    }, cfg.hand.dampener, cfg.hand.lerp);
+
     for (const bone of FINGER_BONES) {
       const key = `Left${bone}`;
       if (riggedLeftHand[key]) {
-        rigRotation(
-          vrm,
-          key,
-          riggedLeftHand[key],
-          cfg.fingers.dampener,
-          cfg.fingers.lerp,
-        );
+        const boneCfg = bone.startsWith("Thumb") ? cfg.thumb : cfg.finger;
+        rigRotation(vrm, key, riggedLeftHand[key], boneCfg.dampener, boneCfg.lerp);
       }
     }
   }
 
-  // Right hand finger articulation
   if (riggedRightHand) {
+    rigRotation(vrm, "RightHand", {
+      z: riggedPose.RightHand?.z ?? 0,
+      y: riggedRightHand.RightWrist?.y ?? 0,
+      x: riggedRightHand.RightWrist?.x ?? 0,
+    }, cfg.hand.dampener, cfg.hand.lerp);
+
     for (const bone of FINGER_BONES) {
       const key = `Right${bone}`;
       if (riggedRightHand[key]) {
-        rigRotation(
-          vrm,
-          key,
-          riggedRightHand[key],
-          cfg.fingers.dampener,
-          cfg.fingers.lerp,
-        );
+        const boneCfg = bone.startsWith("Thumb") ? cfg.thumb : cfg.finger;
+        rigRotation(vrm, key, riggedRightHand[key], boneCfg.dampener, boneCfg.lerp);
       }
     }
   }

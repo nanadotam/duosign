@@ -11,14 +11,14 @@ import { getRenderVRM } from "./vrm-rigger.js";
 
 const CAMERA_PRESETS = {
   interpreter: {
-    position: [0, 1.2, 1.2],
-    target: [0, 1.3, 0],
-    fov: 60,
+    position: [0, 1.1, 1.6],  // further back so arms stay in frame
+    target: [0, 1.1, 0],      // look at mid-chest — keeps hands visible
+    fov: 55,
   },
   fullbody: {
-    position: [0, 0.9, 1.8],
+    position: [0, 0.9, 2.2],
     target: [0, 1.0, 0],
-    fov: 60,
+    fov: 55,
   },
 };
 

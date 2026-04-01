@@ -161,10 +161,15 @@ function applyPoseToVRM(vrm, frame, Kalidokit, options = {}) {
   // ── Pose (body) ──────────────────────────────────────────────
   let riggedPose = null;
   if (frame.poseLandmarks) {
+    // World landmarks should be metric-space; if absent, use flat z=0 approximation
+    // (passing raw poseLandmarks Z values causes Kalidokit to return null — matches frontend fix)
+    const worldLandmarks = frame.poseWorldLandmarks
+      ?? frame.poseLandmarks.map((lm) => ({ ...lm, z: 0 }));
+
     riggedPose = Kalidokit.Pose.solve(
-      frame.poseWorldLandmarks || frame.poseLandmarks,
+      worldLandmarks,
       frame.poseLandmarks,
-      { runtime: "mediapipe", imageSize },
+      { runtime: "mediapipe", imageSize, enableLegs: false },
     );
     if (riggedPose) {
       rigUpperBody(vrm, riggedPose);
@@ -176,31 +181,35 @@ function applyPoseToVRM(vrm, frame, Kalidokit, options = {}) {
     const riggedFace = Kalidokit.Face.solve(frame.faceLandmarks, {
       runtime: "mediapipe",
       imageSize,
+      smoothBlink: true,
+      blinkSettings: [0.3, 0.7],
     });
     if (riggedFace) {
       rigFace(vrm, riggedFace);
     }
   }
 
-  // ── Left Hand ────────────────────────────────────────────────
-  if (frame.leftHandLandmarks && riggedPose) {
-    const rawLeftHand = Kalidokit.Hand.solve(frame.leftHandLandmarks, "Left");
-    if (rawLeftHand) {
-      rigHands(vrm, rawLeftHand, null, riggedPose);
-    }
-    applyFingers(vrm, frame.leftHandLandmarks, "Left");
-  }
+  // Playback landmarks are from the camera/viewer perspective:
+  // file's LEFT_HAND = signer's RIGHT hand (and vice versa). Swap before solving.
+  const signerRightHandLandmarks = frame.leftHandLandmarks;
+  const signerLeftHandLandmarks  = frame.rightHandLandmarks;
 
-  // ── Right Hand ───────────────────────────────────────────────
-  if (frame.rightHandLandmarks && riggedPose) {
-    const rawRightHand = Kalidokit.Hand.solve(
-      frame.rightHandLandmarks,
-      "Right",
-    );
+  // ── Right Hand (signer) ──────────────────────────────────────
+  if (signerRightHandLandmarks && riggedPose) {
+    const rawRightHand = Kalidokit.Hand.solve(signerRightHandLandmarks, "Right");
     if (rawRightHand) {
       rigHands(vrm, null, rawRightHand, riggedPose);
     }
-    applyFingers(vrm, frame.rightHandLandmarks, "Right");
+    applyFingers(vrm, signerRightHandLandmarks, "Right");
+  }
+
+  // ── Left Hand (signer) ───────────────────────────────────────
+  if (signerLeftHandLandmarks && riggedPose) {
+    const rawLeftHand = Kalidokit.Hand.solve(signerLeftHandLandmarks, "Left");
+    if (rawLeftHand) {
+      rigHands(vrm, rawLeftHand, null, riggedPose);
+    }
+    applyFingers(vrm, signerLeftHandLandmarks, "Left");
   }
 
   return performance.now() - start;
