@@ -351,6 +351,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // ── First-install: download VRM avatar into IndexedDB ────────────
+  (async () => {
+    try {
+      const { ready } = await window.assetManager.checkFirstInstall();
+      if (!ready) {
+        statusBar.textContent = "● Downloading sign avatar (first install)…";
+        await window.assetManager.runFirstInstall(({ label, loaded, total }) => {
+          const pct = total ? Math.round((loaded / total) * 100) : 0;
+          statusBar.textContent = `● ${label} ${pct ? pct + "%" : ""}`;
+        });
+        statusBar.textContent = "● Ready — highlight text on any page to sign";
+      }
+    } catch (err) {
+      console.warn("[SidePanel] First-install check failed:", err);
+    }
+  })();
+
   // ── Load active mode from storage ─────────────────────────────────
   chrome.storage.local.get("activeMode", (result) => {
     const mode = result.activeMode || "text";

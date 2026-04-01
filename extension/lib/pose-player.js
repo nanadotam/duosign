@@ -17,8 +17,11 @@
  *   player.stop();
  */
 
-// URL is set by lib/config.js (loaded before this file)
-const API_BASE_URL = window.DUOSIGN_API_URL ?? "https://duosign.onrender.com";
+// Pose URL builder set by lib/config.js (loaded before this file).
+// Dev: routes through localhost backend (reads from bucket/poses_v3/).
+// Prod: fetches directly from Supabase storage.
+const _getPoseURL = window.DUOSIGN_POSE_URL
+  ?? ((g) => `https://yqhuvnbgtrbjrfmykznk.supabase.co/storage/v1/object/public/duosign-poses/${g}.pose`);
 
 class PosePlayer {
   constructor({ onFrame, onGlossChange, onComplete, onStateChange } = {}) {
@@ -78,9 +81,7 @@ class PosePlayer {
     const cached = this._poseCache.get(gloss);
     if (cached) return cached;
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/pose/${encodeURIComponent(gloss)}`,
-      );
+      const res = await fetch(_getPoseURL(gloss), { cache: "no-store" });
       if (!res.ok) return null;
       const parsed = await this._parsePoseBuffer(
         await res.arrayBuffer(),

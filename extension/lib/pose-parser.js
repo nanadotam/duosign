@@ -1,65 +1,38 @@
 /**
- * Minimal .pose binary format parser
- * ====================================
- * Parses the binary .pose file format used by DuoSign.
+ * Pose binary format parser — matches pose_format Python library v0.2
+ * =====================================================================
+ * Actual binary layout (all little-endian):
  *
- * File format (little-endian):
- *   Header:
- *     float32  version
- *     uint16   width
- *     uint16   height
- *     uint16   depth (z-axis, usually 0 for 2D)
- *     uint16   numComponents
- *     For each component:
- *       uint16  nameLength → UTF-8 name
- *       uint16  format (1 = XY, 2 = XYC, 3 = XYZ, 4 = XYZC)
- *       uint16  numPoints
- *       For each point:
- *         uint16 pointNameLength → UTF-8 pointName
- *       uint16  numLimbs
- *       For each limb:
- *         uint16 from
- *         uint16 to
- *       uint16  numColors
- *       For each color:
- *         uint8  R, G, B
- *   Body:
- *     float32  fps
- *     uint16   numFrames (old) — but modern files use the remaining bytes
- *     For each frame:
- *       For each component:
- *         uint8  numPeople (≤1 for DuoSign)
- *         For each person:
- *           float32[] data — (numPoints * valuesPerPoint) floats
+ * HEADER:
+ *   float32   version (0.2)
+ *   uint16    width, height, depth
+ *   uint16    numComponents
+ *   For each component:
+ *     [uint16 len + bytes]  name
+ *     [uint16 len + bytes]  format string (e.g. "XYZC")
+ *     uint16  numPoints, numLimbs, numColors  — THREE together
+ *     For each point:    [uint16 len + bytes] pointName
+ *     For each limb:     uint16 from, uint16 to
+ *     For each color:    uint16 R, uint16 G, uint16 B  (NOT uint8!)
  *
- * This parser is a simplified port of the `pose-format` npm package.
+ * BODY:
+ *   float32   fps
+ *   uint32    numFrames   (NOT uint16!)
+ *   uint16    numPeople
+ *   float32[] data:        (numFrames × numPeople × totalPoints × numDims)
+ *   float32[] confidence:  (numFrames × numPeople × totalPoints)
+ *
+ * numDims = max(len(format) - 1) across components
+ *   e.g. "XYZC" → 3 spatial dims; confidence is separate
  */
 
-/**
- * Parse a .pose ArrayBuffer into a structured object.
- * @param {ArrayBuffer} buffer
- * @returns {{ header: Object, fps: number, frameCount: number, getFrame: (i: number) => Object }}
- */
 function parsePose(buffer) {
   const view = new DataView(buffer);
   let offset = 0;
 
-  // ── Helpers ─────────────────────────────────────────────
-  function readFloat32() {
-    const v = view.getFloat32(offset, true);
-    offset += 4;
-    return v;
-  }
-  function readUint16() {
-    const v = view.getUint16(offset, true);
-    offset += 2;
-    return v;
-  }
-  function readUint8() {
-    const v = view.getUint8(offset);
-    offset += 1;
-    return v;
-  }
+  function readFloat32() { const v = view.getFloat32(offset, true); offset += 4; return v; }
+  function readUint32()  { const v = view.getUint32(offset, true);  offset += 4; return v; }
+  function readUint16()  { const v = view.getUint16(offset, true);  offset += 2; return v; }
   function readString() {
     const len = readUint16();
     const bytes = new Uint8Array(buffer, offset, len);
@@ -68,130 +41,101 @@ function parsePose(buffer) {
   }
 
   // ── Header ──────────────────────────────────────────────
-  const version = readFloat32();
-  const width = readUint16();
-  const height = readUint16();
-  const depth = readUint16();
+  const version    = readFloat32();
+  const width      = readUint16();
+  const height     = readUint16();
+  const depth      = readUint16();
   const numComponents = readUint16();
 
+  let totalPoints = 0;
   const components = [];
+
   for (let c = 0; c < numComponents; c++) {
-    const name = readString();
-    const format = readUint16();
+    const name   = readString();
+    const format = readString(); // "XYZC" — stored as a STRING, not a uint16
+
+    // numPoints, numLimbs, numColors written together as triple uint16
     const numPoints = readUint16();
+    const numLimbs  = readUint16();
+    const numColors = readUint16();
 
     const points = [];
-    for (let p = 0; p < numPoints; p++) {
-      points.push(readString());
-    }
+    for (let p = 0; p < numPoints; p++) points.push(readString());
 
-    const numLimbs = readUint16();
     const limbs = [];
     for (let l = 0; l < numLimbs; l++) {
       limbs.push({ from: readUint16(), to: readUint16() });
     }
 
-    const numColors = readUint16();
     const colors = [];
     for (let cl = 0; cl < numColors; cl++) {
-      colors.push({ R: readUint8(), G: readUint8(), B: readUint8() });
+      // Colors stored as uint16 R, G, B — values in 0–255 range
+      colors.push({ R: readUint16(), G: readUint16(), B: readUint16() });
     }
-
-    // Values per point: XY=2, XYC=3, XYZ=3, XYZC=4
-    const valuesPerPoint = [0, 2, 3, 3, 4][format] || 3;
 
     components.push({
       name,
       format,
       numPoints,
+      pointOffset: totalPoints, // offset into the flat points array
       points,
       limbs,
       colors,
-      valuesPerPoint,
     });
+    totalPoints += numPoints;
   }
 
   const header = { version, width, height, depth, components };
 
   // ── Body ────────────────────────────────────────────────
-  const fps = readFloat32();
-  const _numFramesDeclared = readUint16();
+  const fps       = readFloat32();
+  const numFrames = readUint32();  // uint32 — NOT uint16!
+  const numPeople = readUint16();
 
-  // Calculate frame data size
-  let bytesPerFrame = 0;
-  for (const comp of components) {
-    bytesPerFrame += 1; // numPeople byte
-    bytesPerFrame += comp.numPoints * comp.valuesPerPoint * 4; // float32 data
-  }
+  // Number of spatial dims stored per point.
+  // "XYZC" → len=4 → dims=3 (X,Y,Z). Confidence is a separate array.
+  const numDims = Math.max(...components.map(c => c.format.length - 1));
 
-  const bodyStart = offset;
-  const remainingBytes = buffer.byteLength - bodyStart;
-  const frameCount =
-    bytesPerFrame > 0 ? Math.floor(remainingBytes / bytesPerFrame) : 0;
+  // Data: flat float32 block — (numFrames × numPeople × totalPoints × numDims)
+  const dataCount = numFrames * numPeople * totalPoints * numDims;
+  const data = new Float32Array(buffer.slice(offset, offset + dataCount * 4));
+  offset += dataCount * 4;
+
+  // Confidence: flat float32 block — (numFrames × numPeople × totalPoints)
+  const confCount = numFrames * numPeople * totalPoints;
+  const conf = new Float32Array(buffer.slice(offset, offset + confCount * 4));
 
   /**
-   * Read a single frame at index `i`.
-   * Returns { people: [{ COMPONENT_NAME: [{X, Y, C?}, ...], ... }] }
+   * Returns one frame as { people: [{ COMPONENT_NAME: [{X,Y,Z,C}, ...] }] }
+   * Compatible with skeleton-renderer.js drawSkeleton(ctx, frame, header, w, h).
    */
-  function getFrame(i) {
-    if (i < 0 || i >= frameCount) return null;
-    const frameOffset = bodyStart + i * bytesPerFrame;
-    const fv = new DataView(buffer);
-    let fOff = frameOffset;
+  function getFrame(frameIdx) {
+    if (frameIdx < 0 || frameIdx >= numFrames) return null;
 
-    const people = [];
+    const pIdx = 0; // DuoSign always records 1 person
+    const person = {};
 
     for (const comp of components) {
-      const numPeople = fv.getUint8(fOff);
-      fOff += 1;
+      const pts = [];
+      for (let p = 0; p < comp.numPoints; p++) {
+        const gp = comp.pointOffset + p; // global point index across all components
+        const di = ((frameIdx * numPeople + pIdx) * totalPoints + gp) * numDims;
+        const ci = (frameIdx * numPeople + pIdx) * totalPoints + gp;
 
-      if (numPeople === 0) {
-        // Skip the data block — there's still space reserved
-        fOff += comp.numPoints * comp.valuesPerPoint * 4;
-        continue;
+        pts.push({
+          X: data[di],
+          Y: data[di + 1],
+          Z: numDims >= 3 ? data[di + 2] : 0,
+          C: conf[ci],
+        });
       }
-
-      for (let person = 0; person < numPeople; person++) {
-        if (!people[person]) people[person] = {};
-
-        const pts = [];
-        for (let p = 0; p < comp.numPoints; p++) {
-          const point = {};
-          if (comp.valuesPerPoint >= 2) {
-            point.X = fv.getFloat32(fOff, true);
-            fOff += 4;
-            point.Y = fv.getFloat32(fOff, true);
-            fOff += 4;
-          }
-          if (comp.format === 2) {
-            // XYC
-            point.C = fv.getFloat32(fOff, true);
-            fOff += 4;
-          } else if (comp.format === 3) {
-            // XYZ
-            point.Z = fv.getFloat32(fOff, true);
-            fOff += 4;
-          } else if (comp.format === 4) {
-            // XYZC
-            point.Z = fv.getFloat32(fOff, true);
-            fOff += 4;
-            point.C = fv.getFloat32(fOff, true);
-            fOff += 4;
-          }
-          // Default confidence if not present
-          if (point.C === undefined) point.C = 1;
-          pts.push(point);
-        }
-
-        people[person][comp.name] = pts;
-      }
+      person[comp.name] = pts;
     }
 
-    return { people };
+    return { people: [person] };
   }
 
-  return { header, fps, frameCount, getFrame };
+  return { header, fps, frameCount: numFrames, getFrame };
 }
 
-// Make available globally for script-tag loading
 window.parsePose = parsePose;

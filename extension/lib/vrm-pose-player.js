@@ -12,11 +12,10 @@ import { animatePoseVRM } from "./animate-pose.js";
 import { SignSequencer } from "./sign-sequencer.js";
 import { setRenderVRM, resetPose, lerpToRestPose } from "./vrm-rigger.js";
 
-// Modules loaded via dynamic import can't read window directly in some contexts,
-// so fall back to the Render URL if config isn't set yet.
-const API_BASE_URL = (typeof window !== "undefined" && window.DUOSIGN_API_URL)
-  ? window.DUOSIGN_API_URL
-  : "https://duosign.onrender.com";
+// Pose URL builder set by lib/config.js. Dev uses backend; prod uses Supabase.
+const _getPoseURL = (typeof window !== "undefined" && window.DUOSIGN_POSE_URL)
+  ? window.DUOSIGN_POSE_URL
+  : (g) => `https://yqhuvnbgtrbjrfmykznk.supabase.co/storage/v1/object/public/duosign-poses/${g}.pose`;
 
 // In-memory pose cache
 const poseCache = new Map();
@@ -75,9 +74,7 @@ async function fetchPoseData(gloss) {
 
   const promise = (async () => {
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/pose/${encodeURIComponent(key)}`,
-      );
+      const res = await fetch(_getPoseURL(key));
       if (!res.ok) return null;
       const buffer = await res.arrayBuffer();
       if (buffer.byteLength === 0) return null;
@@ -157,7 +154,7 @@ class VRMPosePlayer {
 
   /** Play a sequence of glosses */
   playSequence(glosses) {
-    this.stop();
+    this.stop(true); // silent — don't fire onStateChange mid-restart (prevents re-entry loop)
     this.isPlaying = true;
     this.isPaused = false;
     this._notify();
@@ -194,7 +191,7 @@ class VRMPosePlayer {
     })();
   }
 
-  stop() {
+  stop(silent = false) {
     this.isPlaying = false;
     this.isPaused = false;
     this._sequencer?.stop();
@@ -203,7 +200,7 @@ class VRMPosePlayer {
     this.progress = 0;
     this.currentGloss = "";
     if (this.vrm) resetPose(this.vrm);
-    this._notify();
+    if (!silent) this._notify();
   }
 
   pause() {
