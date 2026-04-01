@@ -24,6 +24,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const statusBar = document.getElementById("statusBar");
   const renderToggle = document.getElementById("renderToggle");
   const avatarContainer = document.getElementById("avatarContainer");
+  const zoomControl = document.getElementById("zoomControl");
+  const zoomSlider = document.getElementById("zoomSlider");
 
   // Playback controls
   const prevBtn = document.getElementById("prevBtn");
@@ -107,12 +109,18 @@ document.addEventListener("DOMContentLoaded", () => {
       if (renderMode === "skeleton") {
         canvas.style.display = "";
         avatarContainer.style.display = "none";
+        zoomControl.classList.remove("visible");
       } else {
         canvas.style.display = "none";
         avatarContainer.style.display = "block";
+        zoomControl.classList.add("visible");
         initVRMRenderer();
       }
     });
+  });
+
+  zoomSlider.addEventListener("input", () => {
+    if (avatarRenderer) avatarRenderer.setZoom(parseFloat(zoomSlider.value));
   });
 
   /** Lazy-init the VRM 3D renderer */

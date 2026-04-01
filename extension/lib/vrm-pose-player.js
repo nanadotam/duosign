@@ -2,15 +2,14 @@
  * VRM Pose Player — Drives the VRM avatar with .pose binary data
  * ================================================================
  * Combines the pose-parser (binary reader), animate-pose (RAF loop),
- * and apply-pose (VRM rigging) to play gloss sequences on the 3D avatar.
+ * and duosign-rig.module.js (bundled frontend rigging) to play gloss sequences on the 3D avatar.
  *
  * This is the VRM equivalent of the 2D pose-player.js.
  */
 
-import { applyPoseToVRM } from "./apply-pose.js";
+import { applyPoseToVRM, resetPose, lerpToRestPose, setRenderVRM } from "./vendor/duosign-rig.module.js";
 import { animatePoseVRM } from "./animate-pose.js";
 import { SignSequencer } from "./sign-sequencer.js";
-import { setRenderVRM, resetPose, lerpToRestPose } from "./vrm-rigger.js";
 
 // Pose URL builder set by lib/config.js. Dev uses backend; prod uses Supabase.
 const _getPoseURL = (typeof window !== "undefined" && window.DUOSIGN_POSE_URL)

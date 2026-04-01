@@ -7,7 +7,7 @@
  */
 
 import * as THREE from "./vendor/three.module.js";
-import { getRenderVRM } from "./vrm-rigger.js";
+import { getRenderVRM } from "./vendor/duosign-rig.module.js";
 
 const CAMERA_PRESETS = {
   interpreter: {
@@ -94,6 +94,11 @@ class AvatarRenderer {
     }
 
     this.renderer.render(this.scene, this.camera);
+  }
+
+  /** Zoom — set camera distance along Z (keeps X/Y from current preset) */
+  setZoom(z) {
+    this.camera.position.z = Math.max(0.5, Math.min(4.0, z));
   }
 
   /** Switch camera to a preset view */
