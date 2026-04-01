@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
         avatarContainer.style.display = "none";
       } else {
         canvas.style.display = "none";
-        avatarContainer.style.display = "";
+        avatarContainer.style.display = "block";
         initVRMRenderer();
       }
     });
@@ -119,16 +119,29 @@ document.addEventListener("DOMContentLoaded", () => {
   async function initVRMRenderer() {
     if (avatarRenderer) return;
     try {
+      statusBar.textContent = "● Loading 3D avatar…";
+
       const { AvatarRenderer } = await import("./lib/avatar-renderer.js");
       const { VRMLoader } = await import("./lib/vrm-loader.js");
       const { VRMPosePlayer } = await import("./lib/vrm-pose-player.js");
 
+      // Ensure VRM is in IndexedDB — download now if missing (handles first-install
+      // race where user clicks Avatar 3D before background download finishes)
+      await window.assetManager.init();
+      const { ready } = await window.assetManager.checkFirstInstall();
+      if (!ready) {
+        statusBar.textContent = "● Downloading 3D avatar…";
+        await window.assetManager.runFirstInstall(({ label, loaded, total }) => {
+          const pct = total ? Math.round((loaded / total) * 100) : 0;
+          statusBar.textContent = `● ${label}${pct ? " " + pct + "%" : ""}`;
+        });
+      }
+
+      const blobUrl = await window.assetManager.getAvatarBlobURL();
+      statusBar.textContent = "● Initialising 3D scene…";
+
       avatarRenderer = new AvatarRenderer(avatarContainer);
       const loader = new VRMLoader();
-
-      // Load VRM from IndexedDB
-      await window.assetManager.init();
-      const blobUrl = await window.assetManager.getAvatarBlobURL();
       const vrm = await loader.load(blobUrl, avatarRenderer.scene);
 
       vrmPosePlayer = new VRMPosePlayer();
@@ -145,6 +158,11 @@ document.addEventListener("DOMContentLoaded", () => {
       renderMode = "skeleton";
       canvas.style.display = "";
       avatarContainer.style.display = "none";
+      // Reset so the user can retry by clicking Avatar 3D again
+      if (avatarRenderer) {
+        try { avatarRenderer.dispose(); } catch (_) {}
+        avatarRenderer = null;
+      }
     }
   }
 
