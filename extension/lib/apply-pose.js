@@ -6,8 +6,8 @@
  * model using Kalidokit solvers and vrm-rigger functions.
  */
 
-import * as THREE from "https://esm.sh/three@0.137.4";
-import { VRMSchema } from "https://esm.sh/@pixiv/three-vrm@0.6.11";
+import * as THREE from "./vendor/three.module.js";
+import { VRMSchema } from "./vendor/three-vrm.module.js";
 import {
   rigUpperBody,
   rigHands,

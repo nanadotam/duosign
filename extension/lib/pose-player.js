@@ -17,7 +17,8 @@
  *   player.stop();
  */
 
-const API_BASE_URL = "https://duosign.onrender.com";
+// URL is set by lib/config.js (loaded before this file)
+const API_BASE_URL = window.DUOSIGN_API_URL ?? "https://duosign.onrender.com";
 
 class PosePlayer {
   constructor({ onFrame, onGlossChange, onComplete, onStateChange } = {}) {

@@ -6,7 +6,7 @@
  * Used by the side panel when in "Avatar 3D" mode.
  */
 
-import * as THREE from "https://esm.sh/three@0.137.4";
+import * as THREE from "./vendor/three.module.js";
 import { getRenderVRM } from "./vrm-rigger.js";
 
 const CAMERA_PRESETS = {

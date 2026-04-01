@@ -90,7 +90,7 @@ chrome.commands.onCommand.addListener((command, tab) => {
 // All API calls from extension pages are routed through here to bypass CORS.
 // Auth headers are automatically injected from stored session.
 
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   switch (msg.type) {
     case "TRANSLATE":
       (async () => {

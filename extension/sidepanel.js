@@ -64,8 +64,30 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("resize", resizeCanvas);
 
   // ── 2D Skeleton Player init ───────────────────────────────────────
-  if (window.PosePlayer) {
-    player = new window.PosePlayer(canvas, { speed });
+  if (window.PosePlayer && window.drawSkeleton) {
+    player = new window.PosePlayer({
+      onFrame: (frame, header) => {
+        const w = canvas.width / window.devicePixelRatio;
+        const h = canvas.height / window.devicePixelRatio;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        window.drawSkeleton(ctx, frame, header, w, h);
+      },
+      onGlossChange: (gloss) => {
+        currentGlossLabel.textContent = gloss;
+        highlightActiveChip(gloss);
+      },
+      onComplete: () => {
+        if (isLooping && currentTokens.length > 0) {
+          player.playSequence(currentTokens, 1);
+        } else {
+          isPlaying = false;
+          playBtn.textContent = "▶";
+          currentGlossLabel.textContent = "";
+        }
+      },
+      onStateChange: () => {},
+    });
+    player.speed = speed;
   }
 
   // ── Character count ───────────────────────────────────────────────
@@ -228,7 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (renderMode === "avatar" && vrmPosePlayer) {
       vrmPosePlayer.playGloss(gloss);
     } else if (player) {
-      player.play(gloss);
+      player.playSequence([gloss], 1);
     }
   }
 
@@ -250,31 +272,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     } else if (player) {
-      playNextInSequence();
-    }
-  }
-
-  function playNextInSequence() {
-    if (!isPlaying || currentTokenIndex >= currentTokens.length) {
-      if (isLooping && currentTokens.length > 0) {
-        currentTokenIndex = 0;
-        playNextInSequence();
-      } else {
-        isPlaying = false;
-        playBtn.textContent = "▶";
-        currentGlossLabel.textContent = "";
-      }
-      return;
-    }
-
-    const token = currentTokens[currentTokenIndex];
-    playGloss(token);
-    currentTokenIndex++;
-
-    if (player) {
-      player.onComplete = () => {
-        setTimeout(() => playNextInSequence(), 80);
-      };
+      // PosePlayer handles its own sequencing; looping is handled by onComplete
+      player.playSequence(tokens, 1);
     }
   }
 
@@ -283,12 +282,18 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isPlaying) {
       if (renderMode === "avatar" && vrmPosePlayer) {
         vrmPosePlayer.pause();
+      } else if (player) {
+        player.pause();
       }
       isPlaying = false;
       playBtn.textContent = "▶";
     } else if (currentTokens.length > 0) {
       if (renderMode === "avatar" && vrmPosePlayer?.isPaused) {
         vrmPosePlayer.resume();
+        isPlaying = true;
+        playBtn.textContent = "⏸";
+      } else if (player?.isPaused) {
+        player.resume();
         isPlaying = true;
         playBtn.textContent = "⏸";
       } else {

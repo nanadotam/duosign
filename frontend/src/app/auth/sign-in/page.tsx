@@ -196,7 +196,7 @@ function SignInForm() {
                 error={errors.password?.message}
                 {...register("password", {
                   required: "Password is required",
-                  minLength: { value: 8, message: "Min 8 characters" },
+                  minLength: { value: 8, message: "Minimum 8 characters" },
                 })}
               />
 

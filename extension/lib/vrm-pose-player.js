@@ -12,7 +12,11 @@ import { animatePoseVRM } from "./animate-pose.js";
 import { SignSequencer } from "./sign-sequencer.js";
 import { setRenderVRM, resetPose, lerpToRestPose } from "./vrm-rigger.js";
 
-const API_BASE_URL = "https://duosign.onrender.com";
+// Modules loaded via dynamic import can't read window directly in some contexts,
+// so fall back to the Render URL if config isn't set yet.
+const API_BASE_URL = (typeof window !== "undefined" && window.DUOSIGN_API_URL)
+  ? window.DUOSIGN_API_URL
+  : "https://duosign.onrender.com";
 
 // In-memory pose cache
 const poseCache = new Map();
@@ -22,7 +26,7 @@ let Kalidokit = null;
 
 async function loadKalidokit() {
   if (Kalidokit) return Kalidokit;
-  Kalidokit = await import("https://esm.sh/kalidokit@1.1.5");
+  Kalidokit = await import("./vendor/kalidokit.module.js");
   return Kalidokit;
 }
 

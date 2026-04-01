@@ -5,9 +5,9 @@
  * Uses Three.js GLTFLoader + VRM.from() for VRM 0.x spec.
  */
 
-import * as THREE from "https://esm.sh/three@0.137.4";
-import { GLTFLoader } from "https://esm.sh/three@0.137.4/examples/jsm/loaders/GLTFLoader.js";
-import { VRM, VRMUtils } from "https://esm.sh/@pixiv/three-vrm@0.6.11";
+import * as THREE from "./vendor/three.module.js";
+import { GLTFLoader } from "./vendor/GLTFLoader.js";
+import { VRM, VRMUtils } from "./vendor/three-vrm.module.js";
 
 /** Dispose all geometries and materials in a scene tree */
 function disposeScene(scene) {

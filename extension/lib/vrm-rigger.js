@@ -7,8 +7,8 @@
  * Loaded via <script type="module"> — Three.js and VRM are imported from esm.sh CDN.
  */
 
-import { VRMSchema } from "https://esm.sh/@pixiv/three-vrm@0.6.11";
-import * as THREE from "https://esm.sh/three@0.137.4";
+import { VRMSchema } from "./vendor/three-vrm.module.js";
+import * as THREE from "./vendor/three.module.js";
 
 // ── Rig Configuration ──────────────────────────────────────────────
 
