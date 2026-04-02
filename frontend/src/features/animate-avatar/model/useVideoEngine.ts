@@ -21,8 +21,7 @@ import { VRMSchema } from "@pixiv/three-vrm";
 import * as THREE from "three";
 import type { AvatarDebugStats, ViewMode } from "@/entities/avatar/types";
 import { rigUpperBody, rigFace, resetPose, lerpToRestPose, setRenderVRM, rigRotation, RIG_CONFIG } from "../lib/vrmRigger";
-import { enhanceHandWithSpread } from "../lib/fingerSpread";
-import { solveFingers, solvePalmOrientation, type Landmark3D, type FingerRotationMap } from "../lib/fingerSolver";
+import { solveFingers, solvePalmOrientation, solveWristRotation, type Landmark3D, type FingerRotationMap } from "../lib/fingerSolver";
 import { FINGER_VRM_BONES } from "../lib/fingerConfig";
 import { LandmarkSmoother } from "../lib/landmarkSmoother";
 import {
@@ -365,45 +364,49 @@ export function useVideoEngine({
         }
       }
 
-      // Left Hand — use KalidoKit for wrist, custom solver for fingers
+      // Left Hand — fully custom: wrist X/Y/Z + fingers, no KalidoKit
       if (leftHandLandmarks && riggedPose) {
-        const rawLeftHand = Kalidokit.Hand.solve(leftHandLandmarks, "Left");
-        const riggedLeftHand = rawLeftHand
-          ? enhanceHandWithSpread(rawLeftHand, leftHandLandmarks, "Left")
+        // Wrist rotation from custom solver (pose elbow/wrist + hand palm frame)
+        // Left elbow = pose index 13, Left wrist = pose index 15
+        const leftElbow = pose3DLandmarks?.[13];
+        const leftWrist = pose3DLandmarks?.[15];
+        const wristRot = (leftElbow && leftWrist)
+          ? solveWristRotation(leftHandLandmarks as Landmark3D[], leftElbow, leftWrist, "Left")
           : null;
-        if (riggedLeftHand) {
-          // Wrist rotation: X/Y from hand solver, Z from palm orientation (or pose fallback)
-          const palmRoll = solvePalmOrientation(leftHandLandmarks as Landmark3D[], "Left");
-          const wristZ = palmRoll !== null
-            ? palmRoll * RIG_CONFIG.palmOrientation.pronationScale
-            : riggedPose.LeftHand.z;
-          rigRotation(currentVrm, "LeftHand", {
-            x: riggedLeftHand.LeftWrist?.x ?? 0,
-            y: riggedLeftHand.LeftWrist?.y ?? 0,
-            z: wristZ,
-          }, RIG_CONFIG.hand.dampener, RIG_CONFIG.hand.lerp);
-        }
-        // Custom finger solver (bypasses KalidoKit's limited finger output)
+        const palmRoll = solvePalmOrientation(leftHandLandmarks as Landmark3D[], "Left");
+        const wristZ = palmRoll !== null
+          ? palmRoll * RIG_CONFIG.palmOrientation.pronationScale
+          : riggedPose.LeftHand.z;
+
+        rigRotation(currentVrm, "LeftHand", {
+          x: wristRot?.x ?? 0,
+          y: wristRot?.y ?? 0,
+          z: wristZ,
+        }, RIG_CONFIG.hand.dampener, RIG_CONFIG.hand.lerp);
+
+        // Custom finger solver (bypasses KalidoKit entirely)
         applyCustomFingers(currentVrm, leftHandLandmarks as Landmark3D[], "Left");
       }
 
-      // Right Hand — same approach
+      // Right Hand — same fully custom approach
       if (rightHandLandmarks && riggedPose) {
-        const rawRightHand = Kalidokit.Hand.solve(rightHandLandmarks, "Right");
-        const riggedRightHand = rawRightHand
-          ? enhanceHandWithSpread(rawRightHand, rightHandLandmarks, "Right")
+        // Right elbow = pose index 14, Right wrist = pose index 16
+        const rightElbow = pose3DLandmarks?.[14];
+        const rightWrist = pose3DLandmarks?.[16];
+        const wristRot = (rightElbow && rightWrist)
+          ? solveWristRotation(rightHandLandmarks as Landmark3D[], rightElbow, rightWrist, "Right")
           : null;
-        if (riggedRightHand) {
-          const palmRoll = solvePalmOrientation(rightHandLandmarks as Landmark3D[], "Right");
-          const wristZ = palmRoll !== null
-            ? palmRoll * RIG_CONFIG.palmOrientation.pronationScale
-            : riggedPose.RightHand.z;
-          rigRotation(currentVrm, "RightHand", {
-            x: riggedRightHand.RightWrist?.x ?? 0,
-            y: riggedRightHand.RightWrist?.y ?? 0,
-            z: wristZ,
-          }, RIG_CONFIG.hand.dampener, RIG_CONFIG.hand.lerp);
-        }
+        const palmRoll = solvePalmOrientation(rightHandLandmarks as Landmark3D[], "Right");
+        const wristZ = palmRoll !== null
+          ? palmRoll * RIG_CONFIG.palmOrientation.pronationScale
+          : riggedPose.RightHand.z;
+
+        rigRotation(currentVrm, "RightHand", {
+          x: wristRot?.x ?? 0,
+          y: wristRot?.y ?? 0,
+          z: wristZ,
+        }, RIG_CONFIG.hand.dampener, RIG_CONFIG.hand.lerp);
+
         applyCustomFingers(currentVrm, rightHandLandmarks as Landmark3D[], "Right");
       }
 

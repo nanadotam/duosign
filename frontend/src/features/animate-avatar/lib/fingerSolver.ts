@@ -158,6 +158,95 @@ export function solvePalmOrientation(
   return Number.isFinite(pronation) ? pronation : null;
 }
 
+// ── Wrist Rotation Solver ──────────────────────────────────────────
+//
+// Replaces KalidoKit.Hand.solve() for wrist X/Y rotation.
+// Computes flexion/extension (X) and radial/ulnar deviation (Y) from
+// the angle between the forearm direction (elbow→wrist from pose landmarks)
+// and the hand direction (palmUp from hand landmarks).
+//
+// MediaPipe pose landmark indices:
+//   Left elbow: 13, Left wrist: 15
+//   Right elbow: 14, Right wrist: 16
+
+export interface WristRotation {
+  /** Flexion/extension — hand bending up/down (radians) */
+  x: number;
+  /** Radial/ulnar deviation — hand tilting side-to-side (radians) */
+  y: number;
+}
+
+// Anatomical wrist limits (radians)
+const WRIST_CLAMPS = {
+  flexion:   [-1.2, 1.2] as const,   // dorsiflexion / palmar flexion
+  deviation: [-0.6, 0.5] as const,   // radial / ulnar deviation
+};
+
+/**
+ * Compute wrist flexion (X) and deviation (Y) from hand + pose landmarks.
+ * Returns null if either the hand palm frame or pose forearm data is insufficient.
+ *
+ * @param handLandmarks - 21-point MediaPipe hand landmarks
+ * @param elbowPos      - Elbow position from 33-point pose landmarks
+ * @param wristPos      - Wrist position from 33-point pose landmarks
+ * @param side          - "Right" or "Left"
+ */
+export function solveWristRotation(
+  handLandmarks: Landmark3D[],
+  elbowPos: Landmark3D,
+  wristPos: Landmark3D,
+  side: "Right" | "Left"
+): WristRotation | null {
+  // Build palm coordinate frame from hand landmarks
+  const palmFrame = computePalmFrame(handLandmarks, side);
+  if (!palmFrame) return null;
+
+  // Forearm direction: elbow → wrist (from pose landmarks, NOT hand landmarks)
+  const elbow = new THREE.Vector3(elbowPos.x, elbowPos.y, elbowPos.z);
+  const wrist = new THREE.Vector3(wristPos.x, wristPos.y, wristPos.z);
+  const forearmDir = new THREE.Vector3().subVectors(wrist, elbow);
+
+  if (forearmDir.lengthSq() < VECTOR_EPSILON) return null;
+  forearmDir.normalize();
+
+  // Hand direction = palmUp (wrist → middle MCP, already normalized)
+  const handDir = palmFrame.palmUp;
+
+  // Flexion/extension: angle between forearm and hand in the sagittal plane
+  // (the plane slicing through the palm, normal = palmRight)
+  const forearmSagittal = forearmDir.clone().projectOnPlane(palmFrame.palmRight);
+  const handSagittal = handDir.clone().projectOnPlane(palmFrame.palmRight);
+
+  if (forearmSagittal.lengthSq() < VECTOR_EPSILON || handSagittal.lengthSq() < VECTOR_EPSILON) {
+    return null;
+  }
+  forearmSagittal.normalize();
+  handSagittal.normalize();
+
+  // Positive flexion = palmar flexion (hand curling toward palm side)
+  const flexion = signedAngle(forearmSagittal, handSagittal, palmFrame.palmRight);
+
+  // Radial/ulnar deviation: angle between forearm and hand in the coronal plane
+  // (across the knuckle line, normal = palmNormal)
+  const forearmCoronal = forearmDir.clone().projectOnPlane(palmFrame.palmNormal);
+  const handCoronal = handDir.clone().projectOnPlane(palmFrame.palmNormal);
+
+  if (forearmCoronal.lengthSq() < VECTOR_EPSILON || handCoronal.lengthSq() < VECTOR_EPSILON) {
+    return { x: clampAngle(flexion, WRIST_CLAMPS.flexion), y: 0 };
+  }
+  forearmCoronal.normalize();
+  handCoronal.normalize();
+
+  const deviation = signedAngle(forearmCoronal, handCoronal, palmFrame.palmNormal);
+
+  return {
+    x: clampAngle(flexion, WRIST_CLAMPS.flexion),
+    y: clampAngle(deviation, WRIST_CLAMPS.deviation),
+  };
+}
+
+// ── Finger Flexion Solver ─────────────────────────────────────────
+
 function solveFlexion(
   landmarks: Landmark3D[],
   parentIdx: number,
