@@ -9,6 +9,8 @@ import { ToastProvider } from "@/shared/ui/Toast";
 import { useHistory } from "@/shared/hooks/useHistory";
 import { useGuestLimit } from "@/shared/hooks/useGuestLimit";
 import type { HistoryEntry } from "@/shared/hooks/useHistory";
+import { TestingModeProvider } from "@/features/testing-mode";
+import TestingModeOverlay from "@/features/testing-mode/ui/TestingModeOverlay";
 
 
 const DATE_CHIPS = ["Today", "This Week", "This Month", "All Time"];
@@ -47,6 +49,14 @@ function TypeIcon({ type }: { type: "typed" | "voiced" | "api" }) {
 // TODO: Guest User - Guest users cannot export MP4 videos and cannot access translation history actions (search, filter, replay from history, re-edit, or delete saved entries).
 // TODO: Registered User - View previously translated phrases in a searchable, filterable translation history, grouped by date and annotated with input type (typed, voiced).
 export default function HistoryPage() {
+  return (
+    <TestingModeProvider>
+      <HistoryPageInner />
+    </TestingModeProvider>
+  );
+}
+
+function HistoryPageInner() {
   const router = useRouter();
   const { deleteEntry, markExported, getFiltered, stats } = useHistory();
   const { isAuthenticated, remaining } = useGuestLimit();
@@ -395,6 +405,7 @@ export default function HistoryPage() {
 
         </main>
       </div>
+      <TestingModeOverlay />
     </ToastProvider>
   );
 }

@@ -13,6 +13,8 @@ import { ACCENT_COLORS } from "@/shared/ui/SettingsApplicator";
 import VoiceRecordingPane from "@/features/translate-text/ui/VoiceRecordingPane";
 import Button from "@/shared/ui/Button";
 import Modal from "@/shared/ui/Modal";
+import { TestingModeProvider } from "@/features/testing-mode";
+import TestingModeOverlay from "@/features/testing-mode/ui/TestingModeOverlay";
 
 /* ═══ SIDEBAR DATA ═══ */
 const SIDEBAR = [
@@ -153,6 +155,14 @@ function Select({ options, value, defaultValue, onChange }: { options: string[];
 }
 
 export default function SettingsPage() {
+  return (
+    <TestingModeProvider>
+      <SettingsPageInner />
+    </TestingModeProvider>
+  );
+}
+
+function SettingsPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedSection = searchParams.get("section");
@@ -891,6 +901,7 @@ export default function SettingsPage() {
           </div>
         </>
       )}
+      <TestingModeOverlay />
     </div>
   );
 }
