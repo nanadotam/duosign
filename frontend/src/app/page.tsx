@@ -154,7 +154,8 @@ export default function LandingPage() {
             </svg>
             Go to App
           </Link>
-          <a href="#how" className="l-btn-ghost">View API Documentation →</a>
+          {/* point to frontend/src/app/api-docs */}
+          <a href="api-docs" className="l-btn-ghost">View API Documentation →</a>
         </div>
         <div className="l-trust-row">
           <span className="l-trust-item">Accessibility-first design</span>

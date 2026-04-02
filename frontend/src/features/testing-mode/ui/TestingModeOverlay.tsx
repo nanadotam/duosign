@@ -10,17 +10,17 @@ import SurveyModal from "./SurveyModal";
 import { TestingToastItem, type TestingToastData } from "./TestingToast";
 
 interface TestingModeOverlayProps {
-  translationsCount: number;
-  isTranslating: boolean;
-  voiceInputUsed: boolean;
-  firstTranslationDone: boolean;
+  translationsCount?: number;
+  isTranslating?: boolean;
+  voiceInputUsed?: boolean;
+  firstTranslationDone?: boolean;
 }
 
 export default function TestingModeOverlay({
-  translationsCount,
-  isTranslating,
-  voiceInputUsed,
-  firstTranslationDone,
+  translationsCount = 0,
+  isTranslating = false,
+  voiceInputUsed = false,
+  firstTranslationDone = false,
 }: TestingModeOverlayProps) {
   const {
     isTestingMode,
@@ -41,6 +41,8 @@ export default function TestingModeOverlay({
   const [nudgeToast, setNudgeToast] = useState<TestingToastData | null>(null);
   const feedbackNudgeFired = useRef(false);
   const surveyPromptFired = useRef(false);
+  const periodicIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const nudgeToastActiveRef = useRef(false);
 
   // Auto-nudge feedback after 3 translations
   useEffect(() => {
@@ -106,6 +108,30 @@ export default function TestingModeOverlay({
     trackEvent,
     openSurvey,
   ]);
+
+  // Keep a ref in sync with nudgeToast state so the interval can check without stale closure
+  useEffect(() => {
+    nudgeToastActiveRef.current = nudgeToast !== null;
+  }, [nudgeToast]);
+
+  // 5-minute periodic feedback popup
+  useEffect(() => {
+    if (!session || !isTestingMode) return;
+    periodicIntervalRef.current = setInterval(() => {
+      if (nudgeToastActiveRef.current) return;
+      setNudgeToast({
+        id: `periodic-${Date.now()}`,
+        content: "You\u2019ve been using DuoSign for a bit \u2014 how\u2019s it going?",
+        actionLabel: "Share feedback",
+        duration: 12000,
+        onAction: () => openFeedback("auto_nudge"),
+        onDismiss: () => {},
+      });
+    }, 5 * 60 * 1000);
+    return () => {
+      if (periodicIntervalRef.current) clearInterval(periodicIntervalRef.current);
+    };
+  }, [session, isTestingMode, openFeedback]);
 
   if (!isTestingMode) return null;
 

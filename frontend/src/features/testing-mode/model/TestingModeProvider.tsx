@@ -101,7 +101,10 @@ function saveSession(session: TestingSession) {
 
 export function TestingModeProvider({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
-  const isTestingMode = searchParams.has("testing");
+  // Active if URL has ?testing param OR if a session was already started (persisted in sessionStorage)
+  const isTestingMode =
+    searchParams.has("testing") ||
+    (typeof window !== "undefined" && !!sessionStorage.getItem(STORAGE_KEY));
   const [session, setSession] = useState<TestingSession | null>(null);
   const [sessionDurationMinutes, setSessionDurationMinutes] = useState(0);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
