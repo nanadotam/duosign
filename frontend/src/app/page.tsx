@@ -110,7 +110,6 @@ export default function LandingPage() {
     [runTranslate]
   );
 
-  // Initial demo
   useEffect(() => {
     runTranslate("Hello, how are you?");
     return () => {
@@ -130,7 +129,7 @@ export default function LandingPage() {
           <a href="#how" className="l-nav-link">How it works</a>
           <a href="#demo" className="l-nav-link">Demo</a>
           <a href="#features" className="l-nav-link">Features</a>
-          <a href="#api" className="l-nav-link">API</a>
+          <Link href="/docs" className="l-nav-link">Docs</Link>
           <a href="#contact" className="l-nav-link">Contact</a>
         </div>
       </nav>
@@ -142,27 +141,27 @@ export default function LandingPage() {
           <Image src="/logos/DuoSign_logo.svg" alt="DuoSign" className="logo-white" width={280} height={86} style={{ height: 'auto' }} />
         </div>
         <h1 className="l-hero-headline">
-          Translate text into accurate<br />sign language animations.
+          Sign language,<br />everywhere you go.
         </h1>
         <p className="l-hero-sub">
-          Built for accessibility, education,<br />and everyday communication.
+          DuoSign translates English into American Sign Language —<br />
+          animated live by a 3D avatar, right in your browser.
         </p>
         <div className="l-hero-actions">
           <Link href="/translate" className="l-btn-primary">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="5,3 19,12 5,21 5,3" />
             </svg>
-            Go to App
+            Try DuoSign Free
           </Link>
-          {/* point to frontend/src/app/api-docs */}
-          <a href="api-docs" className="l-btn-ghost">View API Documentation →</a>
+          <Link href="/docs" className="l-btn-ghost">Read the Docs →</Link>
         </div>
         <div className="l-trust-row">
-          <span className="l-trust-item">Accessibility-first design</span>
+          <span className="l-trust-item">Made for the Deaf &amp; Hard-of-Hearing community</span>
           <span className="l-trust-sep" />
-          <span className="l-trust-item">AI-powered sign synthesis</span>
+          <span className="l-trust-item">No account needed to start</span>
           <span className="l-trust-sep" />
-          <span className="l-trust-item">Production-ready platform</span>
+          <span className="l-trust-item">Browser-native — no downloads</span>
         </div>
       </section>
 
@@ -177,12 +176,12 @@ export default function LandingPage() {
       <section className="l-how" id="how">
         <div className="l-how-inner">
           <div className="l-reveal">
-            <div className="l-eyebrow">The Pipeline</div>
+            <div className="l-eyebrow">How It Works</div>
             <h2 className="l-section-title">
               From words to motion<br /><em>in three steps</em>
             </h2>
             <p className="l-section-sub">
-              DuoSign&apos;s modular architecture processes your text and drives a real-time 3D avatar — all in under a second.
+              Type anything in English. DuoSign figures out the signs, looks them up, and brings them to life on screen — all in under a second.
             </p>
           </div>
           <div className="l-steps-grid l-reveal" style={{ transitionDelay: ".1s" }}>
@@ -191,8 +190,8 @@ export default function LandingPage() {
               <div className="l-step-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M4 12h16M4 18h7" /></svg>
               </div>
-              <div className="l-step-name">Text to Gloss</div>
-              <p className="l-step-desc">A hybrid NLP engine — rule-based spaCy for 75–85% of phrases in under 50ms, with an LLM fallback for edge cases.</p>
+              <div className="l-step-name">Text to Signs</div>
+              <p className="l-step-desc">DuoSign reads your English sentence and converts it into ASL Gloss — the written form of American Sign Language grammar.</p>
               <span className="l-step-tag">spaCy + LLM</span>
             </div>
             <div className="l-step-cell">
@@ -200,8 +199,8 @@ export default function LandingPage() {
               <div className="l-step-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M6.343 6.343a8 8 0 1 0 11.314 11.314A8 8 0 0 0 6.343 6.343z" /></svg>
               </div>
-              <div className="l-step-name">Pose Lookup</div>
-              <p className="l-step-desc">Each token maps to a curated pose sequence from WLASL (21,000 videos). MediaPipe extracts 523 landmarks per frame.</p>
+              <div className="l-step-name">Sign Lookup</div>
+              <p className="l-step-desc">Each sign is matched to a real ASL reference from a library of over 2,000 signs — extracted from thousands of ASL videos.</p>
               <span className="l-step-tag">MediaPipe · WLASL</span>
             </div>
             <div className="l-step-cell">
@@ -209,8 +208,8 @@ export default function LandingPage() {
               <div className="l-step-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /></svg>
               </div>
-              <div className="l-step-name">Avatar Animation</div>
-              <p className="l-step-desc">Kalidokit converts pose data to VRM bone rotations. Three.js renders a smooth, accessible avatar in any browser.</p>
+              <div className="l-step-name">Avatar Signs It</div>
+              <p className="l-step-desc">A 3D avatar performs the signs in real time — smooth, accurate, and directly in your browser window.</p>
               <span className="l-step-tag">Kalidokit · Three.js · VRM</span>
             </div>
           </div>
@@ -226,20 +225,20 @@ export default function LandingPage() {
               Type anything.<br /><em style={{ color: "rgba(255,255,255,0.55)" }}>Watch it sign.</em>
             </h2>
             <p className="l-section-sub l-demo-sub">
-              Enter English text and DuoSign converts it to ASL gloss, then animates the avatar in real time.
+              Try it below — enter any English phrase and see DuoSign convert it to ASL in real time.
             </p>
             <div className="l-stat-row">
               <div>
                 <div className="l-stat-num" data-count="21000">0</div>
-                <div className="l-stat-label">Training videos</div>
+                <div className="l-stat-label">ASL reference videos</div>
               </div>
               <div>
                 <div className="l-stat-num" data-count="2000">0</div>
-                <div className="l-stat-label">ASL glosses</div>
+                <div className="l-stat-label">Signs in library</div>
               </div>
               <div>
                 <div className="l-stat-num">&lt;50ms</div>
-                <div className="l-stat-label">Avg. latency</div>
+                <div className="l-stat-label">Translation speed</div>
               </div>
             </div>
           </div>
@@ -301,16 +300,16 @@ export default function LandingPage() {
         <div className="l-features-inner">
           <div className="l-reveal">
             <div className="l-eyebrow">What&apos;s Inside</div>
-            <h2 className="l-section-title">Built for <em>real-world use</em></h2>
+            <h2 className="l-section-title">Everything you need<br /><em>to communicate</em></h2>
           </div>
           <div className="l-feat-grid">
             {[
-              { icon: "mic", name: "Voice Input", desc: "Browser-native speech recognition lets you speak to translate. Zero extra setup — just talk and watch DuoSign sign it back." },
-              { icon: "monitor", name: "Chrome Extension", desc: "Select any text on any website, right-click, and see a floating ASL panel. Brings sign language to the whole web." },
-              { icon: "code", name: "REST API", desc: "POST English text, get back ASL gloss arrays and pose sequences. Simple JSON interface, fast response times.", orange: true },
-              { icon: "chat", name: "Translation History", desc: "Every translation is logged with timestamps, source type, and replay. Filter by voice or typed input at a glance." },
-              { icon: "globe", name: "2,000+ Signs", desc: "WLASL lexicon with 2,000+ ASL glosses, enriched with ASL-LEX phonological similarity data for intelligent fallback.", orange: true },
-              { icon: "user", name: "Guest Access", desc: "Jump in without an account. Guests get 3 free translations per session — sign up for unlimited access." },
+              { icon: "mic", name: "Voice Input", desc: "Speak naturally and DuoSign signs it back. Browser-native speech recognition — no extra setup, no extra apps." },
+              { icon: "monitor", name: "Chrome Extension", desc: "Select any text on any website and see it signed instantly in a floating panel. Coming soon — sign up to be notified.", upcoming: true },
+              { icon: "code", name: "REST API", desc: "POST English text, get back ASL gloss and pose data. Simple JSON — great for building accessible apps.", orange: true },
+              { icon: "chat", name: "Translation History", desc: "Every translation saved with timestamps and replay. Filter by voice or typed input, export anytime." },
+              { icon: "globe", name: "2,000+ Signs", desc: "A growing library of ASL signs from the WLASL dataset. Unknown words fall back to fingerspelling automatically.", orange: true },
+              { icon: "user", name: "Guest Access", desc: "No account, no barrier. Jump in and start translating — create an account to save your history and preferences." },
             ].map((f, i) => (
               <div key={f.name} className="l-feat-card l-reveal" style={{ transitionDelay: `${0.05 + i * 0.05}s` }}>
                 <div className={`l-feat-icon${f.orange ? " orange" : ""}`}>
@@ -323,7 +322,21 @@ export default function LandingPage() {
                     {f.icon === "user" && <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></>}
                   </svg>
                 </div>
-                <div className="l-feat-name">{f.name}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                  <div className="l-feat-name">{f.name}</div>
+                  {f.upcoming && (
+                    <span style={{
+                      fontSize: "10px", fontWeight: 700, letterSpacing: "0.06em",
+                      padding: "2px 7px", borderRadius: "20px",
+                      background: "color-mix(in srgb, var(--accent) 14%, transparent)",
+                      border: "1px solid color-mix(in srgb, var(--accent) 35%, transparent)",
+                      color: "var(--accent)", fontFamily: "var(--font-jetbrains), monospace",
+                      textTransform: "uppercase",
+                    }}>
+                      Coming Soon
+                    </span>
+                  )}
+                </div>
                 <p className="l-feat-desc">{f.desc}</p>
               </div>
             ))}
@@ -340,7 +353,7 @@ export default function LandingPage() {
           </div>
           <div className="l-stat-cell">
             <div className="l-stat-cell-num" data-count="2000">0</div>
-            <div className="l-stat-cell-label">Signs in lexicon</div>
+            <div className="l-stat-cell-label">Signs in library</div>
           </div>
           <div className="l-stat-cell">
             <div className="l-stat-cell-num">50ms</div>
@@ -348,7 +361,7 @@ export default function LandingPage() {
           </div>
           <div className="l-stat-cell">
             <div className="l-stat-cell-num">100%</div>
-            <div className="l-stat-cell-label">Pose extraction rate</div>
+            <div className="l-stat-cell-label">Browser-native</div>
           </div>
         </div>
       </div>
@@ -356,16 +369,16 @@ export default function LandingPage() {
       {/* CTA */}
       <section className="l-cta" id="api">
         <div className="l-cta-inner l-reveal">
-          <h2 className="l-cta-title">Ready to bridge<br /><em>the gap?</em></h2>
-          <p className="l-cta-sub">DuoSign is free. Sign up for unlimited translations and saved history — or jump straight into the app as a guest.</p>
+          <h2 className="l-cta-title">Ready to break down<br /><em>barriers?</em></h2>
+          <p className="l-cta-sub">DuoSign is completely free. No account required — just open the app and start. Create an account to save your translations and unlock unlimited use.</p>
           <div className="l-cta-actions">
             <Link href="/translate" className="l-btn-primary">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}>
                 <polygon points="5,3 19,12 5,21 5,3" />
               </svg>
-              Open the App
+              Open DuoSign
             </Link>
-            <a href="#" className="l-btn-ghost">Read the API Docs →</a>
+            <Link href="/docs" className="l-btn-ghost">Read the Docs →</Link>
           </div>
         </div>
       </section>
@@ -374,13 +387,13 @@ export default function LandingPage() {
       <footer className="l-footer" id="contact">
         <div className="l-footer-left">
           <Image src="/logos/DuoSign_logomark.svg" alt="DuoSign" className="logo-white" width={18} height={18} style={{ opacity: 0.5 }}  />
-          <span className="l-footer-copy">© 2025 DuoSign. Built at Ashesi University.</span>
+          <span className="l-footer-copy">© 2026 DuoSign. Built at Ashesi University, Ghana.</span>
         </div>
         <div className="l-footer-links">
-          <a href="#" className="l-footer-link">Documentation</a>
-          <a href="#" className="l-footer-link">GitHub</a>
-          <a href="#" className="l-footer-link">API</a>
-          <a href="#" className="l-footer-link">Privacy</a>
+          <Link href="/docs" className="l-footer-link">Documentation</Link>
+          <a href="https://github.com/nanadotam" className="l-footer-link">GitHub</a>
+          <Link href="/api-docs" className="l-footer-link">API</Link>
+          <a href="#contact" className="l-footer-link">Contact</a>
         </div>
       </footer>
     </div>

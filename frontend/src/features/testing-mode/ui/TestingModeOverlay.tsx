@@ -109,15 +109,16 @@ export default function TestingModeOverlay({
     openSurvey,
   ]);
 
-  // Keep a ref in sync with nudgeToast state so the interval can check without stale closure
+  // Keep a ref in sync with nudgeToast state so the interval can check it without stale closure
   useEffect(() => {
     nudgeToastActiveRef.current = nudgeToast !== null;
   }, [nudgeToast]);
 
-  // 5-minute periodic feedback popup
+  // 5-minute periodic feedback popup — fires every 5 min while session is active
   useEffect(() => {
     if (!session || !isTestingMode) return;
     periodicIntervalRef.current = setInterval(() => {
+      // Don't stack toasts if one is already showing, or if feedback/survey is open
       if (nudgeToastActiveRef.current) return;
       setNudgeToast({
         id: `periodic-${Date.now()}`,
