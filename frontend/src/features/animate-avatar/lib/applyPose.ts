@@ -16,10 +16,10 @@ import { FINGER_VRM_BONES } from "./fingerConfig";
 import {
   solveFingers,
   solvePalmOrientation,
-  solveWristRotation,
   type FingerRotationMap,
   type Landmark3D,
 } from "./fingerSolver";
+import { enhanceHandWithSpread, type LandmarkPoint } from "./fingerSpread";
 import { syncAvatarDebugOverlay } from "../ui/AvatarDebugOverlay";
 import { rigUpperBody } from "./vrmRigger";
 import { LandmarkSmoother } from "./landmarkSmoother";
@@ -33,6 +33,8 @@ interface ApplyPoseOptions {
 }
 
 type Rotation = { x: number; y: number; z: number };
+type HandRig = Record<string, Rotation>;
+
 const BONE_NAME_MAP: Record<string, keyof typeof VRMSchema.HumanoidBoneName> = {
   hips: "Hips",
   spine: "Spine",
@@ -128,6 +130,14 @@ function lerpBlendShape(vrm: VRM, presetName: string, target: number, smoothing:
   if (!preset) return;
   const current = blendShape.getValue(preset) ?? 0;
   blendShape.setValue(preset, THREE.MathUtils.lerp(current, target, smoothing));
+}
+
+function scaleRotation(rotation: Rotation, scale: number): Rotation {
+  return {
+    x: rotation.x * scale,
+    y: rotation.y * scale,
+    z: rotation.z * scale,
+  };
 }
 
 function lerpHandDepth(vrm: VRM, boneName: "rightHand" | "leftHand", targetZ: number): void {
@@ -260,50 +270,70 @@ export function applyPoseToVRM(
   if (!rawPlaybackLeft) poseLeftHandSmoother.reset();
   if (!rawPlaybackRight) poseRightHandSmoother.reset();
 
-  // Right hand — fully custom wrist + fingers, no KalidoKit Hand.solve()
   if (playbackRightHandLandmarks) {
-    // Wrist rotation from custom solver (pose elbow/wrist + hand palm frame)
-    const worldLandmarks = frame.poseWorldLandmarks;
-    const rightElbow = worldLandmarks?.[14];
-    const rightWrist = worldLandmarks?.[16];
-    const wristRot = (rightElbow && rightWrist)
-      ? solveWristRotation(playbackRightHandLandmarks as Landmark3D[], rightElbow, rightWrist, "Right")
+    const rawRightHand = kalidokit.Hand.solve(playbackRightHandLandmarks, "Right") as HandRig | null;
+    // Augment with Y-axis spread computed from raw landmarks (partial Kalidokit mitigation)
+    const rightHand = rawRightHand
+      ? enhanceHandWithSpread(rawRightHand, playbackRightHandLandmarks as LandmarkPoint[], "Right")
       : null;
-    const palmRoll = solvePalmOrientation(playbackRightHandLandmarks as Landmark3D[], "Right");
-
-    lerpBone(
-      vrm,
-      "rightHand",
-      {
-        x: wristRot?.x ?? 0,
-        y: wristRot?.y ?? 0,
-        z: palmRoll !== null ? palmRoll * PALM_PRONATION_SCALE : 0,
-      },
-      SMOOTHING.hand
-    );
+    if (rightHand) {
+      if (rightHand.RightWrist) {
+        const wristBase = scaleRotation(rightHand.RightWrist, PROPORTION_SCALE.armExtension);
+        const palmRoll = solvePalmOrientation(playbackRightHandLandmarks as Landmark3D[], "Right");
+        lerpBone(
+          vrm,
+          "rightHand",
+          {
+            x: wristBase.x,
+            y: wristBase.y,
+            z: palmRoll !== null ? palmRoll * PALM_PRONATION_SCALE : wristBase.z,
+          },
+          SMOOTHING.hand
+        );
+      }
+      if (rightHand.RightThumbProximal) {
+        lerpBone(vrm, "rightThumbProximal", rightHand.RightThumbProximal, SMOOTHING.thumb);
+      }
+      if (rightHand.RightThumbIntermediate) {
+        lerpBone(vrm, "rightThumbMetacarpal", rightHand.RightThumbIntermediate, SMOOTHING.thumb);
+      }
+      if (rightHand.RightThumbDistal) {
+        lerpBone(vrm, "rightThumbDistal", rightHand.RightThumbDistal, SMOOTHING.thumb);
+      }
+    }
     applyFingers(vrm, playbackRightHandLandmarks as Landmark3D[], "Right");
   }
 
-  // Left hand — same fully custom approach
   if (playbackLeftHandLandmarks) {
-    const worldLandmarks = frame.poseWorldLandmarks;
-    const leftElbow = worldLandmarks?.[13];
-    const leftWrist = worldLandmarks?.[15];
-    const wristRot = (leftElbow && leftWrist)
-      ? solveWristRotation(playbackLeftHandLandmarks as Landmark3D[], leftElbow, leftWrist, "Left")
+    const rawLeftHand = kalidokit.Hand.solve(playbackLeftHandLandmarks, "Left") as HandRig | null;
+    const leftHand = rawLeftHand
+      ? enhanceHandWithSpread(rawLeftHand, playbackLeftHandLandmarks as LandmarkPoint[], "Left")
       : null;
-    const palmRoll = solvePalmOrientation(playbackLeftHandLandmarks as Landmark3D[], "Left");
-
-    lerpBone(
-      vrm,
-      "leftHand",
-      {
-        x: wristRot?.x ?? 0,
-        y: wristRot?.y ?? 0,
-        z: palmRoll !== null ? palmRoll * PALM_PRONATION_SCALE : 0,
-      },
-      SMOOTHING.hand
-    );
+    if (leftHand) {
+      if (leftHand.LeftWrist) {
+        const wristBase = scaleRotation(leftHand.LeftWrist, PROPORTION_SCALE.armExtension);
+        const palmRoll = solvePalmOrientation(playbackLeftHandLandmarks as Landmark3D[], "Left");
+        lerpBone(
+          vrm,
+          "leftHand",
+          {
+            x: wristBase.x,
+            y: wristBase.y,
+            z: palmRoll !== null ? palmRoll * PALM_PRONATION_SCALE : wristBase.z,
+          },
+          SMOOTHING.hand
+        );
+      }
+      if (leftHand.LeftThumbProximal) {
+        lerpBone(vrm, "leftThumbProximal", leftHand.LeftThumbProximal, SMOOTHING.thumb);
+      }
+      if (leftHand.LeftThumbIntermediate) {
+        lerpBone(vrm, "leftThumbMetacarpal", leftHand.LeftThumbIntermediate, SMOOTHING.thumb);
+      }
+      if (leftHand.LeftThumbDistal) {
+        lerpBone(vrm, "leftThumbDistal", leftHand.LeftThumbDistal, SMOOTHING.thumb);
+      }
+    }
     applyFingers(vrm, playbackLeftHandLandmarks as Landmark3D[], "Left");
   }
 

@@ -227,9 +227,25 @@ export default function ApiDocsPage() {
                 translation, vocabulary lookup, and media serving. All endpoints return JSON unless
                 otherwise noted.
               </P>
+
+              {/* Live endpoint callout */}
+              <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-[10px] bg-surface border border-border shadow-raised-sm mb-4">
+                <div>
+                  <div className="text-[11px] font-bold tracking-[0.06em] uppercase text-text-3 font-mono mb-0.5">Live API</div>
+                  <code className="text-[13px] font-mono text-accent">https://duosign.onrender.com/api</code>
+                </div>
+                <a
+                  href="https://duosign.onrender.com/api/health"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-[color-mix(in_srgb,var(--success)_35%,transparent)] bg-[color-mix(in_srgb,var(--success)_8%,var(--surface-3))] text-[var(--success)] hover:opacity-80 transition-opacity"
+                >
+                  Check health ↗
+                </a>
+              </div>
+
               <P>
-                The API is versioned via the application version (<Code>3.0.0</Code>) but URL paths do
-                not include a version prefix. All paths are prefixed with <Code>/api</Code>.
+                All paths are prefixed with <Code>/api</Code>. Authentication is not required — call any endpoint directly.
               </P>
             </section>
 
@@ -238,19 +254,92 @@ export default function ApiDocsPage() {
             {/* ── BASE URL ─────────────────────────────────────────── */}
             <section id="base-url">
               <Heading2 id="base-url">Base URL & Auth</Heading2>
-              <P>Run the backend locally with:</P>
-              <CodeBlock title="shell">
-{`uvicorn api.main:app --reload --port 8000`}
-              </CodeBlock>
+
+              <div className="space-y-3 mb-6">
+                <div className="p-4 rounded-[12px] bg-surface border border-border shadow-raised-sm">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-2 h-2 rounded-full bg-[var(--success)] flex-shrink-0" />
+                    <span className="text-[12px] font-bold font-mono text-text-3 uppercase tracking-[0.06em]">Development</span>
+                  </div>
+                  <code className="text-[13px] font-mono text-accent">http://localhost:8000</code>
+                  <p className="text-[12.5px] text-text-2 mt-1">Run locally with <code className="text-accent text-[12px]">uvicorn api.main:app --reload --port 8000</code></p>
+                </div>
+                <div className="p-4 rounded-[12px] bg-surface border border-border shadow-raised-sm">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-2 h-2 rounded-full bg-[var(--accent)] flex-shrink-0" />
+                    <span className="text-[12px] font-bold font-mono text-text-3 uppercase tracking-[0.06em]">Production (Render)</span>
+                  </div>
+                  <code className="text-[13px] font-mono text-accent">https://duosign.onrender.com</code>
+                  <p className="text-[12.5px] text-text-2 mt-1">Live backend — already wired to <code className="text-accent text-[12px]">duosign.vercel.app</code> via Next.js rewrites.</p>
+                </div>
+              </div>
+
+              <div className="text-[11px] font-bold tracking-[0.06em] uppercase text-text-3 mb-2 mt-6">Deploying to Render</div>
               <P>
-                The frontend proxies <Code>/api/*</Code> to <Code>http://localhost:8000</Code> in development
-                via <Code>NEXT_PUBLIC_API_URL</Code>. For production, set this env var to your deployed
-                backend URL and add the origin to <Code>ALLOWED_ORIGINS</Code> on the backend.
+                The backend is a standard Python web service. In your Render dashboard, create a <strong className="text-text-1">Web Service</strong> pointing to the <Code>/backend</Code> directory with these settings:
+              </P>
+              <div className="overflow-x-auto mb-4">
+                <table className="w-full text-[12.5px] border-collapse">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 pr-4 text-text-3 font-semibold text-[10.5px] tracking-[0.06em] uppercase">Field</th>
+                      <th className="text-left py-2 text-text-3 font-semibold text-[10.5px] tracking-[0.06em] uppercase">Value</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-text-2">
+                    {[
+                      ["Build Command", "pip install -r requirements.txt && python -m spacy download en_core_web_sm"],
+                      ["Start Command", "uvicorn api.main:app --host 0.0.0.0 --port $PORT"],
+                      ["Root Directory", "backend"],
+                      ["Python Version", "3.11+"],
+                    ].map(([field, val]) => (
+                      <tr key={field} className="border-b border-border last:border-0">
+                        <td className="py-2 pr-4 font-semibold text-text-1 whitespace-nowrap">{field}</td>
+                        <td className="py-2 font-mono text-accent text-[12px]">{val}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="text-[11px] font-bold tracking-[0.06em] uppercase text-text-3 mb-2 mt-4">Required Environment Variables</div>
+              <div className="overflow-x-auto mb-4">
+                <table className="w-full text-[12.5px] border-collapse">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 pr-4 text-text-3 font-semibold text-[10.5px] tracking-[0.06em] uppercase">Variable</th>
+                      <th className="text-left py-2 pr-4 text-text-3 font-semibold text-[10.5px] tracking-[0.06em] uppercase">Required</th>
+                      <th className="text-left py-2 text-text-3 font-semibold text-[10.5px] tracking-[0.06em] uppercase">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-text-2">
+                    {[
+                      ["GROQ_API_KEY",    "For voice", "Enables /translate/audio. Get one free at console.groq.com"],
+                      ["ALLOWED_ORIGINS", "Yes",       "Comma-separated allowed origins — production value: https://duosign.vercel.app (already set)"],
+                      ["BACKEND_URL",     "Frontend",  "Set this in your Next.js env — points to the Render service URL"],
+                    ].map(([key, req, desc]) => (
+                      <tr key={key} className="border-b border-border last:border-0">
+                        <td className="py-2 pr-4 font-mono text-accent">{key}</td>
+                        <td className="py-2 pr-4 text-text-3">{req}</td>
+                        <td className="py-2">{desc}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <Note>
+                <strong>Render free tier cold starts:</strong> the backend may take 30–60 seconds to respond after a period of inactivity. Call <Code>GET /api/health</Code> on page load to wake it up proactively if needed.
+              </Note>
+
+              <div className="text-[11px] font-bold tracking-[0.06em] uppercase text-text-3 mb-2 mt-4">CORS</div>
+              <P>
+                The backend automatically allows <Code>localhost:3000</Code>, <Code>localhost:5173</Code>, and <Code>https://duosign.vercel.app</Code>.
+                Add your Render frontend URL (if different) via the <Code>ALLOWED_ORIGINS</Code> env var.
+                The Chrome extension is handled separately — all <Code>chrome-extension://</Code> origins are allowed automatically via origin regex, so no extension ID needs to be hardcoded.
               </P>
               <P>
-                Authentication is not required for any endpoint in the current version. CORS is configured
-                to allow <Code>localhost:3000</Code> and <Code>localhost:5173</Code> plus any origins in
-                the <Code>ALLOWED_ORIGINS</Code> environment variable.
+                Authentication is not required for any endpoint in the current version.
               </P>
             </section>
 
@@ -438,7 +527,7 @@ data: {}`}
               ]} />
 
               <CodeBlock title="shell example">
-{`curl -X POST http://localhost:8000/api/translate/audio \\
+{`curl -X POST https://duosign.onrender.com/api/translate/audio \\
   -F "audio=@recording.webm" \\
   -F "language=en"`}
               </CodeBlock>
@@ -567,10 +656,38 @@ data: {}`}
 }`}
               </CodeBlock>
               <Note>
-                Use this endpoint to confirm the backend is up and that pose data was found on startup.
+                Use this endpoint to confirm the backend is up and that vocabulary data was loaded on startup.
                 If <Code>vocabulary_loaded</Code> is <Code>false</Code>, all translations will return
                 only fingerspelled output.
               </Note>
+              <P>
+                On Render free tier, the service sleeps after 15 minutes of inactivity. A cold-start takes 30–60 seconds.
+                To avoid a visible delay for your first user, ping <Code>/api/health</Code> proactively on app load:
+              </P>
+              <CodeBlock title="javascript — warm-up on page load (duosign.vercel.app)">
+{`// From within duosign.vercel.app — Next.js proxies /api/* to the backend
+async function warmUpBackend() {
+  try {
+    const res = await fetch("/api/health");
+    const data = await res.json();
+    console.log("Backend ready:", data.status, "| Glosses:", data.gloss_count);
+  } catch {
+    console.warn("Backend not reachable — translations will fail");
+  }
+}
+
+warmUpBackend();`}
+              </CodeBlock>
+              <P>
+                Calling from outside the Vercel app (e.g. the Chrome extension, a third-party script, or curl)?
+                Hit the Render URL directly:
+              </P>
+              <CodeBlock title="direct — any client">
+{`// Works from anywhere — no proxy needed
+fetch("https://duosign.onrender.com/api/health")
+  .then(r => r.json())
+  .then(d => console.log("DuoSign backend:", d.status, "| Glosses:", d.gloss_count));`}
+              </CodeBlock>
             </section>
 
             <div className="h-px bg-border my-8" />
