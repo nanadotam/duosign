@@ -22,6 +22,7 @@ import {
 import { enhanceHandWithSpread, type LandmarkPoint } from "./fingerSpread";
 import { syncAvatarDebugOverlay } from "../ui/AvatarDebugOverlay";
 import { rigUpperBody } from "./vrmRigger";
+import { LandmarkSmoother } from "./landmarkSmoother";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type KalidokitModule = any;
@@ -83,6 +84,10 @@ let _activeVRM: VRM | null = null;
 const previousFingerRotations: Partial<Record<"Right" | "Left", FingerRotationMap>> = {};
 const oldLookTarget = new THREE.Euler();
 
+// EMA smoothers for pose engine hand landmarks (reduce jitter from noisy pose files)
+const poseLeftHandSmoother = new LandmarkSmoother(0.5);
+const poseRightHandSmoother = new LandmarkSmoother(0.5);
+
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
@@ -111,9 +116,11 @@ function lerpBone(vrm: VRM, boneName: string, target: Rotation, smoothing: numbe
   if (!bone) return;
 
   const clamped = applyClamp(target, boneName);
-  bone.rotation.x = THREE.MathUtils.lerp(bone.rotation.x, clamped.x, smoothing);
-  bone.rotation.y = THREE.MathUtils.lerp(bone.rotation.y, clamped.y, smoothing);
-  bone.rotation.z = THREE.MathUtils.lerp(bone.rotation.z, clamped.z, smoothing);
+  // Use quaternion slerp instead of per-axis Euler lerp to avoid gimbal lock
+  // and ensure correct rotation interpolation paths (especially for wrists).
+  const targetEuler = new THREE.Euler(clamped.x, clamped.y, clamped.z);
+  const targetQuat = new THREE.Quaternion().setFromEuler(targetEuler);
+  bone.quaternion.slerp(targetQuat, smoothing);
 }
 
 function lerpBlendShape(vrm: VRM, presetName: string, target: number, smoothing: number): void {
@@ -251,8 +258,17 @@ export function applyPoseToVRM(
   // Match the live MediaPipe path: playback landmarks are normalized from the
   // viewer/image perspective, so remap them into signer handedness here before
   // solving hand articulation.
-  const playbackLeftHandLandmarks = frame.rightHandLandmarks;
-  const playbackRightHandLandmarks = frame.leftHandLandmarks;
+  // Apply EMA smoothing to reduce jitter from noisy pose data.
+  const rawPlaybackLeft = frame.rightHandLandmarks;
+  const rawPlaybackRight = frame.leftHandLandmarks;
+  const playbackLeftHandLandmarks = rawPlaybackLeft
+    ? poseLeftHandSmoother.smooth(rawPlaybackLeft) as typeof rawPlaybackLeft
+    : rawPlaybackLeft;
+  const playbackRightHandLandmarks = rawPlaybackRight
+    ? poseRightHandSmoother.smooth(rawPlaybackRight) as typeof rawPlaybackRight
+    : rawPlaybackRight;
+  if (!rawPlaybackLeft) poseLeftHandSmoother.reset();
+  if (!rawPlaybackRight) poseRightHandSmoother.reset();
 
   if (playbackRightHandLandmarks) {
     const rawRightHand = kalidokit.Hand.solve(playbackRightHandLandmarks, "Right") as HandRig | null;

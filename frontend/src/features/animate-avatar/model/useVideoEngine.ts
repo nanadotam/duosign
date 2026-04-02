@@ -17,9 +17,14 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { VRM } from "@pixiv/three-vrm";
+import { VRMSchema } from "@pixiv/three-vrm";
+import * as THREE from "three";
 import type { AvatarDebugStats, ViewMode } from "@/entities/avatar/types";
-import { rigUpperBody, rigHands, rigFace, resetPose, lerpToRestPose, setRenderVRM } from "../lib/vrmRigger";
+import { rigUpperBody, rigFace, resetPose, lerpToRestPose, setRenderVRM, rigRotation, RIG_CONFIG } from "../lib/vrmRigger";
 import { enhanceHandWithSpread } from "../lib/fingerSpread";
+import { solveFingers, solvePalmOrientation, type Landmark3D, type FingerRotationMap } from "../lib/fingerSolver";
+import { FINGER_VRM_BONES } from "../lib/fingerConfig";
+import { LandmarkSmoother } from "../lib/landmarkSmoother";
 import {
   fetchVideoBlobUrl,
   prefetchVideos,
@@ -38,6 +43,72 @@ let holisticInitPromise: Promise<boolean> | null = null;
 declare global {
   interface Window {
     __duosign_holistic__?: unknown;
+  }
+}
+
+// ── Custom finger solver state (persistent across frames) ─────────
+const previousFingerRotations: Partial<Record<"Right" | "Left", FingerRotationMap>> = {};
+
+// ── Landmark smoothers (EMA filters to reduce MediaPipe jitter) ───
+// Alpha 0.5 = balanced responsiveness vs smoothness for signing
+const leftHandSmoother = new LandmarkSmoother(0.5);
+const rightHandSmoother = new LandmarkSmoother(0.5);
+
+/**
+ * Map camelCase bone names (from FINGER_VRM_BONES) to PascalCase VRM schema names
+ * (for rigRotation). VRM 0.x uses "ThumbIntermediate" not "ThumbMetacarpal".
+ */
+const CAMEL_TO_VRM: Record<string, string> = {
+  rightThumbProximal: "RightThumbProximal",
+  rightThumbMetacarpal: "RightThumbIntermediate",
+  rightThumbDistal: "RightThumbDistal",
+  leftThumbProximal: "LeftThumbProximal",
+  leftThumbMetacarpal: "LeftThumbIntermediate",
+  leftThumbDistal: "LeftThumbDistal",
+  rightIndexProximal: "RightIndexProximal",
+  rightIndexIntermediate: "RightIndexIntermediate",
+  rightIndexDistal: "RightIndexDistal",
+  leftIndexProximal: "LeftIndexProximal",
+  leftIndexIntermediate: "LeftIndexIntermediate",
+  leftIndexDistal: "LeftIndexDistal",
+  rightMiddleProximal: "RightMiddleProximal",
+  rightMiddleIntermediate: "RightMiddleIntermediate",
+  rightMiddleDistal: "RightMiddleDistal",
+  leftMiddleProximal: "LeftMiddleProximal",
+  leftMiddleIntermediate: "LeftMiddleIntermediate",
+  leftMiddleDistal: "LeftMiddleDistal",
+  rightRingProximal: "RightRingProximal",
+  rightRingIntermediate: "RightRingIntermediate",
+  rightRingDistal: "RightRingDistal",
+  leftRingProximal: "LeftRingProximal",
+  leftRingIntermediate: "LeftRingIntermediate",
+  leftRingDistal: "LeftRingDistal",
+  rightLittleProximal: "RightLittleProximal",
+  rightLittleIntermediate: "RightLittleIntermediate",
+  rightLittleDistal: "RightLittleDistal",
+  leftLittleProximal: "LeftLittleProximal",
+  leftLittleIntermediate: "LeftLittleIntermediate",
+  leftLittleDistal: "LeftLittleDistal",
+};
+
+function applyCustomFingers(
+  vrm: VRM,
+  landmarks: Landmark3D[],
+  side: "Right" | "Left"
+): void {
+  const rotations = solveFingers(landmarks, side, previousFingerRotations[side]);
+  previousFingerRotations[side] = rotations;
+
+  for (const [fingerName, [mcp, pip, dip]] of Object.entries(rotations)) {
+    const boneNames = FINGER_VRM_BONES[fingerName as keyof typeof FINGER_VRM_BONES]?.[side];
+    if (!boneNames) continue;
+
+    const [proximalName, intermediateName, distalName] = boneNames;
+    const cfg = fingerName === "thumb" ? RIG_CONFIG.thumb : RIG_CONFIG.finger;
+
+    rigRotation(vrm, CAMEL_TO_VRM[proximalName] ?? proximalName, { x: 0, y: mcp.spread, z: mcp.flexion }, cfg.dampener, cfg.lerp);
+    rigRotation(vrm, CAMEL_TO_VRM[intermediateName] ?? intermediateName, { x: 0, y: 0, z: pip.flexion }, cfg.dampener, cfg.lerp);
+    rigRotation(vrm, CAMEL_TO_VRM[distalName] ?? distalName, { x: 0, y: 0, z: dip.flexion }, cfg.dampener, cfg.lerp);
   }
 }
 
@@ -231,8 +302,14 @@ export function useVideoEngine({
       const pose3DLandmarks = result.poseWorldLandmarks?.[0];
       const pose2DLandmarks = result.poseLandmarks?.[0];
       // Intentional swap — MediaPipe labels hands from image perspective (mirrored)
-      const leftHandLandmarks = result.rightHandLandmarks?.[0];
-      const rightHandLandmarks = result.leftHandLandmarks?.[0];
+      // Apply EMA smoothing to reduce frame-to-frame jitter before solving
+      const rawLeftHand = result.rightHandLandmarks?.[0];
+      const rawRightHand = result.leftHandLandmarks?.[0];
+      const leftHandLandmarks = rawLeftHand ? leftHandSmoother.smooth(rawLeftHand) : undefined;
+      const rightHandLandmarks = rawRightHand ? rightHandSmoother.smooth(rawRightHand) : undefined;
+      // Reset smoothers when hand tracking is lost to avoid stale data
+      if (!rawLeftHand) leftHandSmoother.reset();
+      if (!rawRightHand) rightHandSmoother.reset();
 
       // Face
       if (faceLandmarks) {
@@ -260,27 +337,74 @@ export function useVideoEngine({
         }
       }
 
-      // Left Hand
+      // Hand depth (forward/backward) from pose world landmarks
+      if (pose3DLandmarks) {
+        const HAND_DEPTH_SCALE = 0.35;
+        const HAND_DEPTH_CLAMP = 0.4;
+
+        const rightWristWorld = pose3DLandmarks[16];
+        const rightShoulderWorld = pose3DLandmarks[12];
+        if (rightWristWorld && rightShoulderWorld && rightHandLandmarks) {
+          const rawDepth = (rightWristWorld.z - rightShoulderWorld.z) * HAND_DEPTH_SCALE;
+          const depthZ = Math.max(-HAND_DEPTH_CLAMP, Math.min(HAND_DEPTH_CLAMP, rawDepth));
+          const rHandNode = currentVrm.humanoid?.getBoneNode(VRMSchema.HumanoidBoneName.RightHand);
+          if (rHandNode) {
+            rHandNode.position.z = THREE.MathUtils.lerp(rHandNode.position.z, depthZ, 0.6);
+          }
+        }
+
+        const leftWristWorld = pose3DLandmarks[15];
+        const leftShoulderWorld = pose3DLandmarks[11];
+        if (leftWristWorld && leftShoulderWorld && leftHandLandmarks) {
+          const rawDepth = (leftWristWorld.z - leftShoulderWorld.z) * HAND_DEPTH_SCALE;
+          const depthZ = Math.max(-HAND_DEPTH_CLAMP, Math.min(HAND_DEPTH_CLAMP, rawDepth));
+          const lHandNode = currentVrm.humanoid?.getBoneNode(VRMSchema.HumanoidBoneName.LeftHand);
+          if (lHandNode) {
+            lHandNode.position.z = THREE.MathUtils.lerp(lHandNode.position.z, depthZ, 0.6);
+          }
+        }
+      }
+
+      // Left Hand — use KalidoKit for wrist, custom solver for fingers
       if (leftHandLandmarks && riggedPose) {
         const rawLeftHand = Kalidokit.Hand.solve(leftHandLandmarks, "Left");
-        // Augment with Y-axis spread from raw landmarks (partial Kalidokit mitigation)
         const riggedLeftHand = rawLeftHand
           ? enhanceHandWithSpread(rawLeftHand, leftHandLandmarks, "Left")
           : null;
         if (riggedLeftHand) {
-          rigHands(currentVrm, riggedLeftHand, null, riggedPose);
+          // Wrist rotation: X/Y from hand solver, Z from palm orientation (or pose fallback)
+          const palmRoll = solvePalmOrientation(leftHandLandmarks as Landmark3D[], "Left");
+          const wristZ = palmRoll !== null
+            ? palmRoll * RIG_CONFIG.palmOrientation.pronationScale
+            : riggedPose.LeftHand.z;
+          rigRotation(currentVrm, "LeftHand", {
+            x: riggedLeftHand.LeftWrist?.x ?? 0,
+            y: riggedLeftHand.LeftWrist?.y ?? 0,
+            z: wristZ,
+          }, RIG_CONFIG.hand.dampener, RIG_CONFIG.hand.lerp);
         }
+        // Custom finger solver (bypasses KalidoKit's limited finger output)
+        applyCustomFingers(currentVrm, leftHandLandmarks as Landmark3D[], "Left");
       }
 
-      // Right Hand
+      // Right Hand — same approach
       if (rightHandLandmarks && riggedPose) {
         const rawRightHand = Kalidokit.Hand.solve(rightHandLandmarks, "Right");
         const riggedRightHand = rawRightHand
           ? enhanceHandWithSpread(rawRightHand, rightHandLandmarks, "Right")
           : null;
         if (riggedRightHand) {
-          rigHands(currentVrm, null, riggedRightHand, riggedPose);
+          const palmRoll = solvePalmOrientation(rightHandLandmarks as Landmark3D[], "Right");
+          const wristZ = palmRoll !== null
+            ? palmRoll * RIG_CONFIG.palmOrientation.pronationScale
+            : riggedPose.RightHand.z;
+          rigRotation(currentVrm, "RightHand", {
+            x: riggedRightHand.RightWrist?.x ?? 0,
+            y: riggedRightHand.RightWrist?.y ?? 0,
+            z: wristZ,
+          }, RIG_CONFIG.hand.dampener, RIG_CONFIG.hand.lerp);
         }
+        applyCustomFingers(currentVrm, rightHandLandmarks as Landmark3D[], "Right");
       }
 
       // Track FPS
