@@ -227,9 +227,25 @@ export default function ApiDocsPage() {
                 translation, vocabulary lookup, and media serving. All endpoints return JSON unless
                 otherwise noted.
               </P>
+
+              {/* Live endpoint callout */}
+              <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-[10px] bg-surface border border-border shadow-raised-sm mb-4">
+                <div>
+                  <div className="text-[11px] font-bold tracking-[0.06em] uppercase text-text-3 font-mono mb-0.5">Live API</div>
+                  <code className="text-[13px] font-mono text-accent">https://duosign.onrender.com/api</code>
+                </div>
+                <a
+                  href="https://duosign.onrender.com/api/health"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-[color-mix(in_srgb,var(--success)_35%,transparent)] bg-[color-mix(in_srgb,var(--success)_8%,var(--surface-3))] text-[var(--success)] hover:opacity-80 transition-opacity"
+                >
+                  Check health ↗
+                </a>
+              </div>
+
               <P>
-                The API is versioned via the application version (<Code>3.0.0</Code>) but URL paths do
-                not include a version prefix. All paths are prefixed with <Code>/api</Code>.
+                All paths are prefixed with <Code>/api</Code>. Authentication is not required — call any endpoint directly.
               </P>
             </section>
 
@@ -253,8 +269,8 @@ export default function ApiDocsPage() {
                     <span className="w-2 h-2 rounded-full bg-[var(--accent)] flex-shrink-0" />
                     <span className="text-[12px] font-bold font-mono text-text-3 uppercase tracking-[0.06em]">Production (Render)</span>
                   </div>
-                  <code className="text-[13px] font-mono text-accent">https://&lt;your-service&gt;.onrender.com</code>
-                  <p className="text-[12.5px] text-text-2 mt-1">Set <code className="text-accent text-[12px]">BACKEND_URL</code> in your frontend environment to point here.</p>
+                  <code className="text-[13px] font-mono text-accent">https://duosign.onrender.com</code>
+                  <p className="text-[12.5px] text-text-2 mt-1">Live backend — already wired to <code className="text-accent text-[12px]">duosign.vercel.app</code> via Next.js rewrites.</p>
                 </div>
               </div>
 
@@ -299,7 +315,7 @@ export default function ApiDocsPage() {
                   <tbody className="text-text-2">
                     {[
                       ["GROQ_API_KEY",    "For voice", "Enables /translate/audio. Get one free at console.groq.com"],
-                      ["ALLOWED_ORIGINS", "Yes",       "Comma-separated list of frontend origins to allow — e.g. https://duosign.vercel.app"],
+                      ["ALLOWED_ORIGINS", "Yes",       "Comma-separated allowed origins — production value: https://duosign.vercel.app (already set)"],
                       ["BACKEND_URL",     "Frontend",  "Set this in your Next.js env — points to the Render service URL"],
                     ].map(([key, req, desc]) => (
                       <tr key={key} className="border-b border-border last:border-0">
@@ -511,7 +527,7 @@ data: {}`}
               ]} />
 
               <CodeBlock title="shell example">
-{`curl -X POST http://localhost:8000/api/translate/audio \\
+{`curl -X POST https://duosign.onrender.com/api/translate/audio \\
   -F "audio=@recording.webm" \\
   -F "language=en"`}
               </CodeBlock>
@@ -648,8 +664,8 @@ data: {}`}
                 On Render free tier, the service sleeps after 15 minutes of inactivity. A cold-start takes 30–60 seconds.
                 To avoid a visible delay for your first user, ping <Code>/api/health</Code> proactively on app load:
               </P>
-              <CodeBlock title="javascript — warm-up on page load">
-{`// Call this once when your app mounts
+              <CodeBlock title="javascript — warm-up on page load (duosign.vercel.app)">
+{`// From within duosign.vercel.app — Next.js proxies /api/* to the backend
 async function warmUpBackend() {
   try {
     const res = await fetch("/api/health");
@@ -663,15 +679,14 @@ async function warmUpBackend() {
 warmUpBackend();`}
               </CodeBlock>
               <P>
-                The Chrome extension version of this check uses the Render URL directly (since it doesn&apos;t
-                proxy through Next.js) — replace <Code>/api/health</Code> with your full Render service URL:
+                Calling from outside the Vercel app (e.g. the Chrome extension, a third-party script, or curl)?
+                Hit the Render URL directly:
               </P>
-              <CodeBlock title="chrome extension — health check">
-{`const BACKEND = "https://<your-service>.onrender.com";
-
-fetch(\`\${BACKEND}/api/health\`)
+              <CodeBlock title="direct — any client">
+{`// Works from anywhere — no proxy needed
+fetch("https://duosign.onrender.com/api/health")
   .then(r => r.json())
-  .then(d => console.log("DuoSign backend:", d.status));`}
+  .then(d => console.log("DuoSign backend:", d.status, "| Glosses:", d.gloss_count));`}
               </CodeBlock>
             </section>
 
