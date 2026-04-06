@@ -25,7 +25,4 @@ const connectionConfig = {
 };
 
 export const pool = globalThis.__duosignPool ?? new Pool(connectionConfig);
-
-if (process.env.NODE_ENV !== "production") {
-  globalThis.__duosignPool = pool;
-}
+globalThis.__duosignPool = pool;
