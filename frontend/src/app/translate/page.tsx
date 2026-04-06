@@ -21,7 +21,7 @@ import { useHistory } from "@/shared/hooks/useHistory";
 import { useGuestLimit } from "@/shared/hooks/useGuestLimit";
 import { useSettings } from "@/shared/hooks/useSettings";
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { GlossToken } from "@/entities/gloss/types";
 import type { AvatarDisplayMode } from "@/entities/avatar/types";
 import GlossChip from "@/shared/ui/GlossChip";
@@ -29,6 +29,11 @@ import Link from "next/link";
 import { useToast } from "@/shared/ui/Toast";
 import { useSession } from "@/lib/auth-client";
 import type { HistoryEntryType } from "@/shared/lib/history";
+import ResearchIntroScreen from "@/features/testing-mode/ui/ResearchIntroScreen";
+import {
+  RESEARCH_INTRO_DISMISSED_KEY,
+  buildTestingHref,
+} from "@/features/testing-mode/lib/researchConfig";
 
 // Outer shell — provides context, then delegates to inner component
 export default function TranslatePage() {
@@ -45,6 +50,7 @@ export default function TranslatePage() {
 
 // Inner component — all logic lives here so it's inside ToastProvider context
 function TranslatePageContent() {
+  const router = useRouter();
   const { settings } = useSettings();
   const { showToast } = useToast();
   const { isTestingMode, session: testingSession, trackEvent, incrementTranslations } = useTestingMode();
@@ -60,6 +66,7 @@ function TranslatePageContent() {
   const { remaining: guestRemaining, consume } = useGuestLimit();
   const [voiceInputUsed, setVoiceInputUsed] = useState(false);
   const [firstTranslationDone, setFirstTranslationDone] = useState(false);
+  const [showResearchIntro, setShowResearchIntro] = useState(false);
 
   // ─── Network connectivity detection ────────────────────────────────────────
   const [isOnline, setIsOnline] = useState(
@@ -75,6 +82,17 @@ function TranslatePageContent() {
       window.removeEventListener("offline", down);
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (isTestingMode) {
+      setShowResearchIntro(false);
+      return;
+    }
+    setShowResearchIntro(
+      sessionStorage.getItem(RESEARCH_INTRO_DISMISSED_KEY) !== "1"
+    );
+  }, [isTestingMode]);
 
   const {
     inputText,
@@ -259,6 +277,13 @@ function TranslatePageContent() {
     void attemptTranslate(inputText, "typed");
   }, [attemptTranslate, inputText]);
 
+  const handleProceedToTesting = useCallback(() => {
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem(RESEARCH_INTRO_DISMISSED_KEY);
+    }
+    router.push(buildTestingHref("/translate", searchParams));
+  }, [router, searchParams]);
+
   const handleClear = useCallback(() => {
     clearInput();
     reset();
@@ -328,6 +353,14 @@ function TranslatePageContent() {
     : translationPhase === "rule_based" && isTranslating && isOnline ? "waiting_for_llm"
     : translationPhase === "rule_based" ? "rule_based"
     : "llm_quality";
+
+  if (!isTestingMode && showResearchIntro) {
+    return (
+      <ResearchIntroScreen
+        onProceed={handleProceedToTesting}
+      />
+    );
+  }
 
   return (
     <>

@@ -7,6 +7,7 @@ import OnboardingController from "./OnboardingController";
 import TaskHintController from "./TaskHintController";
 import FeedbackWidget from "./FeedbackWidget";
 import SurveyModal from "./SurveyModal";
+import ResearchCheckInModal from "./ResearchCheckInModal";
 import { TestingToastItem, type TestingToastData } from "./TestingToast";
 
 interface TestingModeOverlayProps {
@@ -39,6 +40,7 @@ export default function TestingModeOverlay({
   } = useTestingMode();
 
   const [nudgeToast, setNudgeToast] = useState<TestingToastData | null>(null);
+  const [isCheckInOpen, setIsCheckInOpen] = useState(false);
   const feedbackNudgeFired = useRef(false);
   const surveyPromptFired = useRef(false);
   const periodicIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -118,21 +120,15 @@ export default function TestingModeOverlay({
   useEffect(() => {
     if (!session || !isTestingMode) return;
     periodicIntervalRef.current = setInterval(() => {
-      // Don't stack toasts if one is already showing, or if feedback/survey is open
       if (nudgeToastActiveRef.current) return;
-      setNudgeToast({
-        id: `periodic-${Date.now()}`,
-        content: "You\u2019ve been using DuoSign for a bit \u2014 how\u2019s it going?",
-        actionLabel: "Share feedback",
-        duration: 12000,
-        onAction: () => openFeedback("auto_nudge"),
-        onDismiss: () => {},
-      });
+      if (isFeedbackOpen || isSurveyOpen) return;
+      if (translationsCount === 0) return;
+      setIsCheckInOpen(true);
     }, 5 * 60 * 1000);
     return () => {
       if (periodicIntervalRef.current) clearInterval(periodicIntervalRef.current);
     };
-  }, [session, isTestingMode, openFeedback]);
+  }, [session, isTestingMode, isFeedbackOpen, isSurveyOpen, translationsCount]);
 
   if (!isTestingMode) return null;
 
@@ -159,6 +155,24 @@ export default function TestingModeOverlay({
               if (!open) closeFeedback();
             }}
             triggerType={feedbackTriggerType}
+          />
+
+          <ResearchCheckInModal
+            isOpen={isCheckInOpen}
+            onClose={() => setIsCheckInOpen(false)}
+            onShareFeedback={() => {
+              setIsCheckInOpen(false);
+              openFeedback("periodic_prompt");
+            }}
+            onOpenSurvey={() => {
+              setIsCheckInOpen(false);
+              trackEvent("sus_survey_opened");
+              openSurvey();
+            }}
+            showSurveyAction={
+              !session.surveyCompleted &&
+              (sessionDurationMinutes >= 10 || translationsCount >= 5)
+            }
           />
 
           <SurveyModal

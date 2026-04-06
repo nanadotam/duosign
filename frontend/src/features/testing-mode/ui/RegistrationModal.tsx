@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { useTestingMode } from "../model/TestingModeProvider";
 import Button from "@/shared/ui/Button";
 import Input from "@/shared/ui/Input";
@@ -24,7 +25,10 @@ function generateParticipantCode(): string {
 
 export default function RegistrationModal() {
   const { isTestingMode, session, registerParticipant } = useTestingMode();
-  const participantCode = useMemo(generateParticipantCode, []);
+  const suggestedParticipantCode = useMemo(generateParticipantCode, []);
+  const [participantCode, setParticipantCode] = useState(
+    suggestedParticipantCode
+  );
   const [name, setName] = useState("");
   const [participantType, setParticipantType] = useState<"hearing" | "deaf_hoh">("hearing");
   const [consent, setConsent] = useState(false);
@@ -35,7 +39,7 @@ export default function RegistrationModal() {
   // Don't show if not in testing mode or already registered
   if (!isTestingMode || session) return null;
 
-  const canSubmit = consent && !isSubmitting;
+  const canSubmit = consent && participantCode.trim().length > 0 && !isSubmitting;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -45,7 +49,7 @@ export default function RegistrationModal() {
     try {
       await registerParticipant({
         name: name.trim() || null,
-        participantCode,
+        participantCode: participantCode.trim(),
         participantType,
       });
     } catch {
@@ -73,22 +77,19 @@ export default function RegistrationModal() {
 
         {/* Form */}
         <div className="px-6 py-4 flex flex-col gap-4">
-          {/* Assigned Participant ID */}
+          {/* Participant Number */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold tracking-wide uppercase text-text-3">
-              Your Participant ID
+              Participant Number
             </label>
-            <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-btn bg-accent/8 border border-accent/25">
-              <span className="text-sm font-mono font-bold text-accent tracking-wider">
-                {participantCode}
-              </span>
-              <span className="text-[10px] text-text-3 ml-auto">
-                auto-assigned
-              </span>
-            </div>
+            <Input
+              value={participantCode}
+              onChange={(e) => setParticipantCode(e.target.value.toUpperCase())}
+              placeholder="Enter your participant number"
+            />
             <p className="text-[10px] text-text-3 leading-relaxed">
-              Please note this ID. It will be used to identify your session
-              anonymously.
+              Use the participant number assigned for the study, or keep the
+              suggested code if you are running the session yourself.
             </p>
           </div>
 
@@ -150,7 +151,8 @@ export default function RegistrationModal() {
             <span className="text-xs text-text-3 leading-relaxed group-hover:text-text-2 transition-colors">
               I understand my interactions will be recorded anonymously for
               academic research at Ashesi University (DuoSign Study, Nana Kwaku
-              Amoako). I can withdraw at any time by closing this tab.
+              Amoako). I have read the linked consent and data collection
+              details. I can withdraw at any time by closing this tab.
             </span>
           </label>
 
@@ -167,8 +169,18 @@ export default function RegistrationModal() {
             isLoading={isSubmitting}
             onClick={handleSubmit}
           >
-            Begin Testing
+            Start Study Session
           </Button>
+        </div>
+        <div className="px-6 pb-5 pt-2 text-center">
+          <Link
+            href={`/research/consent?audience=${participantType}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[11px] text-text-3 underline underline-offset-4 transition-colors hover:text-text-1"
+          >
+            Read consent form
+          </Link>
         </div>
       </div>
     </div>
