@@ -160,19 +160,11 @@ export default function TestingModeOverlay({
           <ResearchCheckInModal
             isOpen={isCheckInOpen}
             onClose={() => setIsCheckInOpen(false)}
-            onShareFeedback={() => {
-              setIsCheckInOpen(false);
-              openFeedback("periodic_prompt");
-            }}
             onOpenSurvey={() => {
               setIsCheckInOpen(false);
               trackEvent("sus_survey_opened");
               openSurvey();
             }}
-            showSurveyAction={
-              !session.surveyCompleted &&
-              (sessionDurationMinutes >= 10 || translationsCount >= 5)
-            }
           />
 
           <SurveyModal

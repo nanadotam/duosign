@@ -6,17 +6,13 @@ import Modal from "@/shared/ui/Modal";
 interface ResearchCheckInModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onShareFeedback: () => void;
-  onOpenSurvey?: () => void;
-  showSurveyAction?: boolean;
+  onOpenSurvey: () => void;
 }
 
 export default function ResearchCheckInModal({
   isOpen,
   onClose,
-  onShareFeedback,
   onOpenSurvey,
-  showSurveyAction = false,
 }: ResearchCheckInModalProps) {
   return (
     <Modal
@@ -24,21 +20,11 @@ export default function ResearchCheckInModal({
       onClose={onClose}
       title="Research Check-In"
       size="md"
-      footerClassName="flex-col-reverse sm:flex-row sm:justify-end"
+      footerClassName="justify-end"
       footer={
-        <>
-          <Button variant="ghost" size="sm" className="w-full sm:w-auto" onClick={onClose}>
-            Continue testing
-          </Button>
-          {showSurveyAction && onOpenSurvey && (
-            <Button variant="ghost" size="sm" className="w-full sm:w-auto" onClick={onOpenSurvey}>
-              Open SUS Survey
-            </Button>
-          )}
-          <Button size="sm" className="w-full sm:w-auto" onClick={onShareFeedback}>
-            Share Feedback
-          </Button>
-        </>
+        <Button size="sm" className="w-full sm:w-auto" onClick={onOpenSurvey}>
+          Take SUS Survey
+        </Button>
       }
     >
       <div className="flex flex-col gap-4">
@@ -47,14 +33,12 @@ export default function ResearchCheckInModal({
             Study prompt
           </p>
           <p className="mt-1 text-sm leading-6 text-text-2">
-            You&apos;ve been using DuoSign for a few minutes. Please share what
-            feels clear, confusing, slow, or inaccurate so the prototype can be
-            improved.
+            You&apos;ve been using DuoSign for a few minutes. Please complete the
+            SUS survey to record your usability feedback for this session.
           </p>
         </div>
         <p className="text-sm leading-6 text-text-3">
-          Feedback is optional at each check-in, but the app will keep inviting
-          participants back into the study flow while the session is active.
+          This check-in now routes directly to the usability survey.
         </p>
       </div>
     </Modal>
