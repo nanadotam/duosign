@@ -58,7 +58,14 @@ async function ensureGuestRow(hashedIdentifier: string) {
 
 export async function GET(request: Request) {
   const { hashedId, isNew } = getGuestId(request);
-  const count = await ensureGuestRow(hashedId);
+  let count: number;
+  try {
+    count = await ensureGuestRow(hashedId);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("guest-usage GET error:", msg);
+    return NextResponse.json({ error: "db_error", detail: msg }, { status: 500 });
+  }
 
   const response = NextResponse.json({
     count,
