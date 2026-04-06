@@ -26,7 +26,7 @@ type ExpandedGlossToken = {
 };
 
 function expandFingerspelledTokens(tokens: string[]): ExpandedGlossToken[] {
-  return tokens.flatMap((token) => {
+  return tokens.flatMap((token): ExpandedGlossToken[] => {
     const normalized = token.toUpperCase();
     if (normalized.startsWith("IX-")) {
       return [{ token, isSpelled: false }];

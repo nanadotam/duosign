@@ -24,12 +24,14 @@ describe("AUTH-04 — better-auth rate limiting configured", () => {
   });
 
   it("has rateLimit.enabled: true", () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require("@/lib/auth");
     const config = (betterAuth as jest.Mock).mock.calls[0]?.[0];
     expect(config?.rateLimit?.enabled).toBe(true);
   });
 
   it("has a rateLimit.window (seconds)", () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require("@/lib/auth");
     const config = (betterAuth as jest.Mock).mock.calls[0]?.[0];
     expect(typeof config?.rateLimit?.window).toBe("number");
@@ -37,6 +39,7 @@ describe("AUTH-04 — better-auth rate limiting configured", () => {
   });
 
   it("has a rateLimit.max", () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require("@/lib/auth");
     const config = (betterAuth as jest.Mock).mock.calls[0]?.[0];
     expect(typeof config?.rateLimit?.max).toBe("number");

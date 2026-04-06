@@ -12,18 +12,6 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 8,
     maxPasswordLength: 72,
-    password: {
-      async validate(password: string) {
-        const hasNumber = /[0-9]/.test(password);
-        const hasSpecial = /[^a-zA-Z0-9]/.test(password);
-        if (!hasNumber && !hasSpecial) {
-          return {
-            error: "Password must contain at least one number or special character.",
-          };
-        }
-        return { success: true };
-      },
-    },
   },
   user: {
     deleteUser: {

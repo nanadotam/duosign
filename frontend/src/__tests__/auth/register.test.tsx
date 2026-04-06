@@ -11,7 +11,10 @@ import RegisterPage from "@/app/auth/register/page";
 
 jest.mock("next/navigation", () => ({ useRouter: () => ({ push: jest.fn() }) }));
 jest.mock("@/lib/auth-client", () => ({ signUp: { email: jest.fn().mockResolvedValue({ error: null }) } }));
-jest.mock("@/widgets/navigation-bar/NavigationBar", () => () => <nav />);
+jest.mock("@/widgets/navigation-bar/NavigationBar", () => {
+  function MockNav() { return <nav />; }
+  return MockNav;
+});
 jest.mock("next/image", () => ({ __esModule: true, default: (p: Record<string, unknown>) => <img {...p} /> }));
 
 import { signUp } from "@/lib/auth-client";

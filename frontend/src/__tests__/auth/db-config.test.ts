@@ -19,7 +19,9 @@ describe("AUTH-07 — DB SSL config", () => {
       return { Pool };
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Pool } = require("pg");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require("@/lib/db");
 
     const callArgs = (Pool as jest.Mock).mock.calls[0]?.[0];
