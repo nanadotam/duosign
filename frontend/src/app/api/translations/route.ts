@@ -52,9 +52,18 @@ export async function POST(request: Request) {
     ? (body.type as HistoryEntryType)
     : "typed";
 
+  const MAX_TEXT_LENGTH = 1000;
+
   if (!text || glossTokens.length === 0) {
     return NextResponse.json(
       { message: "Text and gloss tokens are required." },
+      { status: 400 }
+    );
+  }
+
+  if (text.length > MAX_TEXT_LENGTH) {
+    return NextResponse.json(
+      { message: `Text too long (max ${MAX_TEXT_LENGTH} characters).` },
       { status: 400 }
     );
   }

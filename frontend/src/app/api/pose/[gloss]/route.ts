@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import { existsSync } from "fs";
-import path from "path";
+import path, { resolve, sep } from "path";
 
 /**
  * GET /api/pose/[gloss]
@@ -16,11 +16,24 @@ const POSES_V3    = path.join(BUCKET_DIR, "poses_v3");
 const POSES_DIR   = path.join(BUCKET_DIR, "poses");
 const BACKUP_DIR  = path.join(BUCKET_DIR, "poses-backup");
 
+function isWithinBucket(filePath: string, bucketDir: string): boolean {
+  const resolved = resolve(filePath);
+  const base = resolve(bucketDir) + sep;
+  return resolved.startsWith(base);
+}
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: { gloss: string } }
 ) {
-  const gloss = decodeURIComponent(params.gloss).toUpperCase().replace(/\s+/g, "_");
+  const decoded = decodeURIComponent(params.gloss);
+
+  // Reject any gloss containing path-traversal sequences
+  if (/[/\\]|\.\./.test(decoded)) {
+    return NextResponse.json({ error: "Invalid gloss" }, { status: 400 });
+  }
+
+  const gloss = decoded.toUpperCase().replace(/\s+/g, "_");
 
   const candidates = [
     path.join(POSES_V3,   `${gloss}.pose`),      // contour-only, 60% smaller
@@ -30,6 +43,9 @@ export async function GET(
   ];
 
   for (const filePath of candidates) {
+    if (!isWithinBucket(filePath, BUCKET_DIR)) {
+      return NextResponse.json({ error: "Invalid gloss" }, { status: 400 });
+    }
     if (existsSync(filePath)) {
       const data = await readFile(filePath);
       return new NextResponse(data, {

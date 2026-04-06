@@ -13,11 +13,11 @@ import type {
   PosePointModel,
 } from "pose-format";
 
-// ── Line widths — no joint dots ──────────────────────────────────────────────
+// ── Line widths ───────────────────────────────────────────────────────────────
 const LIMB_WIDTH: Record<string, number> = {
-  POSE_LANDMARKS:       3,
-  LEFT_HAND_LANDMARKS:  2,
-  RIGHT_HAND_LANDMARKS: 2,
+  POSE_LANDMARKS:       8,
+  LEFT_HAND_LANDMARKS:  3,
+  RIGHT_HAND_LANDMARKS: 3,
   FACE_LANDMARKS:       2,
 };
 
@@ -40,7 +40,7 @@ function rgbString(r: number, g: number, b: number, a = 1): string {
   return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
-// ── Body / hand component renderer (lines only, no dots) ─────────────────────
+// ── Body / hand component renderer ───────────────────────────────────────────
 function drawComponent(
   ctx: CanvasRenderingContext2D,
   component: PoseHeaderComponentModel,
@@ -49,6 +49,8 @@ function drawComponent(
   lineWidth: number,
 ) {
   if (!points || points.length === 0) return;
+
+  const isHand = component.name === "LEFT_HAND_LANDMARKS" || component.name === "RIGHT_HAND_LANDMARKS";
 
   ctx.lineWidth = lineWidth;
   ctx.lineCap = "round";
@@ -71,6 +73,19 @@ function drawComponent(
       ? rgbString(color.R, color.G, color.B, alpha)
       : rgbString(180, 0, 0, alpha);
     ctx.stroke();
+  }
+
+  // Small joint dots on fingers only
+  if (isHand) {
+    for (const pt of points) {
+      if (!pt || (pt.C ?? 0) < MIN_CONFIDENCE) continue;
+      ctx.beginPath();
+      ctx.arc(pt.X * scale, pt.Y * scale, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.globalAlpha = 0.75;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
   }
 }
 

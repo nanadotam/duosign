@@ -29,6 +29,10 @@ router = APIRouter()
 # imageio-ffmpeg bundles its own binary — no system ffmpeg needed
 FFMPEG_BIN = imageio_ffmpeg.get_ffmpeg_exe()
 
+MAX_VIDEO_BYTES = 524_288_000   # 500 MB
+MAX_FRAMES      = 3_000         # 100s at 30fps — more than enough
+MIN_FPS, MAX_FPS = 1, 60
+
 
 @router.post("/api/export/video")
 async def export_video(
@@ -50,13 +54,18 @@ async def export_video(
             400, "Provide either 'video' (WebM file) or 'frames' (base64 JPEG array)"
         )
 
+    if not (MIN_FPS <= fps <= MAX_FPS):
+        raise HTTPException(400, f"fps must be between {MIN_FPS} and {MAX_FPS}")
+
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp = Path(tmpdir)
         output_path = tmp / "output.mp4"
 
         if video:
             # ── Mode 1: WebM blob → H.264 MP4 ──────────────────────────
-            video_bytes = await video.read()
+            video_bytes = await video.read(MAX_VIDEO_BYTES + 1)
+            if len(video_bytes) > MAX_VIDEO_BYTES:
+                raise HTTPException(413, "Video too large (max 500 MB)")
             if not video_bytes:
                 raise HTTPException(400, "Empty video file")
 
@@ -84,6 +93,9 @@ async def export_video(
 
             if not frame_list:
                 raise HTTPException(400, "Empty frames array")
+
+            if len(frame_list) > MAX_FRAMES:
+                raise HTTPException(400, f"Too many frames (max {MAX_FRAMES})")
 
             for i, frame_b64 in enumerate(frame_list):
                 # Strip data URI prefix (data:image/jpeg;base64,...)

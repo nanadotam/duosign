@@ -26,11 +26,14 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Query
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, FileResponse
 from pydantic import BaseModel, Field
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from .vocabulary import get_vocabulary, VocabularyManager
 from .text_to_gloss import TextToGloss, GlossResult
@@ -103,12 +106,24 @@ async def lifespan(app: FastAPI):
     logger.info("DuoSign API shutting down")
 
 
+def get_rate_limit_key(request: Request) -> str:
+    """Key by user ID for authenticated requests, IP for guests."""
+    user_id = request.headers.get("X-User-Id")
+    if user_id:
+        return f"user:{user_id}"
+    return get_remote_address(request)
+
+
+limiter = Limiter(key_func=get_rate_limit_key)
+
 app = FastAPI(
     title="DuoSign API",
     description="English → ASL Gloss translation with rule-based processing and LLM fallback",
     version="3.0.0",
     lifespan=lifespan,
 )
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.include_router(export_router)
 
@@ -127,8 +142,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_DEV_ORIGINS + _extra,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization", "X-User-Id"],
 )
 
 
@@ -182,7 +197,8 @@ def _result_to_dict(result: GlossResult) -> dict:
 # ── Endpoints ────────────────────────────────────────────────────────
 
 @app.post("/api/translate", response_model=TranslateResponse)
-async def translate(req: TranslateRequest):
+@limiter.limit("30/minute")
+async def translate(request: Request, req: TranslateRequest):
     """
     Translate English text to ASL Gloss — full pipeline.
 
@@ -198,7 +214,8 @@ async def translate(req: TranslateRequest):
 
 
 @app.post("/api/translate/fast", response_model=TranslateResponse)
-async def translate_fast(req: TranslateRequest):
+@limiter.limit("120/minute")
+async def translate_fast(request: Request, req: TranslateRequest):
     """
     Translate English text to ASL Gloss — rule-based only, strictly no LLM.
 
@@ -215,7 +232,8 @@ async def translate_fast(req: TranslateRequest):
 
 
 @app.post("/api/translate/stream")
-async def translate_stream(req: TranslateRequest):
+@limiter.limit("30/minute")
+async def translate_stream(request: Request, req: TranslateRequest):
     """
     Translate with Server-Sent Events — two-phase progressive response.
 
@@ -252,12 +270,13 @@ async def translate_stream(req: TranslateRequest):
                     text, rule_result, timeout=3.0
                 )
                 if llm_gloss and llm_gloss != rule_result.gloss_internal:
+                    normalized_gloss = converter._normalize_llm_gloss(llm_gloss)
                     # LLM gave a different (hopefully better) result
                     llm_result = GlossResult(
                         input_text=text,
-                        gloss=converter._to_display_form(llm_gloss),
-                        gloss_internal=llm_gloss,
-                        tokens=resolve_tokens(llm_gloss.split(), vocab),
+                        gloss=converter._to_display_form(normalized_gloss),
+                        gloss_internal=normalized_gloss,
+                        tokens=resolve_tokens(normalized_gloss.split(), vocab),
                         method="llm_quality",
                         confidence=rule_result.confidence,
                     )
@@ -272,11 +291,12 @@ async def translate_stream(req: TranslateRequest):
                     text, rule_result, timeout=5.0
                 )
                 if llm_gloss:
+                    normalized_gloss = converter._normalize_llm_gloss(llm_gloss)
                     llm_result = GlossResult(
                         input_text=text,
-                        gloss=converter._to_display_form(llm_gloss),
-                        gloss_internal=llm_gloss,
-                        tokens=resolve_tokens(llm_gloss.split(), vocab),
+                        gloss=converter._to_display_form(normalized_gloss),
+                        gloss_internal=normalized_gloss,
+                        tokens=resolve_tokens(normalized_gloss.split(), vocab),
                         method="llm",
                         confidence=rule_result.confidence,
                     )
@@ -297,8 +317,14 @@ async def translate_stream(req: TranslateRequest):
     )
 
 
+MAX_AUDIO_BYTES = 26_214_400  # 25 MB (Groq's documented limit)
+ALLOWED_AUDIO_EXTENSIONS = {".webm", ".mp3", ".mp4", ".wav", ".m4a", ".mpeg", ".mpga", ".ogg"}
+
+
 @app.post("/api/translate/audio", response_model=TranslateResponse)
+@limiter.limit("10/minute")
 async def translate_audio(
+    request: Request,
     audio: UploadFile = File(...),
     language: str | None = None,
 ):
@@ -318,11 +344,16 @@ async def translate_audio(
     if not converter:
         raise HTTPException(503, "Converter not initialized")
 
-    audio_bytes = await audio.read()
+    filename = audio.filename or "audio.webm"
+    ext = Path(filename).suffix.lower()
+    if ext not in ALLOWED_AUDIO_EXTENSIONS:
+        raise HTTPException(415, f"Unsupported audio format: {ext}. Allowed: {', '.join(ALLOWED_AUDIO_EXTENSIONS)}")
+
+    audio_bytes = await audio.read(MAX_AUDIO_BYTES + 1)
+    if len(audio_bytes) > MAX_AUDIO_BYTES:
+        raise HTTPException(413, f"Audio file too large (max {MAX_AUDIO_BYTES // 1_048_576} MB)")
     if not audio_bytes:
         raise HTTPException(400, "Empty audio file")
-
-    filename = audio.filename or "audio.webm"
 
     text = await transcribe_audio(audio_bytes, filename=filename, language=language)
     if not text:
@@ -349,7 +380,7 @@ async def get_vocab():
 
 
 @app.get("/api/vocabulary/search")
-async def search_vocab(q: str = "", limit: int = 50):
+async def search_vocab(q: str = "", limit: int = Query(default=50, ge=1, le=200)):
     """Search glosses by prefix."""
     if not vocab:
         raise HTTPException(503, "Vocabulary not loaded")
@@ -357,6 +388,20 @@ async def search_vocab(q: str = "", limit: int = 50):
 
 
 # ── Media Serving (Video + Pose files) ───────────────────────────────
+
+def _safe_gloss(gloss: str) -> str:
+    """Strip path-traversal characters from a gloss parameter."""
+    import re
+    return re.sub(r"[/\\]|\.{2,}", "", gloss)
+
+
+def _assert_within_bucket(path: Path, base: Path) -> None:
+    """Raise 400 if resolved path escapes base directory."""
+    try:
+        path.resolve().relative_to(base.resolve())
+    except ValueError:
+        raise HTTPException(400, "Invalid gloss")
+
 
 @app.get("/api/video/{gloss}")
 async def serve_video(gloss: str):
@@ -366,7 +411,9 @@ async def serve_video(gloss: str):
             url=f"{_SUPABASE_STORAGE}/duosign-videos/{gloss}.mp4",
             status_code=302,
         )
+    gloss = _safe_gloss(gloss)
     path = BUCKET_DIR / "videos" / f"{gloss}.mp4"
+    _assert_within_bucket(path, BUCKET_DIR)
     if not path.exists():
         raise HTTPException(404, f"Video not found: {gloss}")
     return FileResponse(
@@ -384,7 +431,9 @@ async def serve_pose(gloss: str):
             url=f"{_SUPABASE_STORAGE}/duosign-poses/{gloss}.pose",
             status_code=302,
         )
+    gloss = _safe_gloss(gloss)
     path = BUCKET_DIR / "poses_v3" / f"{gloss}.pose"
+    _assert_within_bucket(path, BUCKET_DIR)
     if not path.exists():
         raise HTTPException(404, f"Pose not found: {gloss}")
     return FileResponse(

@@ -33,6 +33,7 @@ interface InputPanelProps {
   isOnline?: boolean;
   showGloss?: boolean;
   autoPaste?: boolean;
+  userId?: string;
 }
 
 // TODO: Guest User - Input English text (up to 500 characters) and receive a corresponding ASL avatar animation.
@@ -57,6 +58,7 @@ export default function InputPanel({
   isOnline = true,
   showGloss = true,
   autoPaste = false,
+  userId,
 }: InputPanelProps) {
   const [micActive, setMicActive] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -136,6 +138,7 @@ export default function InputPanel({
             setMicActive(false);
           }}
           onClose={() => setMicActive(false)}
+          userId={userId}
         />
       ) : (
         <div className="flex items-center justify-between px-2.5 py-1.5 lg:px-4 lg:py-2.5 border-t border-border transition-colors duration-250">

@@ -24,7 +24,7 @@ export default function LoginPage() {
     setAuthError(null);
     try {
       const { error } = await signIn.email({
-        email: data.email,
+        email: data.email.trim(),
         password: data.password,
         callbackURL: "/translate",
       });
@@ -61,6 +61,7 @@ export default function LoginPage() {
               {...register("email", {
                 required: "Email is required",
                 pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Invalid email" },
+                setValueAs: (v: string) => v.trim(),
               })}
             />
             <Input
@@ -70,7 +71,8 @@ export default function LoginPage() {
               error={errors.password?.message}
               {...register("password", {
                 required: "Password is required",
-                minLength: { value: 6, message: "Min 6 characters" },
+                minLength: { value: 8, message: "Min 8 characters" },
+                maxLength: { value: 72, message: "Max 72 characters" },
               })}
             />
             {authError && (

@@ -25,9 +25,9 @@ export default function RegisterPage() {
     setAuthError(null);
     try {
       const { error } = await signUp.email({
-        email: data.email,
+        email: data.email.trim(),
         password: data.password,
-        name: data.email.split("@")[0],
+        name: data.email.split("@")[0].replace(/[^a-zA-Z0-9._\- ]/g, "").trim().slice(0, 50) || "User",
         callbackURL: "/translate",
       });
       if (error) {
@@ -63,6 +63,7 @@ export default function RegisterPage() {
               {...register("email", {
                 required: "Email is required",
                 pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Invalid email" },
+                setValueAs: (v: string) => v.trim(),
               })}
             />
             <Input
@@ -73,6 +74,7 @@ export default function RegisterPage() {
               {...register("password", {
                 required: "Password is required",
                 minLength: { value: 8, message: "Min 8 characters" },
+                maxLength: { value: 72, message: "Max 72 characters" },
               })}
             />
             <Input

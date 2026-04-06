@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
+// When USE_BACKEND_POSE_PROXY=true, /api/pose/* is proxied to the backend.
+// Leave it unset in local dev so the Next.js route handler
+// (src/app/api/pose/[gloss]/route.ts) serves pose files directly without
+// going through a backend 302 redirect to Supabase storage.
+const usePoseProxy = process.env.USE_BACKEND_POSE_PROXY === "true";
+
 const nextConfig = {
   async rewrites() {
     return [
@@ -20,10 +26,14 @@ const nextConfig = {
         source: "/api/video/:path*",
         destination: `${BACKEND_URL}/api/video/:path*`,
       },
-      {
-        source: "/api/pose/:path*",
-        destination: `${BACKEND_URL}/api/pose/:path*`,
-      },
+      ...(usePoseProxy
+        ? [
+            {
+              source: "/api/pose/:path*",
+              destination: `${BACKEND_URL}/api/pose/:path*`,
+            },
+          ]
+        : []),
     ];
   },
   webpack: (config, { isServer }) => {

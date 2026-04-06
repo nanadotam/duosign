@@ -15,22 +15,22 @@ function getGuestId(request: Request) {
     ?.split("=")[1];
 
   if (cookieValue) {
-    return { guestId: decodeURIComponent(cookieValue), isNew: false };
+    // Cookie stores the SHA-256 hash directly
+    return { hashedId: decodeURIComponent(cookieValue), isNew: false };
   }
 
-  return { guestId: randomUUID(), isNew: true };
+  // Generate new ID and hash it — store only the hash in the cookie
+  const rawId = randomUUID();
+  const hashedId = createHash("sha256").update(rawId).digest("hex");
+  return { hashedId, isNew: true };
 }
 
-function hashGuestId(guestId: string) {
-  return createHash("sha256").update(guestId).digest("hex");
-}
-
-function attachCookie(response: NextResponse, guestId: string, isNew: boolean) {
+function attachCookie(response: NextResponse, hashedId: string, isNew: boolean) {
   if (!isNew) return response;
 
   response.cookies.set({
     name: COOKIE_NAME,
-    value: guestId,
+    value: hashedId,
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -57,9 +57,8 @@ async function ensureGuestRow(hashedIdentifier: string) {
 }
 
 export async function GET(request: Request) {
-  const { guestId, isNew } = getGuestId(request);
-  const hashedIdentifier = hashGuestId(guestId);
-  const count = await ensureGuestRow(hashedIdentifier);
+  const { hashedId, isNew } = getGuestId(request);
+  const count = await ensureGuestRow(hashedId);
 
   const response = NextResponse.json({
     count,
@@ -67,12 +66,12 @@ export async function GET(request: Request) {
     limit: GUEST_TRANSLATION_LIMIT,
   });
 
-  return attachCookie(response, guestId, isNew);
+  return attachCookie(response, hashedId, isNew);
 }
 
 export async function POST(request: Request) {
-  const { guestId, isNew } = getGuestId(request);
-  const hashedIdentifier = hashGuestId(guestId);
+  const { hashedId, isNew } = getGuestId(request);
+  const hashedIdentifier = hashedId;
 
   await pool.query(
     `
@@ -112,7 +111,7 @@ export async function POST(request: Request) {
       { status: 403 }
     );
 
-    return attachCookie(response, guestId, isNew);
+    return attachCookie(response, hashedId, isNew);
   }
 
   const count = result.rows[0]?.translation_count ?? 0;
@@ -122,5 +121,5 @@ export async function POST(request: Request) {
     limit: GUEST_TRANSLATION_LIMIT,
   });
 
-  return attachCookie(response, guestId, isNew);
+  return attachCookie(response, hashedId, isNew);
 }

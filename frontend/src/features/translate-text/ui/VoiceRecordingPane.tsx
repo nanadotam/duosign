@@ -27,10 +27,11 @@ interface VoiceRecordingPaneProps {
   onDone: (text: string) => void;
   onTranslate: (text: string) => void;
   onClose: () => void;
+  userId?: string;
 }
 
 // TODO: Guest User - Use voice input via microphone as an alternative to typed text, with clear visual feedback indicating listening, idle, and error states.
-export default function VoiceRecordingPane({ onDone, onTranslate, onClose }: VoiceRecordingPaneProps) {
+export default function VoiceRecordingPane({ onDone, onTranslate, onClose, userId }: VoiceRecordingPaneProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -86,8 +87,12 @@ export default function VoiceRecordingPane({ onDone, onTranslate, onClose }: Voi
       const form = new FormData();
       form.append("audio", blob, mimeToFilename(mimeType));
 
+      const audioHeaders: Record<string, string> = {};
+      if (userId) audioHeaders["X-User-Id"] = userId;
+
       const res = await fetch(`${API_BASE_URL}/api/translate/audio`, {
         method: "POST",
+        headers: audioHeaders,
         body: form,
       });
 
@@ -111,7 +116,7 @@ export default function VoiceRecordingPane({ onDone, onTranslate, onClose }: Voi
     } finally {
       setIsTranscribing(false);
     }
-  }, []);
+  }, [userId]);
 
   const startRecording = useCallback(async () => {
     setTranscript("");

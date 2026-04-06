@@ -20,18 +20,30 @@ const IX_DISPLAY: Record<string, string> = {
   "IX-3+": "THEY",
 };
 
-function expandFingerspelledTokens(tokens: string[]): string[] {
+type ExpandedGlossToken = {
+  token: string;
+  isSpelled: boolean;
+};
+
+function expandFingerspelledTokens(tokens: string[]): ExpandedGlossToken[] {
   return tokens.flatMap((token) => {
     const normalized = token.toUpperCase();
-    if (normalized.startsWith("IX-")) return [token];
+    if (normalized.startsWith("IX-")) {
+      return [{ token, isSpelled: false }];
+    }
 
     const parts = normalized.split("-");
     const isFingerToken = parts.length > 1 && parts.every((part) => part.length === 1 && /^[A-Z]$/.test(part));
-    return isFingerToken ? parts : [token];
+    if (isFingerToken) {
+      return parts.map((part) => ({ token: part, isSpelled: true }));
+    }
+
+    return [{ token, isSpelled: false }];
   });
 }
 
-export function useTranslate() {
+export function useTranslate(options?: { userId?: string }) {
+  const userId = options?.userId;
   const [inputText, setInputText] = useState("");
   const [glossTokens, setGlossTokens] = useState<GlossToken[]>([]);
   const [glossText, setGlossText] = useState("");
@@ -53,13 +65,13 @@ export function useTranslate() {
   /** Convert API response tokens to GlossToken[] for chip display.
    *  Replaces IX-1/IX-2/IX-3 with I/YOU/HE-SHE for user-facing display. */
   const toGlossTokens = useCallback((tokens: string[]): GlossToken[] => {
-    return expandFingerspelledTokens(tokens).map((t) => {
-      const display = IX_DISPLAY[t] ?? t;
+    return expandFingerspelledTokens(tokens).map(({ token, isSpelled }) => {
+      const normalized = token.toUpperCase();
+      const display = IX_DISPLAY[normalized] ?? token;
       return {
         id: `g-${idCounter.current++}`,
         text: display,
-        // Fingerspelled = has hyphens but is NOT an IX marker ("H-E-L-L-O" yes, "HE/SHE" no)
-        isSpelled: t.includes("-") && t.length > 1 && !(t in IX_DISPLAY),
+        isSpelled,
         isActive: false,
       };
     });
@@ -118,7 +130,7 @@ export function useTranslate() {
     // ── Rule-based only: bypass SSE, use fast endpoint directly ──────────────
     if (engine === "Rule-based only") {
       try {
-        const data = await translateFast(text, controller.signal);
+        const data = await translateFast(text, controller.signal, userId);
         if (generationRef.current !== myGen) return;
         applyFastResult(data, performance.now() - startTime, text);
       } catch (err) {
@@ -141,7 +153,7 @@ export function useTranslate() {
     const phases: DebugInfo["phases"] = [];
 
     try {
-      for await (const event of translateStream(text, controller.signal)) {
+      for await (const event of translateStream(text, controller.signal, userId)) {
         // Superseded by a newer translate() call — stop immediately
         if (generationRef.current !== myGen) break;
         if (event.event === "done") break;
@@ -195,7 +207,7 @@ export function useTranslate() {
       // Network error → fall back to fast (non-streaming) endpoint
       console.warn("Stream failed, trying fast endpoint:", err);
       try {
-        const data = await translateFast(text, controller.signal);
+        const data = await translateFast(text, controller.signal, userId);
         if (generationRef.current !== myGen) return; // Check again after await
         applyFastResult(data, performance.now() - startTime, text);
       } catch (fallbackErr) {
@@ -215,7 +227,7 @@ export function useTranslate() {
         setActiveIndex(-1);
       }
     }
-  }, [inputText, toGlossTokens, applyFastResult]);
+  }, [inputText, toGlossTokens, applyFastResult, userId]);
 
   const clearInput = useCallback(() => {
     abortRef.current?.abort();

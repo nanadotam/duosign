@@ -32,11 +32,15 @@ export interface SSEEvent {
  */
 export async function* translateStream(
   text: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  userId?: string,
 ): AsyncGenerator<SSEEvent> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (userId) headers["X-User-Id"] = userId;
+
   const res = await fetch(`${API_BASE_URL}/api/translate/stream`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ text }),
     signal,
   });
@@ -117,11 +121,15 @@ function parseSSE(raw: string): SSEEvent | null {
 
 export async function translateFast(
   text: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  userId?: string,
 ): Promise<TranslateApiResponse> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (userId) headers["X-User-Id"] = userId;
+
   const res = await fetch(`${API_BASE_URL}/api/translate/fast`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ text }),
     signal,
   });

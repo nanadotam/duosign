@@ -90,7 +90,7 @@ function TranslatePageContent() {
     activeIndex,
     setActiveIndex,
     debugInfo,
-  } = useTranslate();
+  } = useTranslate({ userId: session?.user?.id });
 
   const { addEntry, getRecent, deleteEntry, markExported } = useHistory();
 
@@ -392,6 +392,7 @@ function TranslatePageContent() {
                 isOnline={isOnline}
                 showGloss={settings.showGloss}
                 autoPaste={settings.autoPaste}
+                userId={session?.user?.id}
               />
               <RecentTranslations
                 entries={recentHistory}
@@ -548,6 +549,7 @@ function TranslatePageContent() {
               isSigning={playbackState === "playing"}
               isOnline={isOnline}
               autoPaste={settings.autoPaste}
+              userId={session?.user?.id}
             />
           </div>
         </div>
