@@ -40,6 +40,9 @@ export default function GlossDisplay({ glossText }: GlossDisplayProps) {
       </div>
       <p
         ref={ref}
+        role="status"
+        aria-live="polite"
+        aria-label="ASL gloss output"
         className="font-mono text-[18px] font-bold tracking-[0.08em] text-accent leading-relaxed select-all"
         style={{
           textShadow: "0 0 20px var(--accent-glow)",

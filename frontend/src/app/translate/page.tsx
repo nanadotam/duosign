@@ -398,10 +398,11 @@ function TranslatePageContent() {
         <NavigationBar />
         {!isAuthenticated && !isTestingMode && <GuestBanner remaining={guestRemaining} />}
 
+        <main className="flex flex-col flex-1">
         {/* ═══════════════════════════════════
             DESKTOP LAYOUT (≥ 1024px)
         ═══════════════════════════════════ */}
-        <main className="hidden lg:flex lg:flex-1 lg:flex-col">
+        <div className="hidden lg:flex lg:flex-1 lg:flex-col">
           <div className="flex-1 grid grid-cols-2 gap-[18px] p-5 max-w-[1300px] w-full mx-auto">
             <div className="flex flex-col">
               <InputPanel
@@ -452,7 +453,7 @@ function TranslatePageContent() {
               onPlaybackComplete={handlePlaybackComplete}
             />
           </div>
-        </main>
+        </div>
 
         {/* ═══════════════════════════════════
             MOBILE LAYOUT (< 1024px)
@@ -586,6 +587,7 @@ function TranslatePageContent() {
             />
           </div>
         </div>
+        </main>
       </div>
     </>
   );

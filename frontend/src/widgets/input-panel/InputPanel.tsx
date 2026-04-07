@@ -109,6 +109,7 @@ export default function InputPanel({
               onTranslate();
             }
           }}
+          aria-label="English text to translate into ASL"
           placeholder="Type to translate into ASL..."
           rows={1}
           className="
@@ -146,7 +147,8 @@ export default function InputPanel({
             {/* Mic button */}
             <button
               onClick={() => setMicActive(true)}
-              className="w-[34px] h-[34px] lg:w-[37px] lg:h-[37px] rounded-[8px] lg:rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-accent hover:border-accent/40 hover:shadow-[var(--raised-sm),0_0_12px_var(--accent-glow)] active:shadow-inset-press active:translate-y-px"
+              aria-label="Record voice input"
+              className="w-[34px] h-[34px] lg:w-[37px] lg:h-[37px] rounded-[8px] lg:rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-accent hover:border-accent/40 hover:shadow-[var(--raised-sm),0_0_12px_var(--accent-glow)] active:shadow-inset-press active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
@@ -158,8 +160,8 @@ export default function InputPanel({
             {/* Clear button */}
             <button
               onClick={onClear}
-              className="w-[34px] h-[34px] lg:w-[37px] lg:h-[37px] rounded-[8px] lg:rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-error hover:border-error/40 hover:shadow-[var(--raised-sm),0_0_12px_rgba(248,113,113,0.25)] active:shadow-inset-press active:translate-y-px"
-              title="Clear input"
+              aria-label="Clear input"
+              className="w-[34px] h-[34px] lg:w-[37px] lg:h-[37px] rounded-[8px] lg:rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-error hover:border-error/40 hover:shadow-[var(--raised-sm),0_0_12px_rgba(248,113,113,0.25)] active:shadow-inset-press active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="3 6 5 6 21 6" />
@@ -199,7 +201,7 @@ export default function InputPanel({
 
       {/* Pipeline Status Strip — desktop only */}
       {(pipelinePhase !== "idle" || !isOnline) && (
-        <div className="hidden lg:flex items-center gap-2.5 px-4 py-2 border-t border-border bg-surface-2/40 transition-all duration-200">
+        <div aria-live="polite" aria-atomic="true" className="hidden lg:flex items-center gap-2.5 px-4 py-2 border-t border-border bg-surface-2/40 transition-all duration-200">
           {/* Offline badge — always visible when disconnected */}
           {!isOnline && (
             <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-semibold tracking-[0.04em] flex-shrink-0">

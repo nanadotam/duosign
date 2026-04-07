@@ -47,13 +47,14 @@ export default function AvatarSwitcher({
       {/* Compact trigger button — matches playback bar button style */}
       <button
         onClick={() => setExpanded((prev) => !prev)}
+        aria-label="Switch avatar model"
+        aria-expanded={expanded}
         className={[
-          "w-[26px] h-[26px] lg:w-[30px] lg:h-[30px] rounded-full border flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 active:shadow-inset-press active:scale-[0.93]",
+          "w-[26px] h-[26px] lg:w-[30px] lg:h-[30px] rounded-full border flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 active:shadow-inset-press active:scale-[0.93] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70",
           expanded
             ? "border-accent text-accent bg-[color-mix(in_srgb,var(--accent)_12%,var(--surface-2))]"
             : "border-border-hi bg-surface-2 text-text-2 hover:text-text-1 hover:bg-surface-3",
         ].join(" ")}
-        title="Switch avatar"
       >
         <span className="text-[9px] lg:text-[10px] font-bold leading-none select-none">
           {current.name.charAt(0)}
@@ -73,14 +74,15 @@ export default function AvatarSwitcher({
                 onSelect(model);
                 setExpanded(false);
               }}
+              aria-label={`Switch to ${model.name} avatar${model.id === currentModelId ? " (current)" : ""}`}
+              aria-pressed={model.id === currentModelId}
               className={[
-                "w-9 h-9 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-110 active:scale-95",
+                "w-9 h-9 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-110 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70",
                 model.id === currentModelId
                   ? "border-accent shadow-[0_0_8px_var(--accent-glow)]"
                   : "border-border-hi hover:border-text-3",
               ].join(" ")}
               style={{ background: "linear-gradient(135deg, var(--surface-2), var(--surface-3))" }}
-              title={model.name}
             >
               <span className="text-[11px] font-bold text-text-2 select-none">
                 {model.name.charAt(0)}

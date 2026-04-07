@@ -7,8 +7,29 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTheme } from "@/shared/hooks/useTheme";
 import SegmentedControl from "@/shared/ui/SegmentedControl";
 import Button from "@/shared/ui/Button";
+import { Tooltip } from "@/shared/ui/Tooltip";
 import { useSession } from "@/lib/auth-client";
 import { useTestingMode } from "@/features/testing-mode";
+
+function MoonIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5" />
+      <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+      <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    </svg>
+  );
+}
 
 const NAV_ITEMS = [
   { label: "Translate", href: "/translate" },
@@ -126,25 +147,16 @@ export default function NavigationBar() {
             </button>
           )}
           {/* Theme toggle */}
-          <button
-            onClick={toggle}
-            className="w-[34px] h-[34px] rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:border-border-hi active:shadow-inset-press active:translate-y-px"
-            title="Toggle theme"
-            suppressHydrationWarning
-          >
-            {/* Moon icon (dark mode) */}
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: isDark ? "block" : "none" }} suppressHydrationWarning>
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
-            {/* Sun icon (light mode) */}
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: isDark ? "none" : "block" }} suppressHydrationWarning>
-              <circle cx="12" cy="12" r="5" />
-              <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-              <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-            </svg>
-          </button>
+          <Tooltip label={isDark ? "Switch to light mode" : "Switch to dark mode"} side="bottom">
+            <button
+              onClick={toggle}
+              aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+              className="w-[34px] h-[34px] rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:border-border-hi active:shadow-inset-press active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70"
+              suppressHydrationWarning
+            >
+              <span suppressHydrationWarning>{isDark ? <MoonIcon /> : <SunIcon />}</span>
+            </button>
+          </Tooltip>
           {!isPending && isAuthenticated && (
             <div className="relative" ref={profileRef}>
               <button
@@ -267,7 +279,10 @@ export default function NavigationBar() {
           )}
           <button
             onClick={() => setDrawerOpen(true)}
-            className="w-[34px] h-[34px] rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm"
+            aria-label="Open navigation menu"
+            aria-expanded={drawerOpen}
+            aria-controls="mobile-drawer"
+            className="w-[34px] h-[34px] rounded-btn border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <line x1="3" y1="6" x2="21" y2="6" />
@@ -282,12 +297,13 @@ export default function NavigationBar() {
       {drawerOpen && (
         <div className="fixed inset-0 z-[200] md:hidden">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDrawerOpen(false)} />
-          <div className="absolute top-0 right-0 w-[280px] h-full bg-surface border-l border-border shadow-raised flex flex-col p-5 gap-4 animate-[toast-in_0.2s_ease]">
+          <div id="mobile-drawer" className="absolute top-0 right-0 w-[280px] h-full bg-surface border-l border-border shadow-raised flex flex-col p-5 gap-4 animate-[toast-in_0.2s_ease]">
             <div className="flex justify-between items-center mb-4">
               <Image src="/logos/DuoSign_logo.svg" alt="DuoSign" width={120} height={28} className="logo-adaptive" />
               <button
                 onClick={() => setDrawerOpen(false)}
-                className="w-8 h-8 rounded-btn border border-border bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer"
+                aria-label="Close navigation menu"
+                className="w-8 h-8 rounded-btn border border-border bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <line x1="18" y1="6" x2="6" y2="18" />
@@ -313,9 +329,11 @@ export default function NavigationBar() {
             <hr className="border-border" />
             <button
               onClick={() => { toggle(); setDrawerOpen(false); }}
+              aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
               className="flex items-center gap-3 px-4 py-2.5 rounded-btn text-sm text-text-2 hover:text-text-1 hover:bg-surface-2 transition-all cursor-pointer"
             >
-              {isDark ? "☀️ Light Mode" : "🌙 Dark Mode"}
+              {isDark ? <SunIcon /> : <MoonIcon />}
+              {isDark ? "Light Mode" : "Dark Mode"}
             </button>
             {!isPending && !isAuthenticated && (
               <div className="mt-auto flex flex-col gap-2">

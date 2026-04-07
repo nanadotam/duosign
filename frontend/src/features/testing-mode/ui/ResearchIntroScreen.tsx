@@ -51,7 +51,7 @@ export default function ResearchIntroScreen({
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(91,142,240,0.18),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_28%),linear-gradient(180deg,#0f1219_0%,#151925_100%)] text-text-1">
-      <div className="mx-auto flex min-h-screen max-w-5xl items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto flex min-h-screen max-w-5xl items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
         <section className="w-full overflow-hidden rounded-[32px] border border-[color-mix(in_srgb,var(--accent)_22%,var(--border-hi))] bg-[linear-gradient(180deg,rgba(22,26,38,0.95),rgba(16,19,28,0.98))] shadow-[0_32px_120px_rgba(0,0,0,0.35)] backdrop-blur-2xl">
           <div className="border-b border-[color-mix(in_srgb,var(--accent)_18%,transparent)] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-5 py-5 sm:px-8 sm:py-7">
             <p className="font-[var(--font-jetbrains)] text-[11px] uppercase tracking-[0.24em] text-accent/90">
@@ -151,7 +151,7 @@ export default function ResearchIntroScreen({
             </div>
           </div>
         </section>
-      </div>
+      </main>
     </div>
   );
 }
