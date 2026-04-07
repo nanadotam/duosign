@@ -61,6 +61,7 @@ BUCKET_DIR = Path(__file__).parent.parent.parent / "bucket"
 # of serving local files. Set this env var on Render.
 # Format: https://<project>.supabase.co/storage/v1/object/public
 _SUPABASE_STORAGE = os.getenv("SUPABASE_STORAGE_URL", "").rstrip("/")
+_FRONTEND_URL = os.getenv("FRONTEND_URL", "https://duosign.vercel.app").rstrip("/")
 
 
 # ── App lifecycle ────────────────────────────────────────────────────
@@ -443,12 +444,35 @@ async def serve_pose(gloss: str):
     )
 
 
+def _health_payload() -> dict:
+    """Build the health payload (shared by /health and /api/health)."""
+    import time
+
+    vocab_stats = vocab.stats() if vocab else {}
+    vocab_ok = vocab is not None
+    converter_ok = converter is not None
+    storage_ok = bool(_SUPABASE_STORAGE)
+
+    return {
+        "status": "ok" if vocab_ok and converter_ok else "degraded",
+        "version": "3.0.0",
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "services": {
+            "translation": "ok" if converter_ok else "unavailable",
+            "sign_library": "ok" if vocab_ok else "unavailable",
+            "gloss_count": vocab_stats.get("total", 0),
+            "media_delivery": "ok" if storage_ok else "local",
+        },
+    }
+
+
+@app.get("/health")
+async def health_root():
+    """Redirect browsers to the frontend status page; JSON clients get the payload."""
+    return RedirectResponse(url=f"{_FRONTEND_URL}/status", status_code=302)
+
+
 @app.get("/api/health")
 async def health():
-    """Health check."""
-    return {
-        "status": "ok",
-        "version": "3.0.0",
-        "vocabulary_loaded": vocab is not None,
-        "gloss_count": vocab.stats()["total"] if vocab else 0,
-    }
+    """Machine-readable health check consumed by the frontend status page."""
+    return _health_payload()
