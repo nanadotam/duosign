@@ -81,6 +81,31 @@ function getDeviceType(): "mobile" | "desktop" | "tablet" {
   return "desktop";
 }
 
+function getBrowserName(): string {
+  const ua = navigator.userAgent;
+  if (/firefox\/\d/i.test(ua)) return "Firefox";
+  if (/edg\/\d/i.test(ua)) return "Edge";
+  if (/opr\/\d|opera/i.test(ua)) return "Opera";
+  if (/chrome\/\d/i.test(ua)) return "Chrome";
+  if (/safari\/\d/i.test(ua)) return "Safari";
+  return "Other";
+}
+
+function getOSName(): string {
+  const ua = navigator.userAgent;
+  if (/android/i.test(ua)) return "Android";
+  if (/iphone|ipad|ipod/i.test(ua)) return "iOS";
+  if (/windows nt/i.test(ua)) return "Windows";
+  if (/mac os x/i.test(ua)) return "macOS";
+  if (/linux/i.test(ua)) return "Linux";
+  return "Other";
+}
+
+function getScreenResolution(): string {
+  if (typeof window === "undefined") return "";
+  return `${window.screen.width}x${window.screen.height}`;
+}
+
 function loadSession(): TestingSession | null {
   if (typeof window === "undefined") return null;
   try {
@@ -154,6 +179,10 @@ export function TestingModeProvider({ children }: { children: ReactNode }) {
           participant_type: data.participantType,
           device_type: deviceType,
           browser_ua: navigator.userAgent,
+          browser_name: getBrowserName(),
+          os_name: getOSName(),
+          screen_resolution: getScreenResolution(),
+          language: navigator.language,
         }),
       });
 
