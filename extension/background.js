@@ -137,6 +137,22 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       })();
       return true;
 
+    // ── YouTube caption relay ───────────────────────────────────────────────
+    // Content script sends caption + tokens when a phrase has been translated.
+    // We forward it to any open side panels so they can optionally display it.
+    case "YOUTUBE_CAPTION":
+      // Broadcast to all extension views (side panel, popup) if they're listening
+      chrome.runtime.sendMessage({ type: "YOUTUBE_CAPTION_RELAY", text: msg.text, tokens: msg.tokens })
+        .catch(() => {}); // ignore if no listeners
+      sendResponse({ ok: true });
+      return true;
+
+    case "YOUTUBE_START":
+    case "YOUTUBE_STOP":
+      // Acknowledged — no-op for now; could update badge/icon in future
+      sendResponse({ ok: true });
+      return true;
+
     case "HEALTH_CHECK":
       fetch(`${API_BASE_URL}/api/health`)
         .then((r) => r.json())

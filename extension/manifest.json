@@ -40,7 +40,13 @@
     },
     {
       "matches": ["*://www.youtube.com/*"],
-      "js": ["youtube-overlay.js"],
+      "js": [
+        "lib/config.js",
+        "lib/pose-parser.js",
+        "lib/skeleton-renderer.js",
+        "lib/pose-player.js",
+        "youtube-overlay.js"
+      ],
       "css": ["youtube-overlay.css"],
       "run_at": "document_idle"
     }

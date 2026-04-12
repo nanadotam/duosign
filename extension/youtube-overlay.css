@@ -15,11 +15,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family:
-    "Roboto",
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
+  font-family: "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 13px;
   animation: duosign-toast-in 0.2s ease;
 }
@@ -32,7 +28,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
   flex-shrink: 0;
 }
 
@@ -61,7 +56,12 @@
 }
 
 .duosign-detect-action:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.15);
+}
+
+.duosign-detect-action.active {
+  background: linear-gradient(to bottom, #e05a5a, #c44);
+  border-color: #c44;
 }
 
 /* ── Disclaimer ────────────────────────────────────────────────── */
@@ -76,11 +76,7 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-family:
-    "Roboto",
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
+  font-family: "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.5;
 }
 
@@ -92,44 +88,52 @@
 /* ── PiP Overlay ───────────────────────────────────────────────── */
 #duosign-pip {
   position: absolute;
-  bottom: 50px;
+  bottom: 60px;
   right: 16px;
-  width: 160px;
-  height: 160px;
-  background: #14161d;
-  border: 2px solid #363a4e;
+  width: 260px;
+  height: 320px;
+  background: #0e1018;
+  border: 1.5px solid #2a2d3a;
   border-radius: 14px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 12px 48px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(91, 142, 240, 0.06);
   overflow: hidden;
-  z-index: 100;
-  animation: duosign-pip-in 0.3s ease;
-  cursor: move;
+  z-index: 2147483600;
+  animation: duosign-pip-in 0.25s cubic-bezier(0.19, 1, 0.22, 1);
   display: none;
+  flex-direction: column;
+  user-select: none;
 }
 
+/* ── Header (drag handle) ──────────────────────────────────────── */
 .duosign-pip-header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  padding: 4px 8px;
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
-  z-index: 2;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  cursor: grab;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.duosign-pip-header:active {
+  cursor: grabbing;
 }
 
 .duosign-pip-label {
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 700;
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
   color: #2dd4bf;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 
 .duosign-pip-dot {
@@ -141,91 +145,107 @@
   display: inline-block;
 }
 
-.duosign-pip-close {
-  width: 16px;
-  height: 16px;
+.duosign-pip-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.duosign-pip-btn {
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: #4e5570;
-  font-size: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #6b7494;
+  font-size: 13px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
+  transition: background 0.15s, color 0.15s;
 }
 
-.duosign-pip-close:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: #edf0ff;
+.duosign-pip-btn:hover {
+  background: rgba(255, 90, 90, 0.2);
+  color: #ff6b6b;
 }
 
+/* ── Canvas area ───────────────────────────────────────────────── */
 .duosign-pip-canvas-wrap {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(
-    circle at center,
-    rgba(91, 142, 240, 0.04),
-    transparent 70%
-  );
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 60%, rgba(91, 142, 240, 0.05), transparent 70%);
 }
 
 .duosign-pip-canvas-wrap canvas {
   width: 100%;
   height: 100%;
+  display: block;
+}
+
+/* Idle state placeholder */
+.duosign-pip-idle {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #363a4e;
+  font-size: 11px;
+  font-family: "Roboto", sans-serif;
+  pointer-events: none;
+}
+
+/* ── Footer ────────────────────────────────────────────────────── */
+.duosign-pip-footer {
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.4);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .duosign-pip-gloss {
-  position: absolute;
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
   font-family: "JetBrains Mono", "SF Mono", monospace;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   color: #5b8ef0;
-  background: rgba(0, 0, 0, 0.65);
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid #2a2d3a;
-  backdrop-filter: blur(4px);
+  letter-spacing: 0.05em;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
-  z-index: 2;
+  max-width: 160px;
+}
+
+.duosign-pip-status {
+  font-family: "Roboto", sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  color: #4e5570;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 /* ── Animations ────────────────────────────────────────────────── */
 @keyframes duosign-toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0);    }
 }
 
 @keyframes duosign-blink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.35;
-  }
+  0%, 100% { opacity: 1;    }
+  50%       { opacity: 0.3; }
 }
 
 @keyframes duosign-pip-in {
-  from {
-    opacity: 0;
-    transform: scale(0.9) translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+  from { opacity: 0; transform: scale(0.88) translateY(12px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);    }
 }
