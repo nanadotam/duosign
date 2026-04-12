@@ -9,6 +9,7 @@ import { ToastProvider } from "@/shared/ui/Toast";
 import { LoadingProvider } from "@/shared/providers/LoadingProvider";
 import { TestingModeProvider, useTestingMode } from "@/features/testing-mode";
 import TestingModeOverlay from "@/features/testing-mode/ui/TestingModeOverlay";
+import RegistrationModal from "@/features/testing-mode/ui/RegistrationModal";
 import dynamic from "next/dynamic";
 
 const ExportVideoModal = dynamic(
@@ -21,7 +22,7 @@ import { useHistory } from "@/shared/hooks/useHistory";
 import { useGuestLimit } from "@/shared/hooks/useGuestLimit";
 import { useSettings } from "@/shared/hooks/useSettings";
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { GlossToken } from "@/entities/gloss/types";
 import type { AvatarDisplayMode } from "@/entities/avatar/types";
 import GlossChip from "@/shared/ui/GlossChip";
@@ -29,6 +30,12 @@ import Link from "next/link";
 import { useToast } from "@/shared/ui/Toast";
 import { useSession } from "@/lib/auth-client";
 import type { HistoryEntryType } from "@/shared/lib/history";
+import ResearchIntroScreen from "@/features/testing-mode/ui/ResearchIntroScreen";
+import AccessibilityFeedbackPanel from "@/features/testing-mode/ui/AccessibilityFeedbackPanel";
+import {
+  RESEARCH_INTRO_DISMISSED_KEY,
+  buildTestingHref,
+} from "@/features/testing-mode/lib/researchConfig";
 
 // Outer shell — provides context, then delegates to inner component
 export default function TranslatePage() {
@@ -45,6 +52,7 @@ export default function TranslatePage() {
 
 // Inner component — all logic lives here so it's inside ToastProvider context
 function TranslatePageContent() {
+  const router = useRouter();
   const { settings } = useSettings();
   const { showToast } = useToast();
   const { isTestingMode, session: testingSession, trackEvent, incrementTranslations } = useTestingMode();
@@ -60,6 +68,9 @@ function TranslatePageContent() {
   const { remaining: guestRemaining, consume } = useGuestLimit();
   const [voiceInputUsed, setVoiceInputUsed] = useState(false);
   const [firstTranslationDone, setFirstTranslationDone] = useState(false);
+  const [showResearchIntro, setShowResearchIntro] = useState(false);
+  const isAccessibilityMode = searchParams.get("testing") === "accessibility";
+  const [showMobileFeedback, setShowMobileFeedback] = useState(false);
 
   // ─── Network connectivity detection ────────────────────────────────────────
   const [isOnline, setIsOnline] = useState(
@@ -76,6 +87,24 @@ function TranslatePageContent() {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (isTestingMode || isAccessibilityMode) {
+      setShowResearchIntro(false);
+      return;
+    }
+    setShowResearchIntro(
+      sessionStorage.getItem(RESEARCH_INTRO_DISMISSED_KEY) !== "1"
+    );
+  }, [isTestingMode, isAccessibilityMode]);
+
+  // Auto-open mobile feedback sheet only after registration is complete
+  useEffect(() => {
+    if (!isAccessibilityMode || !testingSession) return;
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
+    if (isMobile) setShowMobileFeedback(true);
+  }, [isAccessibilityMode, testingSession]);
+
   const {
     inputText,
     setInputText,
@@ -90,7 +119,7 @@ function TranslatePageContent() {
     activeIndex,
     setActiveIndex,
     debugInfo,
-  } = useTranslate();
+  } = useTranslate({ userId: session?.user?.id });
 
   const { addEntry, getRecent, deleteEntry, markExported } = useHistory();
 
@@ -259,6 +288,13 @@ function TranslatePageContent() {
     void attemptTranslate(inputText, "typed");
   }, [attemptTranslate, inputText]);
 
+  const handleProceedToTesting = useCallback(() => {
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem(RESEARCH_INTRO_DISMISSED_KEY);
+    }
+    router.push(buildTestingHref("/translate", searchParams));
+  }, [router, searchParams]);
+
   const handleClear = useCallback(() => {
     clearInput();
     reset();
@@ -329,10 +365,18 @@ function TranslatePageContent() {
     : translationPhase === "rule_based" ? "rule_based"
     : "llm_quality";
 
+  if (!isTestingMode && showResearchIntro) {
+    return (
+      <ResearchIntroScreen
+        onProceed={handleProceedToTesting}
+      />
+    );
+  }
+
   return (
     <>
       {/* ─── Testing Mode Overlay ──────────────────────────────────────────── */}
-      {isTestingMode && (
+      {isTestingMode && !isAccessibilityMode && (
         <TestingModeOverlay
           translationsCount={testingSession?.translationsCount ?? 0}
           isTranslating={isTranslating}
@@ -340,6 +384,8 @@ function TranslatePageContent() {
           firstTranslationDone={firstTranslationDone}
         />
       )}
+      {/* Accessibility mode: only the registration gate, no onboarding/task nudges */}
+      {isAccessibilityMode && <RegistrationModal />}
 
       {showExportModal && glossTokens.length > 0 && (
         <ExportVideoModal
@@ -365,12 +411,15 @@ function TranslatePageContent() {
         <NavigationBar />
         {!isAuthenticated && !isTestingMode && <GuestBanner remaining={guestRemaining} />}
 
+        <main className="flex flex-col flex-1">
         {/* ═══════════════════════════════════
             DESKTOP LAYOUT (≥ 1024px)
         ═══════════════════════════════════ */}
-        <main className="hidden lg:flex lg:flex-1 lg:flex-col">
-          <div className="flex-1 grid grid-cols-2 gap-[18px] p-5 max-w-[1300px] w-full mx-auto">
-            <div className="flex flex-col">
+        <div className="hidden lg:flex lg:flex-1 lg:flex-col">
+          <div className={isAccessibilityMode ? "flex flex-1 overflow-hidden" : "flex-1 grid grid-cols-2 gap-[18px] p-5 max-w-[1300px] w-full mx-auto"}>
+            {/* Main app area — takes 5 parts in accessibility mode */}
+            <div className={isAccessibilityMode ? "flex-[5] grid grid-cols-2 gap-[18px] p-5 min-w-0" : "contents"}>
+            <div className={isAccessibilityMode ? "flex flex-col" : "flex flex-col"}>
               <InputPanel
                 inputText={inputText}
                 onInputChange={setInputText}
@@ -392,6 +441,7 @@ function TranslatePageContent() {
                 isOnline={isOnline}
                 showGloss={settings.showGloss}
                 autoPaste={settings.autoPaste}
+                userId={session?.user?.id}
               />
               <RecentTranslations
                 entries={recentHistory}
@@ -417,8 +467,15 @@ function TranslatePageContent() {
               }}
               onPlaybackComplete={handlePlaybackComplete}
             />
+            </div>{/* end main app wrapper (accessibility mode) */}
+            {/* Accessibility feedback side panel — 2 parts */}
+            {isAccessibilityMode && (
+              <div className="flex-[2] min-w-0 border-l border-border overflow-y-auto">
+                <AccessibilityFeedbackPanel variant="panel" />
+              </div>
+            )}
           </div>
-        </main>
+        </div>
 
         {/* ═══════════════════════════════════
             MOBILE LAYOUT (< 1024px)
@@ -429,6 +486,36 @@ function TranslatePageContent() {
         <div className="lg:hidden flex flex-col flex-1">
           {/* Scrollable content area */}
           <div className="flex-1 overflow-y-auto px-3 pt-3 pb-2 flex flex-col gap-3">
+
+            {/* Accessibility feedback banner — pinned to top, shown after registration */}
+            {isAccessibilityMode && testingSession && !showMobileFeedback && (
+              <button
+                type="button"
+                onClick={() => setShowMobileFeedback(true)}
+                className="w-full rounded-panel overflow-hidden cursor-pointer group"
+                style={{
+                  background: "linear-gradient(135deg, #5b8ef0 0%, #a855f7 50%, #ec4899 100%)",
+                  padding: "1.25rem",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl shrink-0 group-hover:scale-110 transition-transform duration-200">
+                    💜
+                  </div>
+                  <div className="text-left">
+                    <p className="text-white font-bold text-[15px] leading-snug">
+                      Thank you for all your help!
+                    </p>
+                    <p className="text-white/85 text-[12px] mt-0.5 leading-snug">
+                      Please leave some feedback — tap here to open the survey
+                    </p>
+                  </div>
+                  <div className="ml-auto text-white/70 text-xl shrink-0 group-hover:translate-x-1 transition-transform duration-200">
+                    →
+                  </div>
+                </div>
+              </button>
+            )}
 
             {/* Avatar Panel — full rounded corners */}
             <AvatarPanel
@@ -548,10 +635,22 @@ function TranslatePageContent() {
               isSigning={playbackState === "playing"}
               isOnline={isOnline}
               autoPaste={settings.autoPaste}
+              userId={session?.user?.id}
             />
           </div>
         </div>
+        </main>
       </div>
+
+      {/* Mobile accessibility feedback sheet — auto-opens on load */}
+      {isAccessibilityMode && showMobileFeedback && (
+        <div className="lg:hidden">
+          <AccessibilityFeedbackPanel
+            variant="modal"
+            onClose={() => setShowMobileFeedback(false)}
+          />
+        </div>
+      )}
     </>
   );
 }

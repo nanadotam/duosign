@@ -15,6 +15,7 @@ import type {
 
 import { useLoading } from "@/shared/providers/LoadingProvider";
 import { useSettings } from "@/shared/hooks/useSettings";
+import { Tooltip } from "@/shared/ui/Tooltip";
 
 // Pronoun tokens -> actual sign file names that exist in the bucket.
 // Covers both raw IX markers (if they slip through) and display forms
@@ -257,24 +258,28 @@ export default function AvatarPanel({
             )}
 
             {/* Stats toggle */}
+            <Tooltip label={showStats ? "Hide stats" : "Stats for Nerds"} side="bottom">
             <button
               onClick={() => setShowStats((prev) => !prev)}
+              aria-label={showStats ? "Hide debug stats" : "Show debug stats"}
+              aria-pressed={showStats}
               className={[
-                "w-[24px] h-[24px] lg:w-[27px] lg:h-[27px] rounded-[6px] lg:rounded-[7px] border border-border bg-surface text-text-3 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-100 hover:text-text-1 hover:border-border-hi active:shadow-inset-press active:translate-y-px",
+                "w-[24px] h-[24px] lg:w-[27px] lg:h-[27px] rounded-[6px] lg:rounded-[7px] border border-border bg-surface text-text-3 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-100 hover:text-text-1 hover:border-border-hi active:shadow-inset-press active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70",
                 showStats ? "!border-accent !text-accent" : "",
               ].join(" ")}
-              title="Stats for Nerds"
             >
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 20V10M12 20V4M6 20v-6" />
               </svg>
             </button>
+            </Tooltip>
 
             {/* Fullscreen button */}
+            <Tooltip label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"} side="bottom">
             <button
               onClick={toggleFullscreen}
-              className="w-[24px] h-[24px] lg:w-[27px] lg:h-[27px] rounded-[6px] lg:rounded-[7px] border border-border bg-surface text-text-3 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-100 hover:text-text-1 hover:border-border-hi active:shadow-inset-press active:translate-y-px"
-              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              className="w-[24px] h-[24px] lg:w-[27px] lg:h-[27px] rounded-[6px] lg:rounded-[7px] border border-border bg-surface text-text-3 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-100 hover:text-text-1 hover:border-border-hi active:shadow-inset-press active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70"
             >
               {isFullscreen ? (
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -286,6 +291,7 @@ export default function AvatarPanel({
                 </svg>
               )}
             </button>
+            </Tooltip>
           </div>
         </div>
       )}
@@ -351,8 +357,11 @@ export default function AvatarPanel({
         <StatsForNerds stats={debugStats} visible={showStats} />
 
         {/* Now Signing Badge — part of overlay */}
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
+          {isLive ? "Now signing" : ""}
+        </div>
         {isLive && overlayVisible && (
-          <div className="absolute top-2 left-2 lg:top-3 lg:left-3 flex items-center gap-1.5 px-2 py-0.5 lg:px-2.5 lg:py-1 rounded-pill bg-success/10 border border-success/25 text-[9px] lg:text-[10px] font-bold tracking-[0.08em] uppercase text-success z-10">
+          <div aria-hidden="true" className="absolute top-2 left-2 lg:top-3 lg:left-3 flex items-center gap-1.5 px-2 py-0.5 lg:px-2.5 lg:py-1 rounded-pill bg-success/10 border border-success/25 text-[9px] lg:text-[10px] font-bold tracking-[0.08em] uppercase text-success z-10">
             <div className="w-[5px] h-[5px] rounded-full bg-success animate-[blink_1s_infinite]" />
             Now Signing
           </div>
@@ -373,10 +382,12 @@ export default function AvatarPanel({
         )}
 
         {/* Overlay toggle — always visible */}
+        <Tooltip label={overlayVisible ? "Hide overlay (H)" : "Show overlay (H)"} side="bottom">
         <button
           onClick={() => setOverlayVisible((prev) => !prev)}
-          className="absolute top-2 right-2 z-30 w-6 h-6 rounded-full border border-border-hi bg-surface-2/80 backdrop-blur-[4px] text-text-3 flex items-center justify-center cursor-pointer transition-all duration-150 hover:text-text-1 hover:bg-surface-3"
-          title={overlayVisible ? "Hide overlay (H)" : "Show overlay (H)"}
+          aria-label={overlayVisible ? "Hide avatar overlay" : "Show avatar overlay"}
+          aria-pressed={overlayVisible}
+          className="absolute top-2 right-2 z-30 w-6 h-6 rounded-full border border-border-hi bg-surface-2/80 backdrop-blur-[4px] text-text-3 flex items-center justify-center cursor-pointer transition-all duration-150 hover:text-text-1 hover:bg-surface-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70"
         >
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             {overlayVisible ? (
@@ -390,6 +401,7 @@ export default function AvatarPanel({
             )}
           </svg>
         </button>
+        </Tooltip>
 
         {/* Playback Bar — part of overlay */}
         {overlayVisible && (
@@ -419,9 +431,11 @@ export default function AvatarPanel({
             )}
 
             {/* Play/Pause */}
+            <Tooltip label={playbackState === "playing" ? "Pause" : "Play"} side="top">
             <button
               onClick={onTogglePlay}
-              className="w-[30px] h-[30px] lg:w-9 lg:h-9 rounded-full text-white flex items-center justify-center cursor-pointer transition-all duration-120 hover:brightness-110 active:brightness-[0.92] active:scale-[0.94]"
+              aria-label={playbackState === "playing" ? "Pause signing" : "Play signing"}
+              className="w-[30px] h-[30px] lg:w-9 lg:h-9 rounded-full text-white flex items-center justify-center cursor-pointer transition-all duration-120 hover:brightness-110 active:brightness-[0.92] active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70"
               style={{
                 background: "linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%)",
                 border: "1px solid var(--accent-dim)",
@@ -439,43 +453,52 @@ export default function AvatarPanel({
                 </svg>
               )}
             </button>
+            </Tooltip>
 
             {/* Divider */}
             <div className="w-px h-[14px] lg:h-[18px] bg-border mx-px" />
 
             {/* Replay */}
+            <Tooltip label="Replay" side="top">
             <button
               onClick={onReplay}
-              className="w-[26px] h-[26px] lg:w-[30px] lg:h-[30px] rounded-full border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:scale-[0.93]"
-              title="Replay"
+              aria-label="Replay from beginning"
+              className="w-[26px] h-[26px] lg:w-[30px] lg:h-[30px] rounded-full border border-border-hi bg-surface-2 text-text-2 flex items-center justify-center cursor-pointer shadow-raised-sm transition-all duration-120 hover:text-text-1 hover:bg-surface-3 active:shadow-inset-press active:scale-[0.93] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70"
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="1 4 1 10 7 10" />
                 <path d="M3.51 15a9 9 0 1 0 .49-4" />
               </svg>
             </button>
+            </Tooltip>
 
             {/* Speed Chip */}
+            <Tooltip label="Cycle playback speed" side="top">
             <button
               onClick={onCycleSpeed}
-              className="px-1.5 py-0.5 rounded-[5px] font-mono text-[9px] lg:text-[10px] font-medium bg-surface-3 border border-border text-text-3 cursor-pointer shadow-inset transition-all duration-100 hover:text-text-2 active:shadow-inset-press active:translate-y-px"
+              aria-label="Cycle playback speed"
+              className="px-1.5 py-0.5 rounded-[5px] font-mono text-[9px] lg:text-[10px] font-medium bg-surface-3 border border-border text-text-3 cursor-pointer shadow-inset transition-all duration-100 hover:text-text-2 active:shadow-inset-press active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70"
             >
               {SPEED_LABELS[speed]}
             </button>
+            </Tooltip>
 
             {/* CC Toggle — show/hide gloss subtitle */}
+            <Tooltip label={showGloss ? "Hide captions" : "Show captions"} side="top">
             <button
               onClick={() => setShowGloss((prev) => !prev)}
+              aria-label={showGloss ? "Hide gloss captions" : "Show gloss captions"}
+              aria-pressed={showGloss}
               className={[
-                "px-1.5 py-0.5 rounded-[5px] font-mono text-[9px] lg:text-[10px] font-bold border cursor-pointer shadow-inset transition-all duration-100 active:shadow-inset-press active:translate-y-px",
+                "px-1.5 py-0.5 rounded-[5px] font-mono text-[9px] lg:text-[10px] font-bold border cursor-pointer shadow-inset transition-all duration-100 active:shadow-inset-press active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70",
                 showGloss
                   ? "bg-accent/15 border-accent/40 text-accent"
                   : "bg-surface-3 border-border text-text-3 hover:text-text-2",
               ].join(" ")}
-              title={showGloss ? "Hide captions" : "Show captions"}
             >
               CC
             </button>
+            </Tooltip>
 
           </div>
         )}

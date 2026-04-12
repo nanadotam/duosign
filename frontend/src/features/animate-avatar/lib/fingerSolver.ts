@@ -12,6 +12,12 @@ import {
   type FingerName,
 } from "./fingerConfig";
 
+const THUMB_CLAMPS = {
+  cmc: JOINT_CLAMPS.thumbCmc,
+  mcp: JOINT_CLAMPS.thumbMcp,
+  ip: JOINT_CLAMPS.thumbIp,
+};
+
 export interface Landmark3D {
   x: number;
   y: number;
@@ -35,6 +41,11 @@ export type FingerRotationMap = Record<
 
 function neutralFingerRotationMap(): FingerRotationMap {
   return {
+    thumb: [
+      { ...NEUTRAL_FINGER_ROTATION, spread: NEUTRAL_SPREAD_OFFSET.thumb },
+      { ...NEUTRAL_FINGER_ROTATION, spread: 0 },
+      { ...NEUTRAL_FINGER_ROTATION, spread: 0 },
+    ],
     index: [
       { ...NEUTRAL_FINGER_ROTATION, spread: NEUTRAL_SPREAD_OFFSET.index },
       { ...NEUTRAL_FINGER_ROTATION, spread: 0 },
@@ -226,16 +237,16 @@ export function solveFingers(
   const fallback = neutralFingerRotationMap();
   const result: Partial<FingerRotationMap> = {};
 
-  for (const [fingerName, [mcpIdx, pipIdx, dipIdx, tipIdx]] of Object.entries(FINGERS) as [
+  for (const [fingerName, [joint0, joint1, joint2, joint3]] of Object.entries(FINGERS) as [
     FingerName,
     readonly [number, number, number, number],
   ][]) {
     const allFingerLandmarksValid = palmFrame && hasValidFingerLandmarks(landmarks, [
       LANDMARK.WRIST,
-      mcpIdx,
-      pipIdx,
-      dipIdx,
-      tipIdx,
+      joint0,
+      joint1,
+      joint2,
+      joint3,
     ]);
 
     if (!allFingerLandmarksValid) {
@@ -243,16 +254,32 @@ export function solveFingers(
       continue;
     }
 
-    const mcpFlexion = solveFlexion(landmarks, LANDMARK.WRIST, mcpIdx, pipIdx, JOINT_CLAMPS.mcp.flexion);
-    const mcpSpread = solveSpread(landmarks, mcpIdx, pipIdx, fingerName, palmFrame, JOINT_CLAMPS.mcp.abduction);
-    const pipFlexion = solveFlexion(landmarks, mcpIdx, pipIdx, dipIdx, JOINT_CLAMPS.pip.flexion);
-    const dipFlexion = solveFlexion(landmarks, pipIdx, dipIdx, tipIdx, JOINT_CLAMPS.dip.flexion);
+    if (fingerName === "thumb") {
+      // Thumb anatomy: CMC (joint0) → MCP (joint1) → IP (joint2) → TIP (joint3)
+      // The thumb moves in a different plane — use dedicated clamps.
+      const cmcFlexion = solveFlexion(landmarks, LANDMARK.WRIST, joint0, joint1, THUMB_CLAMPS.cmc.flexion);
+      const cmcSpread = solveSpread(landmarks, joint0, joint1, fingerName, palmFrame, THUMB_CLAMPS.cmc.abduction);
+      const mcpFlexion = solveFlexion(landmarks, joint0, joint1, joint2, THUMB_CLAMPS.mcp.flexion);
+      const ipFlexion = solveFlexion(landmarks, joint1, joint2, joint3, THUMB_CLAMPS.ip.flexion);
 
-    result[fingerName] = [
-      { flexion: mcpFlexion, spread: mcpSpread },
-      { flexion: pipFlexion, spread: 0 },
-      { flexion: dipFlexion, spread: 0 },
-    ];
+      result[fingerName] = [
+        { flexion: cmcFlexion, spread: cmcSpread },
+        { flexion: mcpFlexion, spread: 0 },
+        { flexion: ipFlexion, spread: 0 },
+      ];
+    } else {
+      // Standard finger: MCP (joint0) → PIP (joint1) → DIP (joint2) → TIP (joint3)
+      const mcpFlexion = solveFlexion(landmarks, LANDMARK.WRIST, joint0, joint1, JOINT_CLAMPS.mcp.flexion);
+      const mcpSpread = solveSpread(landmarks, joint0, joint1, fingerName, palmFrame, JOINT_CLAMPS.mcp.abduction);
+      const pipFlexion = solveFlexion(landmarks, joint0, joint1, joint2, JOINT_CLAMPS.pip.flexion);
+      const dipFlexion = solveFlexion(landmarks, joint1, joint2, joint3, JOINT_CLAMPS.dip.flexion);
+
+      result[fingerName] = [
+        { flexion: mcpFlexion, spread: mcpSpread },
+        { flexion: pipFlexion, spread: 0 },
+        { flexion: dipFlexion, spread: 0 },
+      ];
+    }
   }
 
   return result as FingerRotationMap;

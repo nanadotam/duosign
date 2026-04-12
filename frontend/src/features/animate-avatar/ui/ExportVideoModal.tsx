@@ -217,6 +217,9 @@ export default function ExportVideoModal({
       onClick={isLocked ? undefined : onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={isDone ? "Export ready" : "Exporting sign video"}
         className="relative bg-surface border border-border rounded-panel overflow-hidden w-full max-w-2xl shadow-[0_32px_80px_rgba(0,0,0,0.65)]"
         onClick={(e) => e.stopPropagation()}
       >
@@ -240,7 +243,8 @@ export default function ExportVideoModal({
           <button
             onClick={isLocked ? undefined : onClose}
             disabled={isLocked}
-            className="w-7 h-7 rounded-full border border-border bg-surface text-text-3 flex items-center justify-center cursor-pointer transition-all hover:text-text-1 hover:border-border-hi disabled:opacity-25 disabled:cursor-not-allowed"
+            aria-label="Close export dialog"
+            className="w-7 h-7 rounded-full border border-border bg-surface text-text-3 flex items-center justify-center cursor-pointer transition-all hover:text-text-1 hover:border-border-hi disabled:opacity-25 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70"
           >
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -332,6 +336,8 @@ export default function ExportVideoModal({
           <div className="px-4 pt-3 pb-1">
             {/* Cycling message */}
             <p
+              aria-live="polite"
+              aria-atomic="true"
               className="text-[11.5px] text-text-2 font-medium text-center transition-all duration-300 h-5 leading-5"
               style={{ opacity: msgVisible ? 1 : 0, transform: msgVisible ? "translateY(0)" : "translateY(4px)" }}
             >
@@ -344,7 +350,14 @@ export default function ExportVideoModal({
         {!isDone && stage !== "error" && (
           <div className="px-4 pt-2 pb-1">
             <div className="flex items-center gap-2.5">
-              <div className="flex-1 h-1.5 rounded-full bg-surface-3 overflow-hidden">
+              <div
+                role="progressbar"
+                aria-valuenow={displayProgress}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Export progress"
+                className="flex-1 h-1.5 rounded-full bg-surface-3 overflow-hidden"
+              >
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
@@ -354,7 +367,7 @@ export default function ExportVideoModal({
                   }}
                 />
               </div>
-              <span className="text-[10px] font-mono text-text-3 w-7 text-right tabular-nums">
+              <span aria-hidden="true" className="text-[10px] font-mono text-text-3 w-7 text-right tabular-nums">
                 {displayProgress}%
               </span>
             </div>

@@ -27,10 +27,11 @@ interface VoiceRecordingPaneProps {
   onDone: (text: string) => void;
   onTranslate: (text: string) => void;
   onClose: () => void;
+  userId?: string;
 }
 
 // TODO: Guest User - Use voice input via microphone as an alternative to typed text, with clear visual feedback indicating listening, idle, and error states.
-export default function VoiceRecordingPane({ onDone, onTranslate, onClose }: VoiceRecordingPaneProps) {
+export default function VoiceRecordingPane({ onDone, onTranslate, onClose, userId }: VoiceRecordingPaneProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -86,8 +87,12 @@ export default function VoiceRecordingPane({ onDone, onTranslate, onClose }: Voi
       const form = new FormData();
       form.append("audio", blob, mimeToFilename(mimeType));
 
+      const audioHeaders: Record<string, string> = {};
+      if (userId) audioHeaders["X-User-Id"] = userId;
+
       const res = await fetch(`${API_BASE_URL}/api/translate/audio`, {
         method: "POST",
+        headers: audioHeaders,
         body: form,
       });
 
@@ -111,7 +116,7 @@ export default function VoiceRecordingPane({ onDone, onTranslate, onClose }: Voi
     } finally {
       setIsTranscribing(false);
     }
-  }, []);
+  }, [userId]);
 
   const startRecording = useCallback(async () => {
     setTranscript("");
@@ -210,12 +215,15 @@ export default function VoiceRecordingPane({ onDone, onTranslate, onClose }: Voi
       {/* Status row */}
       <div className="flex items-center justify-between mb-2">
         <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
           className={[
             "inline-flex items-center gap-[5px] px-2 py-[2px] rounded-pill text-[9px] font-bold tracking-[0.08em] uppercase font-mono border shadow-inset transition-all",
             statusClass,
           ].join(" ")}
         >
-          <span className={["w-[4px] h-[4px] rounded-full", dotClass].join(" ")} />
+          <span aria-hidden="true" className={["w-[4px] h-[4px] rounded-full", dotClass].join(" ")} />
           {statusLabel}
         </div>
         <button
@@ -226,9 +234,10 @@ export default function VoiceRecordingPane({ onDone, onTranslate, onClose }: Voi
         </button>
       </div>
 
-      {/* Waveform */}
+      {/* Waveform — decorative, hidden from screen readers */}
       <div
         ref={barsRef}
+        aria-hidden="true"
         className="h-10 bg-surface-3 border border-border rounded-[10px] shadow-inset flex items-center justify-center gap-[2px] px-3 mb-2 overflow-hidden transition-all duration-250"
       />
 
@@ -251,8 +260,10 @@ export default function VoiceRecordingPane({ onDone, onTranslate, onClose }: Voi
         <button
           onClick={toggleMic}
           disabled={isTranscribing}
+          aria-label={isRecording ? "Stop recording" : "Start recording"}
+          aria-pressed={isRecording}
           className={[
-            "w-9 h-9 rounded-full border flex items-center justify-center cursor-pointer transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed",
+            "w-9 h-9 rounded-full border flex items-center justify-center cursor-pointer transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70",
             isRecording
               ? "border-[color-mix(in_srgb,var(--error)_60%,var(--accent-dim))] bg-gradient-to-b from-[#F87171] to-[#DC4545] text-white animate-[mic-ring_1.4s_ease-in-out_infinite]"
               : "text-white hover:brightness-110 hover:shadow-[0_0_12px_var(--accent)] active:scale-[0.94]",

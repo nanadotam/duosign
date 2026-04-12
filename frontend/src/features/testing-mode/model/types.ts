@@ -13,7 +13,10 @@ export interface TestingSession {
   surveyCompleted: boolean;
 }
 
-export type FeedbackTriggerType = "widget" | "auto_nudge";
+export type FeedbackTriggerType =
+  | "widget"
+  | "auto_nudge"
+  | "periodic_prompt";
 
 export type TestingEventName =
   | "translation_requested"

@@ -405,6 +405,40 @@ export const SIGNING_REST_POSE: Record<string, { x: number; y: number; z: number
   LeftHand:      { x: 0,    y: 0,    z:  0    },
   Spine:         { x: 0.02, y: 0,    z:  0    }, // very slight forward lean
   Hips:          { x: 0,    y: 0,    z:  0    },
+
+  // Relaxed finger pose — slight natural curl so fingers don't stay frozen
+  // in the last handshape between signs. 0.15 rad ≈ 8.6° of curl.
+  RightIndexProximal:      { x: 0, y: 0.06,  z: 0.15 },
+  RightIndexIntermediate:  { x: 0, y: 0,     z: 0.1  },
+  RightIndexDistal:        { x: 0, y: 0,     z: 0.05 },
+  RightMiddleProximal:     { x: 0, y: 0,     z: 0.15 },
+  RightMiddleIntermediate: { x: 0, y: 0,     z: 0.1  },
+  RightMiddleDistal:       { x: 0, y: 0,     z: 0.05 },
+  RightRingProximal:       { x: 0, y: -0.06, z: 0.15 },
+  RightRingIntermediate:   { x: 0, y: 0,     z: 0.1  },
+  RightRingDistal:         { x: 0, y: 0,     z: 0.05 },
+  RightLittleProximal:     { x: 0, y: -0.10, z: 0.15 },
+  RightLittleIntermediate: { x: 0, y: 0,     z: 0.1  },
+  RightLittleDistal:       { x: 0, y: 0,     z: 0.05 },
+  RightThumbProximal:      { x: 0, y: 0.3,   z: 0.1  },
+  RightThumbIntermediate:  { x: 0, y: 0,     z: 0.1  },
+  RightThumbDistal:        { x: 0, y: 0,     z: 0.05 },
+
+  LeftIndexProximal:       { x: 0, y: -0.06, z: 0.15 },
+  LeftIndexIntermediate:   { x: 0, y: 0,     z: 0.1  },
+  LeftIndexDistal:         { x: 0, y: 0,     z: 0.05 },
+  LeftMiddleProximal:      { x: 0, y: 0,     z: 0.15 },
+  LeftMiddleIntermediate:  { x: 0, y: 0,     z: 0.1  },
+  LeftMiddleDistal:        { x: 0, y: 0,     z: 0.05 },
+  LeftRingProximal:        { x: 0, y: 0.06,  z: 0.15 },
+  LeftRingIntermediate:    { x: 0, y: 0,     z: 0.1  },
+  LeftRingDistal:          { x: 0, y: 0,     z: 0.05 },
+  LeftLittleProximal:      { x: 0, y: 0.10,  z: 0.15 },
+  LeftLittleIntermediate:  { x: 0, y: 0,     z: 0.1  },
+  LeftLittleDistal:        { x: 0, y: 0,     z: 0.05 },
+  LeftThumbProximal:       { x: 0, y: -0.3,  z: 0.1  },
+  LeftThumbIntermediate:   { x: 0, y: 0,     z: 0.1  },
+  LeftThumbDistal:         { x: 0, y: 0,     z: 0.05 },
 };
 
 // ── Global VRM registry ────────────────────────────────────────────

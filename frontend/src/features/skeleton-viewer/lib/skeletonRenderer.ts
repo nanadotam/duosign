@@ -13,13 +13,17 @@ import type {
   PosePointModel,
 } from "pose-format";
 
-// ── Line widths — no joint dots ──────────────────────────────────────────────
+// ── Line widths ───────────────────────────────────────────────────────────────
 const LIMB_WIDTH: Record<string, number> = {
-  POSE_LANDMARKS:       3,
-  LEFT_HAND_LANDMARKS:  2,
-  RIGHT_HAND_LANDMARKS: 2,
+  POSE_LANDMARKS:       8,
+  LEFT_HAND_LANDMARKS:  5,
+  RIGHT_HAND_LANDMARKS: 5,
   FACE_LANDMARKS:       2,
 };
+
+// Fixed hand color — readable on both light and dark backgrounds,
+// distinct from the red body and crimson face.
+const HAND_COLOR = "#3d5aed"; // deep indigo
 
 const MIN_CONFIDENCE = 0.01;
 
@@ -40,7 +44,7 @@ function rgbString(r: number, g: number, b: number, a = 1): string {
   return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
-// ── Body / hand component renderer (lines only, no dots) ─────────────────────
+// ── Body / hand component renderer ───────────────────────────────────────────
 function drawComponent(
   ctx: CanvasRenderingContext2D,
   component: PoseHeaderComponentModel,
@@ -49,6 +53,8 @@ function drawComponent(
   lineWidth: number,
 ) {
   if (!points || points.length === 0) return;
+
+  const isHand = component.name === "LEFT_HAND_LANDMARKS" || component.name === "RIGHT_HAND_LANDMARKS";
 
   ctx.lineWidth = lineWidth;
   ctx.lineCap = "round";
@@ -61,16 +67,34 @@ function drawComponent(
     if (!from || !to) continue;
     if ((from.C ?? 0) < MIN_CONFIDENCE || (to.C ?? 0) < MIN_CONFIDENCE) continue;
 
-    const color = component.colors[i] ?? component.colors[0];
     const alpha = Math.min(from.C ?? 1, to.C ?? 1);
 
     ctx.beginPath();
     ctx.moveTo(from.X * scale, from.Y * scale);
     ctx.lineTo(to.X  * scale, to.Y  * scale);
-    ctx.strokeStyle = color
-      ? rgbString(color.R, color.G, color.B, alpha)
-      : rgbString(180, 0, 0, alpha);
+
+    if (isHand) {
+      ctx.strokeStyle = HAND_COLOR;
+    } else {
+      const color = component.colors[i] ?? component.colors[0];
+      ctx.strokeStyle = color
+        ? rgbString(color.R, color.G, color.B, alpha)
+        : rgbString(180, 0, 0, alpha);
+    }
     ctx.stroke();
+  }
+
+  // Small joint dots on fingers only
+  if (isHand) {
+    for (const pt of points) {
+      if (!pt || (pt.C ?? 0) < MIN_CONFIDENCE) continue;
+      ctx.beginPath();
+      ctx.arc(pt.X * scale, pt.Y * scale, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = "#c7d2fe";
+      ctx.globalAlpha = 0.9;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
   }
 }
 

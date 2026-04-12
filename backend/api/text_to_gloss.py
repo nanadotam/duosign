@@ -73,6 +73,17 @@ IX_DISPLAY: dict[str, str] = {
     "IX-1+": "WE", "IX-3+": "THEY",
 }
 
+LLM_PRONOUN_TO_IX: dict[str, str] = {
+    "I": "IX-1",
+    "ME": "IX-1",
+    "YOU": "IX-2",
+    "HE": "IX-3",
+    "SHE": "IX-3",
+    "HE/SHE": "IX-3",
+    "WE": "IX-1+",
+    "THEY": "IX-3+",
+}
+
 # Time words that get moved to the front
 TIME_WORDS: set[str] = {
     "today", "tomorrow", "yesterday", "now", "later", "soon",
@@ -812,9 +823,10 @@ class TextToGloss:
         We expand those into individual letter tokens so each maps to
         its own sign in the avatar.
         """
-        result.gloss_internal = llm_gloss
-        result.gloss = TextToGloss._to_display_form(llm_gloss)
-        result.tokens = resolve_tokens(llm_gloss.split(), self.vocab)
+        normalized_gloss = self._normalize_llm_gloss(llm_gloss)
+        result.gloss_internal = normalized_gloss
+        result.gloss = TextToGloss._to_display_form(normalized_gloss)
+        result.tokens = resolve_tokens(normalized_gloss.split(), self.vocab)
         result.method = method
 
     # ── Other helpers ────────────────────────────────────────────────
@@ -836,6 +848,11 @@ class TextToGloss:
     def _to_display_form(gloss: str) -> str:
         """Convert internal IX markers to readable pronouns for display."""
         return " ".join(IX_DISPLAY.get(t, t) for t in gloss.split())
+
+    @staticmethod
+    def _normalize_llm_gloss(gloss: str) -> str:
+        """Convert LLM display pronouns back to internal IX markers."""
+        return " ".join(LLM_PRONOUN_TO_IX.get(token, token) for token in gloss.split())
 
     def clear_cache(self) -> None:
         """Clear the translation cache."""

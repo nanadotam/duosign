@@ -16,6 +16,8 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { Buffer } from "buffer";
 import type { PoseHeaderModel, PoseBodyFrameModel } from "pose-format";
 
+import { interpolateTransition } from "../lib/poseSmoothing";
+
 interface ParsedPose {
   gloss: string;
   header: PoseHeaderModel;
@@ -100,10 +102,44 @@ export function useSkeletonPlayer(
     }
   }, [parsePoseBuffer]);
 
-  const playGloss = useCallback((poseData: ParsedPose): Promise<void> => {
+  const playGloss = useCallback((poseData: ParsedPose): Promise<PoseBodyFrameModel | null> => {
     const msPerFrame = 1000 / poseData.fps;
-    return new Promise<void>((resolve) => {
+    return new Promise<PoseBodyFrameModel | null>((resolve) => {
       let frameIdx = 0;
+      let lastTick = performance.now();
+      let lastFrame: PoseBodyFrameModel | null = null;
+
+      const tick = (now: number) => {
+        if (!playingRef.current) { resolve(lastFrame); return; }
+        if (pausedRef.current) { rafRef.current = requestAnimationFrame(tick); return; }
+
+        if (now - lastTick >= msPerFrame) {
+          if (frameIdx >= poseData.frameCount) { resolve(lastFrame); return; }
+          const frame = poseData.getFrame(frameIdx);
+          if (frame) {
+            onFrameRef.current(frame, poseData.header);
+            lastFrame = frame;
+          }
+          frameIdx++;
+          lastTick = now;
+        }
+        rafRef.current = requestAnimationFrame(tick);
+      };
+
+      rafRef.current = requestAnimationFrame(tick);
+    });
+  }, []);
+
+  /** Play a pre-computed list of interpolated transition frames at a given fps. */
+  const playTransitionFrames = useCallback((
+    frames: PoseBodyFrameModel[],
+    header: PoseHeaderModel,
+    fps: number,
+  ): Promise<void> => {
+    if (frames.length === 0) return Promise.resolve();
+    const msPerFrame = 1000 / fps;
+    return new Promise<void>((resolve) => {
+      let idx = 0;
       let lastTick = performance.now();
 
       const tick = (now: number) => {
@@ -111,10 +147,9 @@ export function useSkeletonPlayer(
         if (pausedRef.current) { rafRef.current = requestAnimationFrame(tick); return; }
 
         if (now - lastTick >= msPerFrame) {
-          if (frameIdx >= poseData.frameCount) { resolve(); return; }
-          const frame = poseData.getFrame(frameIdx);
-          if (frame) onFrameRef.current(frame, poseData.header);
-          frameIdx++;
+          if (idx >= frames.length) { resolve(); return; }
+          onFrameRef.current(frames[idx], header);
+          idx++;
           lastTick = now;
         }
         rafRef.current = requestAnimationFrame(tick);
@@ -145,6 +180,9 @@ export function useSkeletonPlayer(
         if (!playingRef.current) break;
         setCurrentLoop(loop);
 
+        let lastFrame: PoseBodyFrameModel | null = null;
+        let lastHeader: PoseHeaderModel | null = null;
+
         for (let i = 0; i < glosses.length; i++) {
           if (!playingRef.current) break;
 
@@ -162,12 +200,18 @@ export function useSkeletonPlayer(
           setCurrentGloss(glosses[i]);
           setCurrentGlossIndex(i);
 
-          await playGloss(poseData);
-
-          // Brief hold between signs (not after last sign in a loop)
-          if (playingRef.current && i < glosses.length - 1) {
-            await new Promise<void>((r) => setTimeout(r, 80));
+          // Smooth transition: interpolate from last frame of previous sign
+          // into first frame of this sign (replaces the hard 80 ms pause).
+          if (lastFrame && lastHeader) {
+            const firstFrame = poseData.getFrame(0);
+            if (firstFrame) {
+              const transFrames = interpolateTransition(lastFrame, firstFrame, lastHeader);
+              await playTransitionFrames(transFrames, lastHeader, poseData.fps);
+            }
           }
+
+          lastFrame  = await playGloss(poseData);
+          lastHeader = poseData.header;
         }
 
         // Pause between loops (longer gap so it reads as a repeat)
@@ -183,7 +227,7 @@ export function useSkeletonPlayer(
         onCompleteRef.current?.();
       }
     })();
-  }, [fetchPose, playGloss, prefetch]);
+  }, [fetchPose, playGloss, playTransitionFrames, prefetch]);
 
   const stop = useCallback(() => {
     playingRef.current = false;

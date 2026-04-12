@@ -13,6 +13,8 @@ import { ACCENT_COLORS } from "@/shared/ui/SettingsApplicator";
 import VoiceRecordingPane from "@/features/translate-text/ui/VoiceRecordingPane";
 import Button from "@/shared/ui/Button";
 import Modal from "@/shared/ui/Modal";
+import { TestingModeProvider } from "@/features/testing-mode";
+import TestingModeOverlay from "@/features/testing-mode/ui/TestingModeOverlay";
 
 /* ═══ SIDEBAR DATA ═══ */
 const SIDEBAR = [
@@ -153,6 +155,14 @@ function Select({ options, value, defaultValue, onChange }: { options: string[];
 }
 
 export default function SettingsPage() {
+  return (
+    <TestingModeProvider>
+      <SettingsPageInner />
+    </TestingModeProvider>
+  );
+}
+
+function SettingsPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedSection = searchParams.get("section");
@@ -670,21 +680,10 @@ export default function SettingsPage() {
                 <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Manage your API credentials for programmatic access.</p>
               </div>
 
-              <SettingsCard title="API Access" chip="credentials">
-                <SettingRow label="Production Key" desc="Use in your production app — keep this secret">
-                  <input type="password" defaultValue="ds_live_••••••••••••••••" className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-mono text-[11.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
-                </SettingRow>
-                <SettingRow label="Test Key" desc="Development only — rate limited to 100 req/day">
-                  <input type="password" defaultValue="ds_test_••••••••••••••••" className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-mono text-[11.5px] text-text-1 w-[210px] outline-none shadow-inset transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
-                </SettingRow>
-              </SettingsCard>
-
-              <SettingsCard title="Danger Zone" chip="irreversible" danger>
-                <SettingRow label="Revoke All API Keys" desc="Immediately invalidates all active keys" danger>
-                  <button className="px-3.5 py-[5px] rounded-btn border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,var(--surface-2))] text-error font-sans text-[12.5px] font-semibold cursor-pointer shadow-raised-sm transition-all duration-120 whitespace-nowrap hover:bg-[color-mix(in_srgb,var(--error)_16%,var(--surface-2))] active:shadow-inset-press active:translate-y-px">
-                    Revoke Keys
-                  </button>
-                </SettingRow>
+              <SettingsCard title="API Access" chip="status">
+                <div className="py-6 text-[14px] text-text-3 transition-colors duration-250">
+                  Coming soon
+                </div>
               </SettingsCard>
             </>
           )}
@@ -700,18 +699,10 @@ export default function SettingsPage() {
                 <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Receive real-time notifications for translation events.</p>
               </div>
 
-              <SettingsCard title="Webhook Configuration" chip="events">
-                <SettingRow label="Endpoint URL" desc="URL to receive translation lifecycle events">
-                  <input type="text" placeholder="https://your-app.com/hook" className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-mono text-[11.5px] text-text-1 w-[210px] outline-none shadow-inset placeholder:text-text-3 transition-all duration-150 focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]" />
-                </SettingRow>
-                <SettingRow label="Events" desc="Choose which events trigger webhook calls">
-                  <Select options={["All Events", "Translation Only", "Errors Only"]} onChange={() => {}} />
-                </SettingRow>
-                <SettingRow label="Status" desc="Current webhook delivery status">
-                  <span className="px-3 py-1 rounded-pill text-[11px] font-bold font-mono tracking-[0.06em] bg-surface-3 border border-border text-text-3 shadow-inset">
-                    Not Configured
-                  </span>
-                </SettingRow>
+              <SettingsCard title="Webhook Configuration" chip="status">
+                <div className="py-6 text-[14px] text-text-3 transition-colors duration-250">
+                  Coming soon
+                </div>
               </SettingsCard>
             </>
           )}
@@ -748,9 +739,6 @@ export default function SettingsPage() {
               <SettingsCard title="About DuoSign" chip="info">
                 <SettingRow label="Version" desc="Current application version">
                   <span className="font-mono text-[12px] text-text-2">0.1.0-alpha</span>
-                </SettingRow>
-                <SettingRow label="Technology" desc="Built with Next.js, Three.js, VRM, and FastAPI">
-                  <span className="font-mono text-[12px] text-text-2">Next.js 14</span>
                 </SettingRow>
                 <SettingRow label="Lexicon" desc="Sign language dataset powering the avatar">
                   <span className="font-mono text-[12px] text-text-2">WLASL v0.3</span>
@@ -891,6 +879,7 @@ export default function SettingsPage() {
           </div>
         </>
       )}
+      <TestingModeOverlay />
     </div>
   );
 }

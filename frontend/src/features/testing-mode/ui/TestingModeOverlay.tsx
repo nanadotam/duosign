@@ -7,20 +7,21 @@ import OnboardingController from "./OnboardingController";
 import TaskHintController from "./TaskHintController";
 import FeedbackWidget from "./FeedbackWidget";
 import SurveyModal from "./SurveyModal";
+import ResearchCheckInModal from "./ResearchCheckInModal";
 import { TestingToastItem, type TestingToastData } from "./TestingToast";
 
 interface TestingModeOverlayProps {
-  translationsCount: number;
-  isTranslating: boolean;
-  voiceInputUsed: boolean;
-  firstTranslationDone: boolean;
+  translationsCount?: number;
+  isTranslating?: boolean;
+  voiceInputUsed?: boolean;
+  firstTranslationDone?: boolean;
 }
 
 export default function TestingModeOverlay({
-  translationsCount,
-  isTranslating,
-  voiceInputUsed,
-  firstTranslationDone,
+  translationsCount = 0,
+  isTranslating = false,
+  voiceInputUsed = false,
+  firstTranslationDone = false,
 }: TestingModeOverlayProps) {
   const {
     isTestingMode,
@@ -39,8 +40,11 @@ export default function TestingModeOverlay({
   } = useTestingMode();
 
   const [nudgeToast, setNudgeToast] = useState<TestingToastData | null>(null);
+  const [isCheckInOpen, setIsCheckInOpen] = useState(false);
   const feedbackNudgeFired = useRef(false);
   const surveyPromptFired = useRef(false);
+  const periodicIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const nudgeToastActiveRef = useRef(false);
 
   // Auto-nudge feedback after 3 translations
   useEffect(() => {
@@ -107,6 +111,25 @@ export default function TestingModeOverlay({
     openSurvey,
   ]);
 
+  // Keep a ref in sync with nudgeToast state so the interval can check it without stale closure
+  useEffect(() => {
+    nudgeToastActiveRef.current = nudgeToast !== null;
+  }, [nudgeToast]);
+
+  // 5-minute periodic feedback popup — fires every 5 min while session is active
+  useEffect(() => {
+    if (!session || !isTestingMode) return;
+    periodicIntervalRef.current = setInterval(() => {
+      if (nudgeToastActiveRef.current) return;
+      if (isFeedbackOpen || isSurveyOpen) return;
+      if (translationsCount === 0) return;
+      setIsCheckInOpen(true);
+    }, 5 * 60 * 1000);
+    return () => {
+      if (periodicIntervalRef.current) clearInterval(periodicIntervalRef.current);
+    };
+  }, [session, isTestingMode, isFeedbackOpen, isSurveyOpen, translationsCount]);
+
   if (!isTestingMode) return null;
 
   return (
@@ -132,6 +155,16 @@ export default function TestingModeOverlay({
               if (!open) closeFeedback();
             }}
             triggerType={feedbackTriggerType}
+          />
+
+          <ResearchCheckInModal
+            isOpen={isCheckInOpen}
+            onClose={() => setIsCheckInOpen(false)}
+            onOpenSurvey={() => {
+              setIsCheckInOpen(false);
+              trackEvent("sus_survey_opened");
+              openSurvey();
+            }}
           />
 
           <SurveyModal

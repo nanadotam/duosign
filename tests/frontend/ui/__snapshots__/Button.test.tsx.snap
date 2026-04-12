@@ -1,0 +1,28 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Button renders all variants and matches snapshots 1`] = `
+<button
+  class="inline-flex items-center justify-center transition-all duration-120 cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none font-sans text-white font-semibold hover:brightness-110 active:translate-y-px active:brightness-[0.93] px-4 py-1.5 text-[13px] rounded-btn gap-2 "
+  style="background: linear-gradient(180deg, var(--accent-btn-top) 0%, var(--accent-dim) 100%); border-width: 1px; border-style: solid; border-color: var(--accent-dim); box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 3px 10px color-mix(in srgb, var(--accent) 35%, transparent);"
+>
+  Primary
+</button>
+`;
+
+exports[`Button renders all variants and matches snapshots 2`] = `
+<button
+  class="inline-flex items-center justify-center transition-all duration-120 cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none font-sans border border-border-hi bg-transparent text-text-2 font-medium shadow-raised-sm hover:text-text-1 hover:bg-surface-2 active:shadow-inset-press active:translate-y-px px-4 py-1.5 text-[13px] rounded-btn gap-2 "
+  style=""
+>
+  Ghost
+</button>
+`;
+
+exports[`Button renders all variants and matches snapshots 3`] = `
+<button
+  class="inline-flex items-center justify-center transition-all duration-120 cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none font-sans text-white font-semibold hover:brightness-110 active:translate-y-px active:brightness-[0.93] px-4 py-1.5 text-[13px] rounded-btn gap-2 "
+  style="background: linear-gradient(180deg, #F87171 0%, #c52020 100%); border-width: 1px; border-style: solid; border-color: rgba(248, 113, 113, 0.4); box-shadow: 0 1px 0 rgba(255,255,255,0.15) inset, 0 3px 10px rgba(248,113,113,0.3);"
+>
+  Delete
+</button>
+`;

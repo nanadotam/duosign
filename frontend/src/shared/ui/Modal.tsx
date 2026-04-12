@@ -34,6 +34,7 @@ export default function Modal({
   footerClassName = "",
 }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const titleId = title ? "modal-title" : undefined;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -56,6 +57,9 @@ export default function Modal({
       ].join(" ")}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className={[
           "bg-surface border border-border shadow-raised w-full overflow-hidden flex flex-col",
           SIZE_CLASSES[size],
@@ -67,10 +71,11 @@ export default function Modal({
       >
         {title && (
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-text-1">{title}</h3>
+            <h3 id="modal-title" className="text-sm font-semibold text-text-1">{title}</h3>
             <button
               onClick={onClose}
-              className="w-7 h-7 rounded-btn border border-border bg-surface-2 text-text-3 flex items-center justify-center hover:text-text-1 hover:border-border-hi transition-all cursor-pointer"
+              aria-label="Close dialog"
+              className="w-7 h-7 rounded-btn border border-border bg-surface-2 text-text-3 flex items-center justify-center hover:text-text-1 hover:border-border-hi transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/70"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <line x1="18" y1="6" x2="6" y2="18" />

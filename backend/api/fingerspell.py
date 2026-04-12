@@ -111,6 +111,10 @@ def resolve_tokens(tokens: list[str], vocab: "VocabularyManager | None" = None) 
         if not normalized:
             continue
 
+        if normalized.startswith("IX-"):
+            resolved.append(normalized)
+            continue
+
         if vocab is None or vocab.has(normalized):
             resolved.append(normalized)
             continue
