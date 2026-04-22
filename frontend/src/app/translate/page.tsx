@@ -7,9 +7,6 @@ import AvatarPanel from "@/widgets/avatar-panel/AvatarPanel";
 import RecentTranslations from "@/widgets/recent-translations/RecentTranslations";
 import { ToastProvider } from "@/shared/ui/Toast";
 import { LoadingProvider } from "@/shared/providers/LoadingProvider";
-import { TestingModeProvider, useTestingMode } from "@/features/testing-mode";
-import TestingModeOverlay from "@/features/testing-mode/ui/TestingModeOverlay";
-import RegistrationModal from "@/features/testing-mode/ui/RegistrationModal";
 import dynamic from "next/dynamic";
 
 const ExportVideoModal = dynamic(
@@ -30,21 +27,13 @@ import Link from "next/link";
 import { useToast } from "@/shared/ui/Toast";
 import { useSession } from "@/lib/auth-client";
 import type { HistoryEntryType } from "@/shared/lib/history";
-import ResearchIntroScreen from "@/features/testing-mode/ui/ResearchIntroScreen";
-import AccessibilityFeedbackPanel from "@/features/testing-mode/ui/AccessibilityFeedbackPanel";
-import {
-  RESEARCH_INTRO_DISMISSED_KEY,
-  buildTestingHref,
-} from "@/features/testing-mode/lib/researchConfig";
 
 // Outer shell — provides context, then delegates to inner component
 export default function TranslatePage() {
   return (
     <LoadingProvider>
       <ToastProvider>
-        <TestingModeProvider>
-          <TranslatePageContent />
-        </TestingModeProvider>
+        <TranslatePageContent />
       </ToastProvider>
     </LoadingProvider>
   );
@@ -52,10 +41,8 @@ export default function TranslatePage() {
 
 // Inner component — all logic lives here so it's inside ToastProvider context
 function TranslatePageContent() {
-  const router = useRouter();
   const { settings } = useSettings();
   const { showToast } = useToast();
-  const { isTestingMode, session: testingSession, trackEvent, incrementTranslations } = useTestingMode();
   const [displayMode, setDisplayMode] = useState<AvatarDisplayMode>("avatar");
   const [showExportModal, setShowExportModal] = useState(false);
   const searchParams = useSearchParams();
@@ -66,11 +53,6 @@ function TranslatePageContent() {
   const { data: session } = useSession();
   const isAuthenticated = Boolean(session?.user);
   const { remaining: guestRemaining, consume } = useGuestLimit();
-  const [voiceInputUsed, setVoiceInputUsed] = useState(false);
-  const [firstTranslationDone, setFirstTranslationDone] = useState(false);
-  const [showResearchIntro, setShowResearchIntro] = useState(false);
-  const isAccessibilityMode = searchParams.get("testing") === "accessibility";
-  const [showMobileFeedback, setShowMobileFeedback] = useState(false);
 
   // ─── Network connectivity detection ────────────────────────────────────────
   const [isOnline, setIsOnline] = useState(
@@ -86,24 +68,6 @@ function TranslatePageContent() {
       window.removeEventListener("offline", down);
     };
   }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (isTestingMode || isAccessibilityMode) {
-      setShowResearchIntro(false);
-      return;
-    }
-    setShowResearchIntro(
-      sessionStorage.getItem(RESEARCH_INTRO_DISMISSED_KEY) !== "1"
-    );
-  }, [isTestingMode, isAccessibilityMode]);
-
-  // Auto-open mobile feedback sheet only after registration is complete
-  useEffect(() => {
-    if (!isAccessibilityMode || !testingSession) return;
-    const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
-    if (isMobile) setShowMobileFeedback(true);
-  }, [isAccessibilityMode, testingSession]);
 
   const {
     inputText,
@@ -176,8 +140,7 @@ function TranslatePageContent() {
     const text = rawText.trim();
     if (!text) return false;
 
-    // Testing mode participants get unlimited translations
-    if (!isAuthenticated && !isTestingMode) {
+    if (!isAuthenticated) {
       try {
         const guestUsage = await consume();
         if (!guestUsage.allowed) {
@@ -195,12 +158,9 @@ function TranslatePageContent() {
 
     reset();
     pendingPlayRef.current = { text, type };
-    if (isTestingMode) {
-      trackEvent("translation_requested", { input_length: text.length, feature: type === "voiced" ? "voice_input" : "text_input" });
-    }
     void translate(settings.translationEngine, text);
     return true;
-  }, [consume, isAuthenticated, reset, settings.translationEngine, showToast, translate, isTestingMode, trackEvent]);
+  }, [consume, isAuthenticated, reset, settings.translationEngine, showToast, translate]);
 
   const handleOpenExport = useCallback(() => {
     if (lastHistoryEntryIdRef.current) {
@@ -223,7 +183,6 @@ function TranslatePageContent() {
   }, []);
 
   // Once inputText is set and autoplay/export is pending, trigger translate
-  // (play is triggered by the glossTokens effect below, not a raw timeout)
   useEffect(() => {
     if (autoplayPending.current && inputText) {
       autoplayPending.current = false;
@@ -249,37 +208,26 @@ function TranslatePageContent() {
     // Online and still waiting for LLM: hold off
     if (isOnline && translationPhase === "rule_based") return;
 
-    // Either offline (sign with rule_based) or LLM arrived (sign with llm_quality)
     const pendingPlay = pendingPlayRef.current;
     pendingPlayRef.current = null;
 
     const entry = addEntry(pendingPlay.text, glossTokens.map((t) => t.text), pendingPlay.type);
     lastHistoryEntryIdRef.current = entry.id;
-    if (isTestingMode) {
-      trackEvent("translation_completed", { token_count: glossTokens.length });
-      incrementTranslations();
-      setFirstTranslationDone(true);
-    }
     play();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [glossTokens, translationPhase]);
 
   // ─── Fallback: stream ended without an LLM result (online but LLM skipped) ─
   useEffect(() => {
-    if (isTranslating) return;                        // still in flight
-    if (pendingPlayRef.current === null) return;      // already played
-    if (glossTokens.length === 0) return;             // nothing to play
+    if (isTranslating) return;
+    if (pendingPlayRef.current === null) return;
+    if (glossTokens.length === 0) return;
 
     const pendingPlay = pendingPlayRef.current;
     pendingPlayRef.current = null;
 
     const entry = addEntry(pendingPlay.text, glossTokens.map((t) => t.text), pendingPlay.type);
     lastHistoryEntryIdRef.current = entry.id;
-    if (isTestingMode) {
-      trackEvent("translation_completed", { token_count: glossTokens.length });
-      incrementTranslations();
-      setFirstTranslationDone(true);
-    }
     play();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTranslating]);
@@ -287,13 +235,6 @@ function TranslatePageContent() {
   const handleTranslate = useCallback(() => {
     void attemptTranslate(inputText, "typed");
   }, [attemptTranslate, inputText]);
-
-  const handleProceedToTesting = useCallback(() => {
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem(RESEARCH_INTRO_DISMISSED_KEY);
-    }
-    router.push(buildTestingHref("/translate", searchParams));
-  }, [router, searchParams]);
 
   const handleClear = useCallback(() => {
     clearInput();
@@ -307,20 +248,12 @@ function TranslatePageContent() {
 
   const handleVoiceDone = useCallback((text: string) => {
     setInputText(text);
-    if (isTestingMode) {
-      trackEvent("voice_input_completed", { text_length: text.length });
-      setVoiceInputUsed(true);
-    }
-  }, [setInputText, isTestingMode, trackEvent]);
+  }, [setInputText]);
 
   const handleVoiceTranslate = useCallback((text: string) => {
     setInputText(text);
-    if (isTestingMode) {
-      trackEvent("voice_input_completed", { text_length: text.length });
-      setVoiceInputUsed(true);
-    }
     void attemptTranslate(text, "voiced");
-  }, [attemptTranslate, setInputText, isTestingMode, trackEvent]);
+  }, [attemptTranslate, setInputText]);
 
   // ─── Loop & keyboard shortcuts ─────────────────────────────────────────────
   const MAX_LOOPS = 3;
@@ -357,7 +290,6 @@ function TranslatePageContent() {
   }, [settings.keyboardShortcuts, togglePlay, handleTranslate, glossTokens.length]);
 
   // ─── Derive pipeline display phase for the status strip ────────────────────
-  // "waiting_for_llm" = rule_based arrived but we're online and still enhancing
   const pipelineDisplayPhase: "idle" | "translating" | "waiting_for_llm" | "rule_based" | "llm_quality" =
     translationPhase === "idle" ? "idle"
     : translationPhase === "translating" ? "translating"
@@ -365,28 +297,8 @@ function TranslatePageContent() {
     : translationPhase === "rule_based" ? "rule_based"
     : "llm_quality";
 
-  if (!isTestingMode && showResearchIntro) {
-    return (
-      <ResearchIntroScreen
-        onProceed={handleProceedToTesting}
-      />
-    );
-  }
-
   return (
     <>
-      {/* ─── Testing Mode Overlay ──────────────────────────────────────────── */}
-      {isTestingMode && !isAccessibilityMode && (
-        <TestingModeOverlay
-          translationsCount={testingSession?.translationsCount ?? 0}
-          isTranslating={isTranslating}
-          voiceInputUsed={voiceInputUsed}
-          firstTranslationDone={firstTranslationDone}
-        />
-      )}
-      {/* Accessibility mode: only the registration gate, no onboarding/task nudges */}
-      {isAccessibilityMode && <RegistrationModal />}
-
       {showExportModal && glossTokens.length > 0 && (
         <ExportVideoModal
           glossSequence={glossTokens.map((t) => t.text)}
@@ -409,17 +321,15 @@ function TranslatePageContent() {
       */}
       <div className="min-h-screen flex flex-col">
         <NavigationBar />
-        {!isAuthenticated && !isTestingMode && <GuestBanner remaining={guestRemaining} />}
+        {!isAuthenticated && <GuestBanner remaining={guestRemaining} />}
 
         <main className="flex flex-col flex-1">
         {/* ═══════════════════════════════════
             DESKTOP LAYOUT (≥ 1024px)
         ═══════════════════════════════════ */}
         <div className="hidden lg:flex lg:flex-1 lg:flex-col">
-          <div className={isAccessibilityMode ? "flex flex-1 overflow-hidden" : "flex-1 grid grid-cols-2 gap-[18px] p-5 max-w-[1300px] w-full mx-auto"}>
-            {/* Main app area — takes 5 parts in accessibility mode */}
-            <div className={isAccessibilityMode ? "flex-[5] grid grid-cols-2 gap-[18px] p-5 min-w-0" : "contents"}>
-            <div className={isAccessibilityMode ? "flex flex-col" : "flex flex-col"}>
+          <div className="flex-1 grid grid-cols-2 gap-[18px] p-5 max-w-[1300px] w-full mx-auto">
+            <div className="flex flex-col">
               <InputPanel
                 inputText={inputText}
                 onInputChange={setInputText}
@@ -467,13 +377,6 @@ function TranslatePageContent() {
               }}
               onPlaybackComplete={handlePlaybackComplete}
             />
-            </div>{/* end main app wrapper (accessibility mode) */}
-            {/* Accessibility feedback side panel — 2 parts */}
-            {isAccessibilityMode && (
-              <div className="flex-[2] min-w-0 border-l border-border overflow-y-auto">
-                <AccessibilityFeedbackPanel variant="panel" />
-              </div>
-            )}
           </div>
         </div>
 
@@ -486,36 +389,6 @@ function TranslatePageContent() {
         <div className="lg:hidden flex flex-col flex-1">
           {/* Scrollable content area */}
           <div className="flex-1 overflow-y-auto px-3 pt-3 pb-2 flex flex-col gap-3">
-
-            {/* Accessibility feedback banner — pinned to top, shown after registration */}
-            {isAccessibilityMode && testingSession && !showMobileFeedback && (
-              <button
-                type="button"
-                onClick={() => setShowMobileFeedback(true)}
-                className="w-full rounded-panel overflow-hidden cursor-pointer group"
-                style={{
-                  background: "linear-gradient(135deg, #5b8ef0 0%, #a855f7 50%, #ec4899 100%)",
-                  padding: "1.25rem",
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="text-3xl shrink-0 group-hover:scale-110 transition-transform duration-200">
-                    💜
-                  </div>
-                  <div className="text-left">
-                    <p className="text-white font-bold text-[15px] leading-snug">
-                      Thank you for all your help!
-                    </p>
-                    <p className="text-white/85 text-[12px] mt-0.5 leading-snug">
-                      Please leave some feedback — tap here to open the survey
-                    </p>
-                  </div>
-                  <div className="ml-auto text-white/70 text-xl shrink-0 group-hover:translate-x-1 transition-transform duration-200">
-                    →
-                  </div>
-                </div>
-              </button>
-            )}
 
             {/* Avatar Panel — full rounded corners */}
             <AvatarPanel
@@ -641,16 +514,6 @@ function TranslatePageContent() {
         </div>
         </main>
       </div>
-
-      {/* Mobile accessibility feedback sheet — auto-opens on load */}
-      {isAccessibilityMode && showMobileFeedback && (
-        <div className="lg:hidden">
-          <AccessibilityFeedbackPanel
-            variant="modal"
-            onClose={() => setShowMobileFeedback(false)}
-          />
-        </div>
-      )}
     </>
   );
 }
