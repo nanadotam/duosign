@@ -10,10 +10,10 @@
 
 // ── Line widths — no joint dots ──────────────────────────────────────────────
 const LIMB_WIDTH = {
-  POSE_LANDMARKS: 3,
-  LEFT_HAND_LANDMARKS: 2,
-  RIGHT_HAND_LANDMARKS: 2,
-  FACE_LANDMARKS: 2,
+  POSE_LANDMARKS: 4,
+  LEFT_HAND_LANDMARKS: 3,
+  RIGHT_HAND_LANDMARKS: 3,
+  FACE_LANDMARKS: 2.5,
 };
 
 const MIN_CONFIDENCE = 0.01;
@@ -217,6 +217,8 @@ function drawSkeleton(ctx, frame, header, canvasWidth, canvasHeight) {
   const offsetY = (canvasHeight - header.height * scale) / 2;
 
   ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
   ctx.translate(offsetX, offsetY);
 
   for (const component of header.components) {

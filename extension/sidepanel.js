@@ -10,6 +10,14 @@
  *  - Message handling from content script / background
  */
 
+const _IX_DISPLAY = {
+  'IX': 'I', 'IX-1': 'I', 'IX-SELF': 'I', 'IX-REFL': 'I',
+  'IX-2': 'YOU', 'IX-3': 'THEY', 'IX-PL': 'WE', 'IX-LOC': 'THERE',
+};
+function displayToken(token) {
+  return _IX_DISPLAY[token?.toUpperCase()] ?? token;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   // ── DOM refs ──────────────────────────────────────────────────────
   const textInput = document.getElementById("textInput");
@@ -40,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentTokenIndex = 0;
   let isPlaying = false;
   let isLooping = false;
-  let speed = 1;
+  let speed = 1.6;
   let player = null; // PosePlayer (2D skeleton)
   let renderMode = "skeleton"; // "skeleton" or "avatar"
   let vrmPosePlayer = null; // VRM 3D pose player (lazy loaded)
@@ -75,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.drawSkeleton(ctx, frame, header, w, h);
       },
       onGlossChange: (gloss) => {
-        currentGlossLabel.textContent = gloss;
+        currentGlossLabel.textContent = displayToken(gloss);
         highlightActiveChip(gloss);
       },
       onComplete: () => {
@@ -247,7 +255,7 @@ document.addEventListener("DOMContentLoaded", () => {
     tokens.forEach((token, i) => {
       const chip = document.createElement("span");
       chip.className = "chip";
-      chip.textContent = token;
+      chip.textContent = displayToken(token);
       chip.dataset.index = i;
       chip.addEventListener("click", () => {
         currentTokenIndex = i;
@@ -270,7 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ── Playback ──────────────────────────────────────────────────────
   function playGloss(gloss) {
-    currentGlossLabel.textContent = gloss;
+    currentGlossLabel.textContent = displayToken(gloss);
     highlightActiveChip(gloss);
 
     if (renderMode === "avatar" && vrmPosePlayer) {

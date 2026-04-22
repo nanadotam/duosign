@@ -15,12 +15,23 @@
   window.__duosignYT = true;
 
   // ── Constants ─────────────────────────────────────────────────────────────
-  const PHRASE_SILENCE_MS = 1500;
-  const PHRASE_MAX_CHARS  = 200;
-  const PUNCTUATION_RE    = /[.?!;]/;
-  const PIP_W             = 260;
-  const PIP_H             = 320;
-  const CANVAS_H          = PIP_H - 54; // header (32) + footer (22)
+  const PHRASE_SILENCE_MS  = 1500;
+  const PHRASE_MAX_CHARS   = 200;
+  const PUNCTUATION_RE     = /[.?!;]/;
+  const PIP_W_DEFAULT      = 260;
+  const PIP_H_DEFAULT      = 320;
+  const PIP_MIN_W          = 200;
+  const PIP_MIN_H          = 240;
+  const PIP_CHROME_H       = 54; // header (32) + footer (22)
+
+  // IX-marker → natural-word display map
+  const IX_DISPLAY = {
+    'IX': 'I', 'IX-1': 'I', 'IX-SELF': 'I', 'IX-REFL': 'I',
+    'IX-2': 'YOU', 'IX-3': 'THEY', 'IX-PL': 'WE', 'IX-LOC': 'THERE',
+  };
+  function displayToken(token) {
+    return IX_DISPLAY[token?.toUpperCase()] ?? token;
+  }
 
   // ── State ─────────────────────────────────────────────────────────────────
   let captionObserver = null;
@@ -36,6 +47,14 @@
   let isDragging      = false;
   let dragOffsetX     = 0;
   let dragOffsetY     = 0;
+  let isResizing      = false;
+  let resizeStartX    = 0;
+  let resizeStartY    = 0;
+  let resizeStartW    = PIP_W_DEFAULT;
+  let resizeStartH    = PIP_H_DEFAULT;
+  let pipW            = PIP_W_DEFAULT;
+  let pipH            = PIP_H_DEFAULT;
+  const dpr           = window.devicePixelRatio || 1;
 
   // ── Utilities ─────────────────────────────────────────────────────────────
   function waitForPlayer() {
@@ -131,7 +150,7 @@
         <button class="duosign-pip-btn" id="duosignPipClose" title="Close">×</button>
       </div>
       <div class="duosign-pip-canvas-wrap">
-        <canvas id="duosignPipCanvas" width="${PIP_W}" height="${CANVAS_H}"></canvas>
+        <canvas id="duosignPipCanvas"></canvas>
         <div class="duosign-pip-idle" id="duosignPipIdle">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
@@ -144,6 +163,7 @@
         <span class="duosign-pip-gloss" id="duosignPipGloss">—</span>
         <span class="duosign-pip-status" id="duosignPipStatus">Ready</span>
       </div>
+      <div class="duosign-pip-resize" id="duosignPipResize"></div>
     `;
 
     // Default position: bottom-right, offset to sit above YouTube controls bar
@@ -155,9 +175,21 @@
 
     document.getElementById("duosignPipClose").addEventListener("click", stopSigning);
     document.getElementById("duosignPipHeader").addEventListener("mousedown", onDragStart);
+    document.getElementById("duosignPipResize").addEventListener("mousedown", onResizeStart);
 
     pipCanvas = document.getElementById("duosignPipCanvas");
-    pipCtx    = pipCanvas.getContext("2d");
+    _resizeCanvas(pipW, pipH);
+  }
+
+  // ── Canvas resize helper (applies DPR scaling) ───────────────────────────
+  function _resizeCanvas(w, h) {
+    const canvasH = h - PIP_CHROME_H;
+    pipCanvas.width  = Math.round(w * dpr);
+    pipCanvas.height = Math.round(canvasH * dpr);
+    pipCanvas.style.width  = `${w}px`;
+    pipCanvas.style.height = `${canvasH}px`;
+    pipCtx = pipCanvas.getContext("2d");
+    pipCtx.scale(dpr, dpr);
   }
 
   // ── Drag (page-level, position:fixed) ────────────────────────────────────
@@ -171,20 +203,42 @@
     e.preventDefault();
   }
 
+  // ── Resize ────────────────────────────────────────────────────────────────
+  function onResizeStart(e) {
+    if (!pipElement) return;
+    isResizing   = true;
+    resizeStartX = e.clientX;
+    resizeStartY = e.clientY;
+    resizeStartW = pipW;
+    resizeStartH = pipH;
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
   document.addEventListener("mousemove", (e) => {
-    if (!isDragging || !pipElement) return;
-    // Convert to fixed coords; keep fully on screen
-    let x = e.clientX - dragOffsetX;
-    let y = e.clientY - dragOffsetY;
-    x = Math.max(0, Math.min(x, window.innerWidth  - PIP_W));
-    y = Math.max(0, Math.min(y, window.innerHeight - PIP_H));
-    pipElement.style.right  = "auto";
-    pipElement.style.bottom = "auto";
-    pipElement.style.left   = `${x}px`;
-    pipElement.style.top    = `${y}px`;
+    if (isDragging && pipElement) {
+      let x = e.clientX - dragOffsetX;
+      let y = e.clientY - dragOffsetY;
+      x = Math.max(0, Math.min(x, window.innerWidth  - pipW));
+      y = Math.max(0, Math.min(y, window.innerHeight - pipH));
+      pipElement.style.right  = "auto";
+      pipElement.style.bottom = "auto";
+      pipElement.style.left   = `${x}px`;
+      pipElement.style.top    = `${y}px`;
+    }
+    if (isResizing && pipElement) {
+      pipW = Math.max(PIP_MIN_W, resizeStartW + (e.clientX - resizeStartX));
+      pipH = Math.max(PIP_MIN_H, resizeStartH + (e.clientY - resizeStartY));
+      pipElement.style.width  = `${pipW}px`;
+      pipElement.style.height = `${pipH}px`;
+      _resizeCanvas(pipW, pipH);
+    }
   });
 
-  document.addEventListener("mouseup", () => { isDragging = false; });
+  document.addEventListener("mouseup", () => {
+    isDragging = false;
+    isResizing  = false;
+  });
 
   // ── PosePlayer — CORS-safe fetch via background ───────────────────────────
   // Content scripts cannot bypass CORS for binary fetches; route through the
@@ -201,15 +255,17 @@
       onFrame(frame, header) {
         const idle = document.getElementById("duosignPipIdle");
         if (idle) idle.style.display = "none";
-        window.drawSkeleton(pipCtx, frame, header, PIP_W, CANVAS_H);
+        const canvasH = pipH - PIP_CHROME_H;
+        window.drawSkeleton(pipCtx, frame, header, pipW, canvasH);
       },
       onGlossChange(gloss) {
         const el = document.getElementById("duosignPipGloss");
-        if (el) el.textContent = gloss;
+        if (el) el.textContent = displayToken(gloss);
       },
       onComplete() {
         setStatus("Ready");
-        if (pipCtx) pipCtx.clearRect(0, 0, PIP_W, CANVAS_H);
+        const canvasH = pipH - PIP_CHROME_H;
+        if (pipCtx) pipCtx.clearRect(0, 0, pipW, canvasH);
         const idle = document.getElementById("duosignPipIdle");
         if (idle) idle.style.display = "flex";
         const glossEl = document.getElementById("duosignPipGloss");
@@ -222,6 +278,8 @@
         );
       },
     });
+
+    posePlayer.speed = 1.6;
 
     // ── Patch _fetchPose to route through background (avoids CORS in content scripts)
     posePlayer._fetchPose = async function (gloss) {
@@ -353,7 +411,7 @@
 
       // Show gloss in footer even if pose player isn't ready
       const glossEl = document.getElementById("duosignPipGloss");
-      if (glossEl) glossEl.textContent = tokens.join(" · ");
+      if (glossEl) glossEl.textContent = tokens.map(displayToken).join(" · ");
 
       if (posePlayer) {
         posePlayer.playSequence(tokens, 1);
@@ -397,7 +455,7 @@
 
     if (captionObserver) { captionObserver.disconnect(); captionObserver = null; }
     if (posePlayer)      { posePlayer.stop(); posePlayer = null; }
-    if (pipElement)      { pipElement.remove(); pipElement = null; }
+    if (pipElement)      { pipElement.remove(); pipElement = null; pipW = PIP_W_DEFAULT; pipH = PIP_H_DEFAULT; }
     if (bannerElement)   {
       bannerElement.remove(); bannerElement = null;
       document.getElementById("duosign-yt-disclaimer")?.remove();

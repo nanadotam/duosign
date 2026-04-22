@@ -128,6 +128,8 @@
   bottom: 80px;
   width: 260px;
   height: 320px;
+  min-width: 200px;
+  min-height: 240px;
   background: var(--ds-bg);
   border: 1px solid var(--ds-border);
   border-radius: 14px;
@@ -138,6 +140,35 @@
   flex-direction: column;
   user-select: none;
   animation: duosign-pip-in 0.22s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+/* ── Resize handle (bottom-right corner) ────────────────────────── */
+.duosign-pip-resize {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: se-resize;
+  z-index: 1;
+  background: linear-gradient(
+    135deg,
+    transparent 50%,
+    var(--ds-border) 50%,
+    var(--ds-border) 60%,
+    transparent 60%,
+    transparent 70%,
+    var(--ds-border) 70%,
+    var(--ds-border) 80%,
+    transparent 80%
+  );
+  border-bottom-right-radius: 14px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.duosign-pip-resize:hover {
+  opacity: 1;
 }
 
 /* ── Header / drag handle ──────────────────────────────────────── */

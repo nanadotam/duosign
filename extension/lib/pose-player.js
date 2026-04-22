@@ -34,7 +34,7 @@ class PosePlayer {
     this._paused = false;
     this._rafId = 0;
     this._poseCache = new Map();
-    this._speedMultiplier = 1;
+    this._speedMultiplier = 1.6;
 
     // Public state
     this.currentGloss = "";
@@ -172,13 +172,13 @@ class PosePlayer {
 
         // Brief hold between signs
         if (this._playing && i < glosses.length - 1) {
-          await new Promise((r) => setTimeout(r, 80));
+          await new Promise((r) => setTimeout(r, 50));
         }
       }
 
       // Pause between loops
       if (this._playing && loop < loopCount) {
-        await new Promise((r) => setTimeout(r, 400));
+        await new Promise((r) => setTimeout(r, 250));
       }
     }
 
