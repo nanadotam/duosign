@@ -10,12 +10,32 @@
  *  - Message handling from content script / background
  */
 
-const _IX_DISPLAY = {
-  'IX': 'I', 'IX-1': 'I', 'IX-SELF': 'I', 'IX-REFL': 'I',
-  'IX-2': 'YOU', 'IX-3': 'THEY', 'IX-PL': 'WE', 'IX-LOC': 'THERE',
+const IX_MAP = {
+  'IX':      'I',
+  'IX-1':    'I',
+  'IX-1+':   'WE',
+  'IX-SELF': 'I',
+  'IX-REFL': 'I',
+  'IX-2':    'YOU',
+  'IX-2+':   'YOU',
+  'IX-3':    'THEY',
+  'IX-3+':   'THEY',
+  'IX-PL':   'WE',
+  'IX-MULT': 'THEY',
+  'IX-LOC':  'THERE',
 };
+
+function resolveToken(token) {
+  if (!token) return null;
+  const t = token.trim().toUpperCase();
+  if (!t) return null;
+  if (t in IX_MAP) return IX_MAP[t];
+  if (/^\d/.test(t)) return null;
+  return t;
+}
+
 function displayToken(token) {
-  return _IX_DISPLAY[token?.toUpperCase()] ?? token;
+  return resolveToken(token) ?? token;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -214,7 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
       )) {
         if (event.event === "rule_based" || event.event === "llm_quality") {
           bestResult = event.data;
-          currentTokens = bestResult.tokens || bestResult.gloss.split(" ");
+          currentTokens = (bestResult.tokens || bestResult.gloss.split(" ")).map(resolveToken).filter(Boolean);
           currentTokenIndex = 0;
 
           // Update chips
@@ -233,7 +253,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Fallback to fast endpoint
       try {
         const result = await window.DuoSignAPI.translateText(text);
-        currentTokens = result.tokens || result.gloss.split(" ");
+        currentTokens = (result.tokens || result.gloss.split(" ")).map(resolveToken).filter(Boolean);
         currentTokenIndex = 0;
         renderGlossChips(currentTokens);
         methodBadge.textContent = "⚡ Rule";

@@ -24,13 +24,36 @@
   const PIP_MIN_H          = 240;
   const PIP_CHROME_H       = 54; // header (32) + footer (22)
 
-  // IX-marker → natural-word display map
-  const IX_DISPLAY = {
-    'IX': 'I', 'IX-1': 'I', 'IX-SELF': 'I', 'IX-REFL': 'I',
-    'IX-2': 'YOU', 'IX-3': 'THEY', 'IX-PL': 'WE', 'IX-LOC': 'THERE',
+  // IX-marker → gloss that has a real pose file
+  const IX_MAP = {
+    'IX':      'I',
+    'IX-1':    'I',
+    'IX-1+':   'WE',
+    'IX-SELF': 'I',
+    'IX-REFL': 'I',
+    'IX-2':    'YOU',
+    'IX-2+':   'YOU',
+    'IX-3':    'THEY',
+    'IX-3+':   'THEY',
+    'IX-PL':   'WE',
+    'IX-MULT': 'THEY',
+    'IX-LOC':  'THERE',
   };
+
+  // Resolve a raw backend token to a fetchable gloss name.
+  // Returns null for tokens that should be dropped (numeric codes, empty, etc.)
+  function resolveToken(token) {
+    if (!token) return null;
+    const t = token.trim().toUpperCase();
+    if (!t) return null;
+    if (t in IX_MAP) return IX_MAP[t];
+    // Drop tokens that start with a digit — these are numeric codes, not glosses
+    if (/^\d/.test(t)) return null;
+    return t;
+  }
+
   function displayToken(token) {
-    return IX_DISPLAY[token?.toUpperCase()] ?? token;
+    return resolveToken(token) ?? token;
   }
 
   // ── State ─────────────────────────────────────────────────────────────────
@@ -457,14 +480,15 @@
         return;
       }
 
-      const data   = response.data;
-      const tokens = data.tokens ?? data.gloss?.split(" ") ?? [];
+      const data      = response.data;
+      const rawTokens = data.tokens ?? data.gloss?.split(" ") ?? [];
+      const tokens    = rawTokens.map(resolveToken).filter(Boolean);
 
       if (tokens.length === 0) { setStatus("Ready"); return; }
 
       // Show gloss in footer even if pose player isn't ready
       const glossEl = document.getElementById("duosignPipGloss");
-      if (glossEl) glossEl.textContent = tokens.map(displayToken).join(" · ");
+      if (glossEl) glossEl.textContent = tokens.join(" · ");
 
       if (posePlayer) {
         posePlayer.playSequence(tokens, 1);
