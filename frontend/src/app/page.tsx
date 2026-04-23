@@ -129,7 +129,7 @@ export default function LandingPage() {
           <a href="#how" className="l-nav-link">How it works</a>
           <a href="#demo" className="l-nav-link">Demo</a>
           <a href="#features" className="l-nav-link">Features</a>
-          <Link href="/docs" className="l-nav-link">Docs</Link>
+          <Link href="/guide" className="l-nav-link">Docs</Link>
           <a href="#contact" className="l-nav-link">Contact</a>
         </div>
       </nav>
@@ -154,7 +154,7 @@ export default function LandingPage() {
             </svg>
             Try DuoSign Free
           </Link>
-          <Link href="/docs" className="l-btn-ghost">Read the Docs →</Link>
+          <Link href="/guide" className="l-btn-ghost">Read the Docs →</Link>
         </div>
         <div className="l-trust-row">
           <span className="l-trust-item">Made for the Deaf &amp; Hard-of-Hearing community</span>
@@ -378,7 +378,7 @@ export default function LandingPage() {
               </svg>
               Open DuoSign
             </Link>
-            <Link href="/docs" className="l-btn-ghost">Read the Docs →</Link>
+            <Link href="/guide" className="l-btn-ghost">Read the Docs →</Link>
           </div>
         </div>
       </section>
@@ -390,7 +390,7 @@ export default function LandingPage() {
           <span className="l-footer-copy">© 2026 DuoSign. Built at Ashesi University, Ghana.</span>
         </div>
         <div className="l-footer-links">
-          <Link href="/docs" className="l-footer-link">Documentation</Link>
+          <Link href="/guide" className="l-footer-link">Documentation</Link>
           <a href="https://github.com/nanadotam" className="l-footer-link">GitHub</a>
           <Link href="/api-docs" className="l-footer-link">API</Link>
           <a href="#contact" className="l-footer-link">Contact</a>

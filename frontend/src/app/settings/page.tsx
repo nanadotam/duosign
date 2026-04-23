@@ -714,7 +714,7 @@ function SettingsPageInner() {
 
               <SettingsCard title="Quick Links" chip="resources">
                 <SettingRow label="Getting Started" desc="Full DuoSign feature guide — translation, avatar, voice input">
-                  <Link href="/docs" className="text-[12.5px] font-medium text-accent hover:underline whitespace-nowrap">
+                  <Link href="/guide" className="text-[12.5px] font-medium text-accent hover:underline whitespace-nowrap">
                     Open Docs →
                   </Link>
                 </SettingRow>

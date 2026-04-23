@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function ApiDocsRedirect() {
-  redirect("/docs?tab=api");
+  redirect("/guide?tab=api");
 }
