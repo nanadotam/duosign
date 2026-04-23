@@ -22,7 +22,6 @@ const USER_SECTIONS: Array<{
     group: "Features",
     items: [
       { id: "voice-guide",   label: "Voice Input" },
-      { id: "extension",     label: "Chrome Extension" },
       { id: "history-guide", label: "Translation History" },
     ],
   },
@@ -31,6 +30,28 @@ const USER_SECTIONS: Array<{
     items: [
       { id: "limitations", label: "Honest Limitations" },
       { id: "faq",         label: "FAQ" },
+    ],
+  },
+];
+
+const CHROME_SECTIONS: Array<{
+  group: string;
+  items: Array<{ id: string; label: string }>;
+}> = [
+  {
+    group: "Setup",
+    items: [
+      { id: "ext-install", label: "Installation" },
+      { id: "ext-login",   label: "Sign In" },
+    ],
+  },
+  {
+    group: "Using It",
+    items: [
+      { id: "ext-translate", label: "Translate Any Text" },
+      { id: "ext-sidepanel", label: "Side Panel" },
+      { id: "ext-youtube",   label: "YouTube Captions" },
+      { id: "ext-settings",  label: "Extension Settings" },
     ],
   },
 ];
@@ -252,28 +273,29 @@ function ParamsTable({ rows }: { rows: [string, string, string, string][] }) {
 }
 
 /* ── Page ────────────────────────────────────────────────────────── */
-type Tab = "user" | "dev" | "api";
+type Tab = "user" | "dev" | "api" | "chrome";
 
 const TAB_DEFAULTS: Record<Tab, string> = {
-  user: "welcome",
-  dev:  "dev-intro",
-  api:  "api-overview",
+  user:   "welcome",
+  dev:    "dev-intro",
+  api:    "api-overview",
+  chrome: "ext-install",
 };
 
 export default function DocsPage() {
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>(() => {
     const t = searchParams.get("tab");
-    return (t === "dev" || t === "api") ? t : "user";
+    return (t === "dev" || t === "api" || t === "chrome") ? t : "user";
   });
   const [activeId, setActiveId] = useState(() => {
     const t = searchParams.get("tab");
-    return (t === "dev" || t === "api") ? TAB_DEFAULTS[t as Tab] : "welcome";
+    return (t === "dev" || t === "api" || t === "chrome") ? TAB_DEFAULTS[t as Tab] : "welcome";
   });
 
   useEffect(() => {
     const t = searchParams.get("tab");
-    if (t === "dev" || t === "api") {
+    if (t === "dev" || t === "api" || t === "chrome") {
       setTab(t);
       setActiveId(TAB_DEFAULTS[t]);
     }
@@ -292,9 +314,10 @@ export default function DocsPage() {
   };
 
   const sections =
-    tab === "user" ? USER_SECTIONS :
-    tab === "dev"  ? DEV_SECTIONS  :
-                     API_SECTIONS;
+    tab === "user"   ? USER_SECTIONS   :
+    tab === "dev"    ? DEV_SECTIONS    :
+    tab === "chrome" ? CHROME_SECTIONS :
+                       API_SECTIONS;
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
@@ -313,8 +336,8 @@ export default function DocsPage() {
             DuoSign turns English text into American Sign Language — animated by a 3D avatar, right in your browser.
             Whether you&apos;re new here or building something with our API, you&apos;re in the right place.
           </p>
-          <div className="flex items-center gap-2">
-            {(["user", "dev", "api"] as Tab[]).map((t) => (
+          <div className="flex items-center gap-2 flex-wrap">
+            {(["user", "chrome", "dev", "api"] as Tab[]).map((t) => (
               <button
                 key={t}
                 onClick={() => switchTab(t)}
@@ -325,7 +348,7 @@ export default function DocsPage() {
                     : "border-border text-text-2 hover:text-text-1 hover:bg-surface",
                 ].join(" ")}
               >
-                {t === "user" ? "For Users" : t === "dev" ? "Developer Docs" : "API Reference"}
+                {t === "user" ? "For Users" : t === "chrome" ? "Chrome Extension" : t === "dev" ? "Developer Docs" : "API Reference"}
               </button>
             ))}
           </div>
@@ -457,168 +480,19 @@ export default function DocsPage() {
                 <section id="extension">
                   <Heading2 id="extension">Chrome Extension</Heading2>
                   <P>
-                    The DuoSign Chrome extension lets you translate any text on any webpage to ASL without leaving the page.
-                    Highlight text, right-click, and a sign-language panel opens beside your browser — no tab-switching, no copy-pasting.
-                    It also integrates with YouTube live captions so you can watch any video with a signing avatar alongside it.
+                    DuoSign has a Chrome extension that brings signing to every page you browse.
+                    Highlight any text, right-click, and the avatar signs it in a side panel — no switching tabs.
+                    It also overlays live signing on YouTube videos as they play.
                   </P>
-
-                  <Note>
-                    The extension is distributed as a ZIP file — you install it directly into Chrome. It does <strong>not</strong> require the Chrome Web Store. You only need to do this once.
-                  </Note>
-
-                  {/* ── Step 1: Get the ZIP ── */}
-                  <div className="mb-6">
-                    <div className="text-[13px] font-bold text-text-1 mb-3 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-accent text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">1</span>
-                      Get the extension file
-                    </div>
-                    <P>Download the <strong className="text-text-1">duosign-extension.zip</strong> file shared with you. Save it somewhere easy to find — your Downloads folder is fine. Unzip it so you have a folder called <strong className="text-text-1">duosign-extension</strong>.</P>
-                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of the unzipped <strong className="text-text-1">duosign-extension</strong> folder in Finder/Explorer, showing the files inside (manifest.json, background.js, sidepanel.html, etc.)</div>
-                    </div>
+                  <div className="p-4 rounded-[12px] bg-surface border border-border shadow-raised-sm mb-4 flex items-center justify-between gap-4">
+                    <div className="text-[13px] text-text-2">Full installation guide, screenshots, and YouTube setup</div>
+                    <button
+                      onClick={() => switchTab("chrome")}
+                      className="flex-shrink-0 px-4 py-1.5 rounded-full text-[13px] font-semibold border border-[color-mix(in_srgb,var(--accent)_35%,transparent)] bg-[color-mix(in_srgb,var(--accent)_8%,var(--surface))] text-accent hover:bg-[color-mix(in_srgb,var(--accent)_14%,var(--surface))] transition-colors cursor-pointer"
+                    >
+                      Chrome Extension →
+                    </button>
                   </div>
-
-                  {/* ── Step 2: Enable Developer Mode ── */}
-                  <div className="mb-6">
-                    <div className="text-[13px] font-bold text-text-1 mb-3 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-accent text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">2</span>
-                      Open Chrome Extensions and enable Developer Mode
-                    </div>
-                    <P>In Chrome, go to <Code>chrome://extensions</Code> (type that directly into the address bar and press Enter). In the top-right corner of that page, toggle <strong className="text-text-1">Developer mode</strong> on. The page will refresh and show extra buttons at the top left.</P>
-                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of <strong className="text-text-1">chrome://extensions</strong> with the <strong className="text-text-1">Developer mode</strong> toggle highlighted in the top-right corner, showing it switched ON</div>
-                    </div>
-                  </div>
-
-                  {/* ── Step 3: Load unpacked ── */}
-                  <div className="mb-6">
-                    <div className="text-[13px] font-bold text-text-1 mb-3 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-accent text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">3</span>
-                      Load the extension
-                    </div>
-                    <P>Click the <strong className="text-text-1">Load unpacked</strong> button that appeared in the top-left. A file picker opens — navigate to and select the <strong className="text-text-1">duosign-extension</strong> folder you unzipped in Step 1 (select the folder itself, not any file inside it). Click Open/Select Folder.</P>
-                    <P>DuoSign will appear in your extensions list with its icon. You should also see the puzzle-piece icon in your Chrome toolbar — click it and pin DuoSign so the icon is always visible.</P>
-                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of <strong className="text-text-1">chrome://extensions</strong> after loading — showing the DuoSign card with its name, version, and the toggle enabled. The <strong className="text-text-1">Load unpacked</strong> button should be visible at the top</div>
-                    </div>
-                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of the Chrome toolbar with the puzzle-piece icon open, showing DuoSign listed and the pin icon highlighted</div>
-                    </div>
-                  </div>
-
-                  <div className="h-px bg-border my-6" />
-
-                  {/* ── Step 4: Sign in ── */}
-                  <div className="mb-6">
-                    <div className="text-[13px] font-bold text-text-1 mb-3 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-accent text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">4</span>
-                      Sign in to your DuoSign account
-                    </div>
-                    <P>Click the DuoSign icon in your toolbar. A small popup opens. If you are not signed in, click <strong className="text-text-1">Sign In</strong> — this opens the DuoSign website in a new tab where you can log in or create an account. Once you sign in on the website, the extension picks up your session automatically. Close the website tab and come back to your browser.</P>
-                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of the extension popup with the <strong className="text-text-1">Sign In</strong> button visible, before logging in</div>
-                    </div>
-                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of the same popup after signing in — showing the user&apos;s name/email and the <strong className="text-text-1">Sign Out</strong> button</div>
-                    </div>
-                  </div>
-
-                  <div className="h-px bg-border my-6" />
-
-                  {/* ── Step 5: Translate text ── */}
-                  <div className="mb-6">
-                    <div className="text-[13px] font-bold text-text-1 mb-3 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-accent text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">5</span>
-                      Translate text on any webpage
-                    </div>
-                    <P>Go to any webpage — a news article, an email, anything with text. Highlight any sentence or word with your mouse, then <strong className="text-text-1">right-click</strong> the selection. You will see a <strong className="text-text-1">&quot;Send to DuoSign&quot;</strong> option in the context menu. Click it.</P>
-                    <P>Alternatively, you can use the keyboard shortcut <Code>Cmd+Shift+P</Code> (Mac) or <Code>Ctrl+Shift+P</Code> (Windows/Linux) after highlighting text — no right-click needed.</P>
-                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of text highlighted on a webpage with the right-click context menu open, showing <strong className="text-text-1">&quot;Send to DuoSign&quot;</strong> as one of the menu items</div>
-                    </div>
-                  </div>
-
-                  {/* ── Step 6: Side panel ── */}
-                  <div className="mb-6">
-                    <div className="text-[13px] font-bold text-text-1 mb-3 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-accent text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">6</span>
-                      Watch the signing avatar in the side panel
-                    </div>
-                    <P>After clicking &quot;Send to DuoSign&quot;, a side panel slides open on the right side of your browser. The avatar will begin signing the text you selected. You can resize the panel by dragging its left edge. The panel stays open as you browse — send more text whenever you want.</P>
-                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of a webpage with the DuoSign side panel open on the right, showing the skeleton/avatar actively signing. Ideally capture mid-signing so the pose is visible</div>
-                    </div>
-                    <Callout emoji="💡">
-                      You can also type directly into the side panel&apos;s text box and press Sign — you don&apos;t need to select text from the page every time.
-                    </Callout>
-                  </div>
-
-                  <div className="h-px bg-border my-6" />
-
-                  {/* ── Step 7: YouTube captions ── */}
-                  <div className="mb-6">
-                    <div className="text-[13px] font-bold text-text-1 mb-3 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-accent text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">7</span>
-                      YouTube live captions mode
-                    </div>
-                    <P>DuoSign can read the captions from any YouTube video and sign them in real time as the video plays — so you see the signing avatar alongside the video automatically.</P>
-                    <div className="space-y-2 mb-4">
-                      {[
-                        { step: "a", text: <>Go to any YouTube video and turn on captions by clicking the <strong className="text-text-1">CC</strong> button at the bottom of the video player.</> },
-                        { step: "b", text: <>Click the DuoSign extension icon in your toolbar. In the popup, click <strong className="text-text-1">Start Signing</strong> (or the YouTube signing toggle).</> },
-                        { step: "c", text: <>A small avatar overlay appears on top of the video. As the video plays, the avatar signs each caption line as it appears.</> },
-                        { step: "d", text: <>To move the overlay out of the way, click and drag it. To close it, click the <strong className="text-text-1">×</strong> button on the overlay.</> },
-                      ].map(({ step, text }) => (
-                        <div key={step} className="flex gap-3 text-[13px] text-text-2">
-                          <span className="w-5 h-5 rounded-full border border-border text-[11px] font-bold flex items-center justify-center flex-shrink-0 text-text-3 mt-0.5">{step}</span>
-                          <span>{text}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of a YouTube video playing with the DuoSign avatar overlay visible on top of the video, showing the skeleton signing. The CC button should be active (white/highlighted) in the YouTube controls</div>
-                    </div>
-                    <Note>
-                      YouTube auto-generated captions work fine. If the avatar isn&apos;t signing, check that captions are actually turned on — the CC button must be white/active, not grey.
-                    </Note>
-                  </div>
-
-                  <div className="h-px bg-border my-6" />
-
-                  {/* ── Step 8: Settings ── */}
-                  <div className="mb-6">
-                    <div className="text-[13px] font-bold text-text-1 mb-3 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-accent text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">8</span>
-                      Extension settings
-                    </div>
-                    <P>Right-click the DuoSign icon and choose <strong className="text-text-1">Options</strong>, or go to <Code>chrome://extensions</Code>, find DuoSign, and click <strong className="text-text-1">Details → Extension options</strong>. From the settings page you can:</P>
-                    <div className="p-4 rounded-[12px] bg-surface border border-border shadow-raised-sm mb-4">
-                      <ul className="space-y-1.5 text-[13px] text-text-2">
-                        <li className="flex items-start gap-2"><span className="text-accent mt-0.5">→</span> Change the signing speed (slow, normal, fast)</li>
-                        <li className="flex items-start gap-2"><span className="text-accent mt-0.5">→</span> Switch between skeleton and 3D avatar modes</li>
-                        <li className="flex items-start gap-2"><span className="text-accent mt-0.5">→</span> Download or delete extra avatar models</li>
-                        <li className="flex items-start gap-2"><span className="text-accent mt-0.5">→</span> Remap the keyboard shortcut</li>
-                        <li className="flex items-start gap-2"><span className="text-accent mt-0.5">→</span> Sign out of your account</li>
-                      </ul>
-                    </div>
-                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of the DuoSign Settings/Options page showing the avatar mode selector, speed selector, and avatar list with Download/Delete buttons</div>
-                    </div>
-                  </div>
-
-                  <Callout emoji="⚡">
-                    <strong>First translation may be slow.</strong> The server goes to sleep when nobody is using it. The very first translation after a period of inactivity can take up to 30 seconds to warm up. Subsequent translations are fast.
-                  </Callout>
                 </section>
 
                 <div className="h-px bg-border my-8" />
@@ -678,6 +552,166 @@ export default function DocsPage() {
                   <span className="text-[12px] text-text-3">DuoSign — v0.1.0-alpha · Ashesi University 2026</span>
                   <button onClick={() => switchTab("dev")} className="flex items-center gap-1.5 text-[13px] font-semibold text-accent hover:underline cursor-pointer">
                     Developer Docs →
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* ══════════════════════════════════════════════════════ */}
+            {/* CHROME EXTENSION TAB                                   */}
+            {/* ══════════════════════════════════════════════════════ */}
+            {tab === "chrome" && (
+              <>
+                <section id="ext-install">
+                  <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-2 font-mono">Setup</div>
+                  <Heading1>Chrome Extension</Heading1>
+                  <P>
+                    The DuoSign Chrome extension lets you translate any text on any webpage to ASL without leaving the page.
+                    Highlight text, right-click, and a sign-language panel opens beside your browser — no tab-switching, no copy-pasting.
+                    It also integrates with YouTube live captions so you can watch any video with a signing avatar alongside it.
+                  </P>
+                  <Note>
+                    The extension is distributed as a ZIP file — you install it directly into Chrome. It does <strong>not</strong> require the Chrome Web Store. You only need to do this once.
+                  </Note>
+
+                  <div className="mb-6">
+                    <div className="text-[13px] font-bold text-text-1 mb-3 flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-accent text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">1</span>
+                      Get the extension file
+                    </div>
+                    <P>Download the <strong className="text-text-1">duosign-extension.zip</strong> file shared with you. Save it somewhere easy to find — your Downloads folder is fine. Unzip it so you have a folder called <strong className="text-text-1">duosign-extension</strong>.</P>
+                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
+                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
+                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of the unzipped <strong className="text-text-1">duosign-extension</strong> folder in Finder/Explorer, showing the files inside (manifest.json, background.js, sidepanel.html, etc.)</div>
+                    </div>
+                  </div>
+
+                  <div className="mb-6">
+                    <div className="text-[13px] font-bold text-text-1 mb-3 flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-accent text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">2</span>
+                      Open Chrome Extensions and enable Developer Mode
+                    </div>
+                    <P>In Chrome, go to <Code>chrome://extensions</Code> (type that directly into the address bar and press Enter). In the top-right corner of that page, toggle <strong className="text-text-1">Developer mode</strong> on. The page will refresh and show extra buttons at the top left.</P>
+                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
+                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
+                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of <strong className="text-text-1">chrome://extensions</strong> with the <strong className="text-text-1">Developer mode</strong> toggle highlighted in the top-right corner, switched ON</div>
+                    </div>
+                  </div>
+
+                  <div className="mb-6">
+                    <div className="text-[13px] font-bold text-text-1 mb-3 flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-accent text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">3</span>
+                      Load the extension
+                    </div>
+                    <P>Click <strong className="text-text-1">Load unpacked</strong>. A file picker opens — select the <strong className="text-text-1">duosign-extension</strong> folder you unzipped (select the folder itself, not any file inside it). Click Open/Select Folder.</P>
+                    <P>DuoSign will appear in your extensions list. Click the puzzle-piece icon in your Chrome toolbar and pin DuoSign so it&apos;s always visible.</P>
+                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
+                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
+                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of <strong className="text-text-1">chrome://extensions</strong> after loading — showing the DuoSign card with name, version, and toggle enabled</div>
+                    </div>
+                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
+                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
+                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of the Chrome toolbar with the puzzle-piece icon open, showing DuoSign listed and the pin icon highlighted</div>
+                    </div>
+                  </div>
+                </section>
+
+                <div className="h-px bg-border my-8" />
+
+                <section id="ext-login">
+                  <Heading2 id="ext-login">Sign In</Heading2>
+                  <P>Click the DuoSign icon in your toolbar. If you are not signed in, click <strong className="text-text-1">Sign In</strong> — this opens the DuoSign website in a new tab. Log in or create a free account, then come back to your browser. The extension picks up your session automatically.</P>
+                  <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
+                    <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
+                    <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of the extension popup with the <strong className="text-text-1">Sign In</strong> button visible, before logging in</div>
+                  </div>
+                  <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
+                    <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
+                    <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of the popup after signing in — showing the user&apos;s name/email and the <strong className="text-text-1">Sign Out</strong> button</div>
+                  </div>
+                </section>
+
+                <div className="h-px bg-border my-8" />
+
+                <section id="ext-translate">
+                  <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-2 font-mono">Using It</div>
+                  <Heading2 id="ext-translate">Translate Any Text</Heading2>
+                  <P>Go to any webpage — a news article, an email, anything with text. Highlight any sentence or word with your mouse, then <strong className="text-text-1">right-click</strong> the selection. You will see <strong className="text-text-1">&quot;Send to DuoSign&quot;</strong> in the context menu. Click it.</P>
+                  <P>You can also use the keyboard shortcut <Code>Cmd+Shift+P</Code> (Mac) or <Code>Ctrl+Shift+P</Code> (Windows/Linux) after highlighting — no right-click needed.</P>
+                  <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
+                    <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
+                    <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of text highlighted on a webpage with the right-click context menu open, showing <strong className="text-text-1">&quot;Send to DuoSign&quot;</strong> as one of the menu items</div>
+                  </div>
+                </section>
+
+                <div className="h-px bg-border my-8" />
+
+                <section id="ext-sidepanel">
+                  <Heading2 id="ext-sidepanel">Side Panel</Heading2>
+                  <P>After clicking &quot;Send to DuoSign&quot;, a side panel slides open on the right side of your browser. The avatar begins signing the text you selected. Resize the panel by dragging its left edge. The panel stays open as you browse — send more text any time.</P>
+                  <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
+                    <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
+                    <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of a webpage with the DuoSign side panel open on the right, showing the skeleton/avatar actively signing — ideally mid-pose so the animation is visible</div>
+                  </div>
+                  <Callout emoji="💡">
+                    You can also type directly into the side panel&apos;s text box and press Sign — you don&apos;t need to select text from the page every time.
+                  </Callout>
+                </section>
+
+                <div className="h-px bg-border my-8" />
+
+                <section id="ext-youtube">
+                  <Heading2 id="ext-youtube">YouTube Captions</Heading2>
+                  <P>DuoSign can read the live captions from any YouTube video and sign them as the video plays — the avatar appears as an overlay right on top of the player.</P>
+                  <div className="space-y-2 mb-4">
+                    {[
+                      { step: "a", text: <>Go to any YouTube video and turn on captions by clicking the <strong className="text-text-1">CC</strong> button at the bottom of the player.</> },
+                      { step: "b", text: <>Click the DuoSign icon in your toolbar, then click <strong className="text-text-1">Start Signing</strong>.</> },
+                      { step: "c", text: <>A signing avatar overlay appears on the video. As captions appear, the avatar signs them in real time.</> },
+                      { step: "d", text: <>Drag the overlay to reposition it. Click <strong className="text-text-1">×</strong> to close it.</> },
+                    ].map(({ step, text }) => (
+                      <div key={step} className="flex gap-3 text-[13px] text-text-2">
+                        <span className="w-5 h-5 rounded-full border border-border text-[11px] font-bold flex items-center justify-center flex-shrink-0 text-text-3 mt-0.5">{step}</span>
+                        <span>{text}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
+                    <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
+                    <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of a YouTube video playing with the DuoSign avatar overlay on top, skeleton mid-sign. The CC button should be active (white) in the YouTube controls</div>
+                  </div>
+                  <Note>
+                    YouTube auto-generated captions work fine. If the avatar isn&apos;t signing, make sure captions are actually on — the CC button must be white/active, not grey.
+                  </Note>
+                </section>
+
+                <div className="h-px bg-border my-8" />
+
+                <section id="ext-settings">
+                  <Heading2 id="ext-settings">Extension Settings</Heading2>
+                  <P>Right-click the DuoSign icon and choose <strong className="text-text-1">Options</strong>, or go to <Code>chrome://extensions</Code> → DuoSign → <strong className="text-text-1">Details → Extension options</strong>.</P>
+                  <div className="p-4 rounded-[12px] bg-surface border border-border shadow-raised-sm mb-4">
+                    <ul className="space-y-1.5 text-[13px] text-text-2">
+                      <li className="flex items-start gap-2"><span className="text-accent mt-0.5">→</span> Change the signing speed (slow, normal, fast)</li>
+                      <li className="flex items-start gap-2"><span className="text-accent mt-0.5">→</span> Switch between skeleton and 3D avatar modes</li>
+                      <li className="flex items-start gap-2"><span className="text-accent mt-0.5">→</span> Download or delete extra avatar models</li>
+                      <li className="flex items-start gap-2"><span className="text-accent mt-0.5">→</span> Remap the keyboard shortcut</li>
+                      <li className="flex items-start gap-2"><span className="text-accent mt-0.5">→</span> Sign out of your account</li>
+                    </ul>
+                  </div>
+                  <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-4">
+                    <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
+                    <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of the DuoSign Options page showing the avatar mode selector, speed selector, and avatar list with Download/Delete buttons</div>
+                  </div>
+                  <Callout emoji="⚡">
+                    <strong>First translation may be slow.</strong> The server sleeps when idle. The first sign after a quiet period can take up to 30 seconds to warm up — subsequent ones are fast.
+                  </Callout>
+                </section>
+
+                <div className="flex items-center justify-between pt-2 pb-12">
+                  <span className="text-[12px] text-text-3">DuoSign Chrome Extension · v0.1.0</span>
+                  <button onClick={() => switchTab("user")} className="flex items-center gap-1.5 text-[13px] font-semibold text-accent hover:underline cursor-pointer">
+                    ← Back to User Guide
                   </button>
                 </div>
               </>
