@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTheme } from "@/shared/hooks/useTheme";
 import SegmentedControl from "@/shared/ui/SegmentedControl";
 import Button from "@/shared/ui/Button";

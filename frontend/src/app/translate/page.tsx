@@ -19,7 +19,7 @@ import { useHistory } from "@/shared/hooks/useHistory";
 import { useGuestLimit } from "@/shared/hooks/useGuestLimit";
 import { useSettings } from "@/shared/hooks/useSettings";
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import type { GlossToken } from "@/entities/gloss/types";
 import type { AvatarDisplayMode } from "@/entities/avatar/types";
 import GlossChip from "@/shared/ui/GlossChip";
@@ -27,6 +27,7 @@ import Link from "next/link";
 import { useToast } from "@/shared/ui/Toast";
 import { useSession } from "@/lib/auth-client";
 import type { HistoryEntryType } from "@/shared/lib/history";
+import { WelcomeTips } from "@/shared/ui/WelcomeTips";
 
 // Outer shell — provides context, then delegates to inner component
 export default function TranslatePage() {
@@ -322,6 +323,7 @@ function TranslatePageContent() {
       <div className="min-h-screen flex flex-col">
         <NavigationBar />
         {!isAuthenticated && <GuestBanner remaining={guestRemaining} />}
+        <WelcomeTips />
 
         <main className="flex flex-col flex-1">
         {/* ═══════════════════════════════════
