@@ -2,6 +2,7 @@
   "manifest_version": 3,
   "name": "DuoSign — ASL Translation",
   "version": "0.1.0",
+  "_env": "production",
   "description": "Translate any text to American Sign Language with a real-time skeleton avatar. Highlight text, right-click, and sign.",
   "permissions": ["sidePanel", "contextMenus", "activeTab", "storage"],
   "host_permissions": [

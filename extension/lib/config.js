@@ -9,7 +9,10 @@
  */
 
 (function () {
-  const IS_DEV = !("update_url" in chrome.runtime.getManifest());
+  const _m = chrome.runtime.getManifest();
+  // IS_DEV is true only when loaded unpacked AND _env is not "production".
+  // "_env": "production" in manifest forces prod mode for unpacked distributions.
+  const IS_DEV = !("update_url" in _m) && _m._env !== "production";
 
   const SUPABASE_STORAGE = "https://yqhuvnbgtrbjrfmykznk.supabase.co/storage/v1/object/public";
 

@@ -11,7 +11,8 @@
 
 // ── Environment detection ────────────────────────────────────────────
 // Dev: points to local FastAPI + Next.js. Prod: Render + Vercel.
-const IS_DEV = !("update_url" in chrome.runtime.getManifest());
+const _manifest = chrome.runtime.getManifest();
+const IS_DEV = !("update_url" in _manifest) && _manifest._env !== "production";
 
 const API_BASE_URL = IS_DEV
   ? "http://localhost:8000"        // FastAPI dev server

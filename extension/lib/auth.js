@@ -15,10 +15,11 @@
 
 const AUTH_STORAGE_KEY = "duosign_auth_session";
 
-// Resolve base URL: localhost in dev, production URL otherwise
+// Resolve base URL: mirrors the IS_DEV logic in config.js
 function getAppBaseURL() {
-  // In development, the frontend runs on localhost:3000
-  return "http://localhost:3000";
+  const m = chrome.runtime.getManifest();
+  const IS_DEV = !("update_url" in m) && m._env !== "production";
+  return IS_DEV ? "http://localhost:3000" : "https://duosign.vercel.app";
 }
 
 /**
