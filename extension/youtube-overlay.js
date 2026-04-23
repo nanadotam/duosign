@@ -78,7 +78,7 @@
     for (const t of tracks) {
       if (t.textContent?.toLowerCase().includes("auto-generated")) return true;
     }
-    return true;
+    return false;
   }
 
   function setStatus(text) {
