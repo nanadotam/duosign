@@ -1,0 +1,74 @@
+{
+  "manifest_version": 3,
+  "name": "DuoSign — ASL Translation",
+  "version": "0.1.0",
+  "_env": "production",
+  "description": "Translate any text to American Sign Language with a real-time skeleton avatar. Highlight text, right-click, and sign.",
+  "permissions": ["sidePanel", "contextMenus", "activeTab", "storage"],
+  "host_permissions": [
+    "https://duosign.onrender.com/*",
+    "https://duosign.vercel.app/*",
+    "https://yqhuvnbgtrbjrfmykznk.supabase.co/*",
+    "http://localhost:3000/*",
+    "http://localhost:8000/*"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:3000/*",
+      "https://duosign.vercel.app/*"
+    ]
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://www.youtube.com/*"],
+      "js": [
+        "lib/config.js",
+        "lib/pose-parser.js",
+        "lib/skeleton-renderer.js",
+        "lib/pose-player.js",
+        "youtube-overlay.js"
+      ],
+      "css": ["youtube-overlay.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "send-to-duosign": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+P",
+        "mac": "Command+Shift+P"
+      },
+      "description": "Send selected text to DuoSign for ASL translation"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "options_page": "settings.html",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src 'self' https://esm.sh https://duosign.onrender.com https://duosign.vercel.app https://yqhuvnbgtrbjrfmykznk.supabase.co http://localhost:3000 http://localhost:8000"
+  }
+}

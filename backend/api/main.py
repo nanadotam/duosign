@@ -131,6 +131,7 @@ app.include_router(export_router)
 _DEV_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
+    "https://duosign.vercel.app",
 ]
 
 # allow_credentials=True is incompatible with the "*" wildcard — browsers
@@ -139,9 +140,15 @@ _DEV_ORIGINS = [
 import os as _os
 _extra = [o.strip() for o in _os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()]
 
+# Chrome extensions use chrome-extension://<id> as their origin. We cannot
+# enumerate all extension IDs ahead of time, so we handle them in the ASGI
+# middleware below rather than the CORS list (which requires exact matches).
+_all_origins = _DEV_ORIGINS + _extra
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_DEV_ORIGINS + _extra,
+    allow_origins=_all_origins,
+    allow_origin_regex=r"chrome-extension://.*",
     allow_credentials=True,
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type", "Authorization", "X-User-Id"],
