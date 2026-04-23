@@ -41,8 +41,9 @@ const CHROME_SECTIONS: Array<{
   {
     group: "Setup",
     items: [
-      { id: "ext-install", label: "Installation" },
-      { id: "ext-login",   label: "Sign In" },
+      { id: "ext-download", label: "Download" },
+      { id: "ext-install",  label: "Installation" },
+      { id: "ext-login",    label: "Sign In" },
     ],
   },
   {
@@ -562,7 +563,7 @@ export default function DocsPage() {
             {/* ══════════════════════════════════════════════════════ */}
             {tab === "chrome" && (
               <>
-                <section id="ext-install">
+                <section id="ext-download">
                   <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-2 font-mono">Setup</div>
                   <Heading1>Chrome Extension</Heading1>
                   <P>
@@ -570,6 +571,42 @@ export default function DocsPage() {
                     Highlight text, right-click, and a sign-language panel opens beside your browser — no tab-switching, no copy-pasting.
                     It also integrates with YouTube live captions so you can watch any video with a signing avatar alongside it.
                   </P>
+
+                  <div className="p-5 rounded-[12px] bg-surface border border-border shadow-raised-sm mb-6">
+                    <div className="text-[13px] font-semibold text-text-1 mb-1">Download the latest release</div>
+                    <div className="text-[13px] text-text-2 mb-4">
+                      The extension is packaged as a ZIP on GitHub Releases. Download the latest <strong className="text-text-1">duosign-extension.zip</strong>, unzip it, then follow the installation steps below.
+                    </div>
+                    <a
+                      href="https://github.com/nanadotam/duosign/releases"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-[8px] bg-[color-mix(in_srgb,var(--accent)_10%,var(--surface-2))] border border-[color-mix(in_srgb,var(--accent)_30%,transparent)] text-accent text-[13px] font-semibold hover:bg-[color-mix(in_srgb,var(--accent)_16%,var(--surface-2))] transition-colors"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.729.083-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.807 1.305 3.492.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                      View Releases on GitHub
+                    </a>
+                  </div>
+
+                  <div className="p-4 rounded-[10px] bg-[color-mix(in_srgb,var(--warn)_6%,var(--surface-2))] border border-[color-mix(in_srgb,var(--warn)_20%,transparent)] mb-6">
+                    <div className="text-[11px] font-bold tracking-[0.06em] uppercase text-[var(--warn)] mb-2 font-mono">For the developer — publishing a new release</div>
+                    <ol className="space-y-1.5 text-[13px] text-text-2 list-none">
+                      <li className="flex gap-2"><span className="text-[var(--warn)] font-bold flex-shrink-0">1.</span> Zip the <Code>extension/</Code> folder: <Code>cd duosign && zip -r duosign-extension.zip extension/</Code></li>
+                      <li className="flex gap-2"><span className="text-[var(--warn)] font-bold flex-shrink-0">2.</span> Go to{" "}
+                        <a href="https://github.com/nanadotam/duosign/releases/new" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+                          github.com/nanadotam/duosign/releases/new
+                        </a>
+                      </li>
+                      <li className="flex gap-2"><span className="text-[var(--warn)] font-bold flex-shrink-0">3.</span> Set a tag (e.g. <Code>v0.1.0</Code>), write a title, and attach <Code>duosign-extension.zip</Code> as a release asset.</li>
+                      <li className="flex gap-2"><span className="text-[var(--warn)] font-bold flex-shrink-0">4.</span> Publish — the link above will show the new release automatically.</li>
+                    </ol>
+                  </div>
+                </section>
+
+                <div className="h-px bg-border my-8" />
+
+                <section id="ext-install">
+                  <Heading2 id="ext-install">Installation</Heading2>
                   <Note>
                     The extension is distributed as a ZIP file — you install it directly into Chrome. It does <strong>not</strong> require the Chrome Web Store. You only need to do this once.
                   </Note>
@@ -577,9 +614,9 @@ export default function DocsPage() {
                   <div className="mb-6">
                     <div className="text-[13px] font-bold text-text-1 mb-3 flex items-center gap-2">
                       <span className="w-6 h-6 rounded-full bg-accent text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">1</span>
-                      Get the extension file
+                      Download and unzip
                     </div>
-                    <P>Download the <strong className="text-text-1">duosign-extension.zip</strong> file shared with you. Save it somewhere easy to find — your Downloads folder is fine. Unzip it so you have a folder called <strong className="text-text-1">duosign-extension</strong>.</P>
+                    <P>Go to the <a href="https://github.com/nanadotam/duosign/releases" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">GitHub Releases page</a> and download the latest <strong className="text-text-1">duosign-extension.zip</strong>. Unzip it so you have a folder called <strong className="text-text-1">duosign-extension</strong>.</P>
                     <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
                       <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
                       <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of the unzipped <strong className="text-text-1">duosign-extension</strong> folder in Finder/Explorer, showing the files inside (manifest.json, background.js, sidepanel.html, etc.)</div>
