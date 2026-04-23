@@ -37,6 +37,8 @@
   let captionObserver = null;
   let pipElement      = null;
   let bannerElement   = null;
+  let toastElement    = null;
+  let toastTimer      = null;
   let isSigningActive = false;
   let lastCaption     = "";
   let phraseBuffer    = "";
@@ -130,6 +132,51 @@
         <span>Auto-generated captions may contain inaccuracies that affect signing accuracy.</span>
       `;
       bannerElement.after(d);
+    }
+  }
+
+  // ── Fixed toast (ambient-mode-safe fallback) ─────────────────────────────
+  function createToast(playerEl) {
+    if (toastElement) return;
+
+    toastElement = document.createElement("div");
+    toastElement.id = "duosign-toast";
+    toastElement.innerHTML = `
+      <span class="duosign-toast-icon">🤟</span>
+      <div class="duosign-toast-body">
+        <div class="duosign-toast-title">DuoSign ready</div>
+        <div class="duosign-toast-sub">Captions detected</div>
+      </div>
+      <button class="duosign-toast-start" id="duosignToastStart">Start Signing</button>
+      <button class="duosign-toast-close" id="duosignToastClose" title="Dismiss">×</button>
+    `;
+    document.body.appendChild(toastElement);
+
+    document.getElementById("duosignToastStart").addEventListener("click", () => {
+      if (isSigningActive) stopSigning();
+      else startSigning(playerEl);
+    });
+
+    document.getElementById("duosignToastClose").addEventListener("click", removeToast);
+
+    // Auto-dismiss after 12 s if the user ignores it
+    toastTimer = setTimeout(removeToast, 12000);
+  }
+
+  function removeToast() {
+    if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+    if (toastElement) { toastElement.remove(); toastElement = null; }
+  }
+
+  function updateToastButton() {
+    const btn = document.getElementById("duosignToastStart");
+    if (!btn) return;
+    if (isSigningActive) {
+      btn.textContent = "Stop Signing";
+      btn.classList.add("stopping");
+    } else {
+      btn.textContent = "Start Signing";
+      btn.classList.remove("stopping");
     }
   }
 
@@ -311,6 +358,10 @@
     const btn = document.getElementById("duosignStartBtn");
     if (btn) { btn.textContent = "Stop Signing"; btn.classList.add("active"); }
 
+    // Cancel auto-dismiss and update toast button instead of removing it
+    if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+    updateToastButton();
+
     createPiP(playerEl);
     pipElement.style.display = "flex";
     initPosePlayer();
@@ -325,6 +376,8 @@
 
     const btn = document.getElementById("duosignStartBtn");
     if (btn) { btn.textContent = "Start Signing"; btn.classList.remove("active"); }
+
+    updateToastButton();
 
     if (pipElement) pipElement.style.display = "none";
     if (captionObserver) { captionObserver.disconnect(); captionObserver = null; }
@@ -435,10 +488,12 @@
     setTimeout(() => {
       if (detectCaptions()) {
         createBanner(playerEl);
+        createToast(playerEl);
       } else {
         const poll = setInterval(() => {
           if (detectCaptions()) {
             createBanner(playerEl);
+            createToast(playerEl);
             clearInterval(poll);
           }
         }, 2000);
@@ -460,6 +515,7 @@
       bannerElement.remove(); bannerElement = null;
       document.getElementById("duosign-yt-disclaimer")?.remove();
     }
+    removeToast();
 
     isSigningActive = false;
     lastCaption     = "";
