@@ -588,19 +588,6 @@ export default function DocsPage() {
                     </a>
                   </div>
 
-                  <div className="p-4 rounded-[10px] bg-[color-mix(in_srgb,var(--warn)_6%,var(--surface-2))] border border-[color-mix(in_srgb,var(--warn)_20%,transparent)] mb-6">
-                    <div className="text-[11px] font-bold tracking-[0.06em] uppercase text-[var(--warn)] mb-2 font-mono">For the developer — publishing a new release</div>
-                    <ol className="space-y-1.5 text-[13px] text-text-2 list-none">
-                      <li className="flex gap-2"><span className="text-[var(--warn)] font-bold flex-shrink-0">1.</span> Zip the <Code>extension/</Code> folder: <Code>cd duosign && zip -r duosign-extension.zip extension/</Code></li>
-                      <li className="flex gap-2"><span className="text-[var(--warn)] font-bold flex-shrink-0">2.</span> Go to{" "}
-                        <a href="https://github.com/nanadotam/duosign/releases/new" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
-                          github.com/nanadotam/duosign/releases/new
-                        </a>
-                      </li>
-                      <li className="flex gap-2"><span className="text-[var(--warn)] font-bold flex-shrink-0">3.</span> Set a tag (e.g. <Code>v0.1.0</Code>), write a title, and attach <Code>duosign-extension.zip</Code> as a release asset.</li>
-                      <li className="flex gap-2"><span className="text-[var(--warn)] font-bold flex-shrink-0">4.</span> Publish — the link above will show the new release automatically.</li>
-                    </ol>
-                  </div>
                 </section>
 
                 <div className="h-px bg-border my-8" />
@@ -617,10 +604,7 @@ export default function DocsPage() {
                       Download and unzip
                     </div>
                     <P>Go to the <a href="https://github.com/nanadotam/duosign/releases" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">GitHub Releases page</a> and download the latest <strong className="text-text-1">duosign-extension.zip</strong>. Unzip it so you have a folder called <strong className="text-text-1">duosign-extension</strong>.</P>
-                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of the unzipped <strong className="text-text-1">duosign-extension</strong> folder in Finder/Explorer, showing the files inside (manifest.json, background.js, sidepanel.html, etc.)</div>
-                    </div>
+                    <img src="/ext-guide/1-ext-folder.png" alt="Unzipped duosign-extension folder showing its contents" className="w-full rounded-[10px] border border-border shadow-raised-sm mb-4 block" />
                   </div>
 
                   <div className="mb-6">
@@ -629,10 +613,7 @@ export default function DocsPage() {
                       Open Chrome Extensions and enable Developer Mode
                     </div>
                     <P>In Chrome, go to <Code>chrome://extensions</Code> (type that directly into the address bar and press Enter). In the top-right corner of that page, toggle <strong className="text-text-1">Developer mode</strong> on. The page will refresh and show extra buttons at the top left.</P>
-                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of <strong className="text-text-1">chrome://extensions</strong> with the <strong className="text-text-1">Developer mode</strong> toggle highlighted in the top-right corner, switched ON</div>
-                    </div>
+                    <img src="/ext-guide/2-dev-mode.png" alt="chrome://extensions with Developer mode toggle switched ON" className="w-full rounded-[10px] border border-border shadow-raised-sm mb-4 block" />
                   </div>
 
                   <div className="mb-6">
@@ -642,14 +623,7 @@ export default function DocsPage() {
                     </div>
                     <P>Click <strong className="text-text-1">Load unpacked</strong>. A file picker opens — select the <strong className="text-text-1">duosign-extension</strong> folder you unzipped (select the folder itself, not any file inside it). Click Open/Select Folder.</P>
                     <P>DuoSign will appear in your extensions list. Click the puzzle-piece icon in your Chrome toolbar and pin DuoSign so it&apos;s always visible.</P>
-                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of <strong className="text-text-1">chrome://extensions</strong> after loading — showing the DuoSign card with name, version, and toggle enabled</div>
-                    </div>
-                    <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                      <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                      <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of the Chrome toolbar with the puzzle-piece icon open, showing DuoSign listed and the pin icon highlighted</div>
-                    </div>
+                    <img src="/ext-guide/3-load-ext.png" alt="chrome://extensions showing the DuoSign extension card loaded and enabled" className="w-full rounded-[10px] border border-border shadow-raised-sm mb-4 block" />
                   </div>
                 </section>
 
@@ -658,13 +632,9 @@ export default function DocsPage() {
                 <section id="ext-login">
                   <Heading2 id="ext-login">Sign In</Heading2>
                   <P>Click the DuoSign icon in your toolbar. If you are not signed in, click <strong className="text-text-1">Sign In</strong> — this opens the DuoSign website in a new tab. Log in or create a free account, then come back to your browser. The extension picks up your session automatically.</P>
-                  <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                    <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                    <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of the extension popup with the <strong className="text-text-1">Sign In</strong> button visible, before logging in</div>
-                  </div>
-                  <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                    <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                    <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of the popup after signing in — showing the user&apos;s name/email and the <strong className="text-text-1">Sign Out</strong> button</div>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <img src="/ext-guide/sign-in-modal.png" alt="Extension popup showing the Sign In button" className="w-full rounded-[10px] border border-border shadow-raised-sm block" />
+                    <img src="/ext-guide/signout-modal-settings.png" alt="Extension popup after signing in, showing the user's name and Sign Out button" className="w-full rounded-[10px] border border-border shadow-raised-sm block" />
                   </div>
                 </section>
 
@@ -675,10 +645,7 @@ export default function DocsPage() {
                   <Heading2 id="ext-translate">Translate Any Text</Heading2>
                   <P>Go to any webpage — a news article, an email, anything with text. Highlight any sentence or word with your mouse, then <strong className="text-text-1">right-click</strong> the selection. You will see <strong className="text-text-1">&quot;Send to DuoSign&quot;</strong> in the context menu. Click it.</P>
                   <P>You can also use the keyboard shortcut <Code>Cmd+Shift+P</Code> (Mac) or <Code>Ctrl+Shift+P</Code> (Windows/Linux) after highlighting — no right-click needed.</P>
-                  <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                    <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                    <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of text highlighted on a webpage with the right-click context menu open, showing <strong className="text-text-1">&quot;Send to DuoSign&quot;</strong> as one of the menu items</div>
-                  </div>
+                  <img src="/ext-guide/send-to-duosign-right-click.png" alt="Right-click context menu showing Send to DuoSign option on selected text" className="w-full rounded-[10px] border border-border shadow-raised-sm mb-4 block" />
                 </section>
 
                 <div className="h-px bg-border my-8" />
@@ -686,10 +653,7 @@ export default function DocsPage() {
                 <section id="ext-sidepanel">
                   <Heading2 id="ext-sidepanel">Side Panel</Heading2>
                   <P>After clicking &quot;Send to DuoSign&quot;, a side panel slides open on the right side of your browser. The avatar begins signing the text you selected. Resize the panel by dragging its left edge. The panel stays open as you browse — send more text any time.</P>
-                  <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                    <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                    <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of a webpage with the DuoSign side panel open on the right, showing the skeleton/avatar actively signing — ideally mid-pose so the animation is visible</div>
-                  </div>
+                  <img src="/ext-guide/side-panel.png" alt="DuoSign side panel open in the browser with the avatar signing" className="w-full rounded-[10px] border border-border shadow-raised-sm mb-4 block" />
                   <Callout emoji="💡">
                     You can also type directly into the side panel&apos;s text box and press Sign — you don&apos;t need to select text from the page every time.
                   </Callout>
@@ -713,10 +677,7 @@ export default function DocsPage() {
                       </div>
                     ))}
                   </div>
-                  <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-2">
-                    <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                    <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of a YouTube video playing with the DuoSign avatar overlay on top, skeleton mid-sign. The CC button should be active (white) in the YouTube controls</div>
-                  </div>
+                  <img src="/ext-guide/yt-capstions.png" alt="YouTube video with DuoSign signing overlay active on top of the player" className="w-full rounded-[10px] border border-border shadow-raised-sm mb-4 block" />
                   <Note>
                     YouTube auto-generated captions work fine. If the avatar isn&apos;t signing, make sure captions are actually on — the CC button must be white/active, not grey.
                   </Note>
@@ -735,10 +696,6 @@ export default function DocsPage() {
                       <li className="flex items-start gap-2"><span className="text-accent mt-0.5">→</span> Remap the keyboard shortcut</li>
                       <li className="flex items-start gap-2"><span className="text-accent mt-0.5">→</span> Sign out of your account</li>
                     </ul>
-                  </div>
-                  <div className="rounded-[10px] border-2 border-dashed border-border bg-surface-2 flex flex-col items-center justify-center py-8 px-4 mb-4">
-                    <div className="text-text-3 text-[12px] font-mono mb-1">[ SCREENSHOT ]</div>
-                    <div className="text-[13px] text-text-2 text-center max-w-xs">Screenshot of the DuoSign Options page showing the avatar mode selector, speed selector, and avatar list with Download/Delete buttons</div>
                   </div>
                   <Callout emoji="⚡">
                     <strong>First translation may be slow.</strong> The server sleeps when idle. The first sign after a quiet period can take up to 30 seconds to warm up — subsequent ones are fast.
