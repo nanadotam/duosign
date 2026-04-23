@@ -73,7 +73,6 @@ export default function RegisterPage() {
               error={errors.password?.message}
               {...register("password", {
                 required: "Password is required",
-<<<<<<< HEAD
                 minLength: { value: 8, message: "Minimum 8 characters" },
                 maxLength: { value: 72, message: "Max 72 characters" },
                 pattern: {
