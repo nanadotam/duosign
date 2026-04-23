@@ -200,6 +200,31 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       return true;
     }
 
+    // Floating action button clicked on a page — open side panel + translate
+    case "OPEN_SIDE_PANEL": {
+      const tabId = _sender?.tab?.id;
+      if (tabId) {
+        chrome.sidePanel.open({ tabId }).then(() => {
+          if (msg.text) {
+            setTimeout(() => {
+              chrome.runtime.sendMessage({ type: "TRANSLATE_TEXT", text: msg.text });
+            }, 300);
+          }
+        });
+      }
+      sendResponse({ ok: true });
+      return true;
+    }
+
+    // Content script detected a PDF tab — store URL for side panel to use
+    case "PDF_DETECTED": {
+      if (_sender?.tab?.id) {
+        chrome.storage.local.set({ lastPdfUrl: msg.url, lastPdfTabId: _sender.tab.id });
+      }
+      sendResponse({ ok: true });
+      return true;
+    }
+
     default:
       break;
   }
