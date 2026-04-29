@@ -30,6 +30,7 @@ from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Query
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, FileResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -144,6 +145,24 @@ _extra = [o.strip() for o in _os.getenv("ALLOWED_ORIGINS", "").split(",") if o.s
 # enumerate all extension IDs ahead of time, so we handle them in the ASGI
 # middleware below rather than the CORS list (which requires exact matches).
 _all_origins = _DEV_ORIGINS + _extra
+
+class WLASLLicenseHeaderMiddleware(BaseHTTPMiddleware):
+    """Inject WLASL C-UDA license headers on every /api/video/* and /api/pose/* response."""
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        path = request.url.path
+        if path.startswith("/api/video") or path.startswith("/api/pose"):
+            response.headers["X-Data-License"] = "C-UDA-1.0"
+            response.headers["X-Data-Attribution"] = (
+                "WLASL: Li et al., WACV 2020, github.com/dxli94/WLASL"
+            )
+            response.headers["X-Data-Use-Restriction"] = "Computational-Use-Only-Non-Commercial"
+            response.headers["X-Terms-Of-Service"] = "https://duosign.vercel.app/terms"
+            response.headers["Cache-Control"] = "no-store, no-cache"
+        return response
+
+
+app.add_middleware(WLASLLicenseHeaderMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

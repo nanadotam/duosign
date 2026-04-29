@@ -3,6 +3,8 @@ import { DM_Serif_Display, DM_Sans, JetBrains_Mono, Instrument_Serif, Instrument
 import { ThemeScript } from "@/shared/ui/ThemeScript";
 import { SettingsProvider } from "@/shared/providers/SettingsProvider";
 import { SettingsApplicator } from "@/shared/ui/SettingsApplicator";
+import Footer from "@/shared/ui/Footer";
+import OnboardingGate from "@/shared/ui/OnboardingGate";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
@@ -111,7 +113,9 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <SettingsProvider>
           <SettingsApplicator />
+          <OnboardingGate />
           {children}
+          <Footer />
           <Analytics />
         </SettingsProvider>
       </body>

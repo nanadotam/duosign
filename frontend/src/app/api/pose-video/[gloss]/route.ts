@@ -15,6 +15,13 @@ import path from "path";
 
 const POSES_V2_DIR = path.join(process.cwd(), "..", "bucket", "poses_v2");
 
+const WLASL_HEADERS = {
+  "X-Data-License": "C-UDA-1.0",
+  "X-Data-Attribution": "WLASL: Li et al., WACV 2020, github.com/dxli94/WLASL",
+  "X-Data-Use-Restriction": "Computational-Use-Only-Non-Commercial",
+  "X-Terms-Of-Service": "https://duosign.vercel.app/terms",
+};
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { gloss: string } }
@@ -48,11 +55,12 @@ export async function GET(
     return new NextResponse(buffer, {
       status: 206,
       headers: {
+        ...WLASL_HEADERS,
         "Content-Type": "video/mp4",
         "Content-Range": `bytes ${start}-${end}/${fileSize}`,
         "Accept-Ranges": "bytes",
         "Content-Length": String(chunkSize),
-        "Cache-Control": "public, max-age=86400, immutable",
+        "Cache-Control": "no-store",
       },
     });
   }
@@ -66,10 +74,11 @@ export async function GET(
   return new NextResponse(buffer, {
     status: 200,
     headers: {
+      ...WLASL_HEADERS,
       "Content-Type": "video/mp4",
       "Accept-Ranges": "bytes",
       "Content-Length": String(fileSize),
-      "Cache-Control": "public, max-age=86400, immutable",
+      "Cache-Control": "no-store",
       "Content-Disposition": `inline; filename="${gloss}.mp4"`,
     },
   });

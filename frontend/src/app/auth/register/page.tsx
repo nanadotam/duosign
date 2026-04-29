@@ -19,9 +19,14 @@ interface RegisterFormData {
 export default function RegisterPage() {
   const router = useRouter();
   const [authError, setAuthError] = useState<string | null>(null);
+  const [consentTerms, setConsentTerms] = useState(false);
+  const [consentPrototype, setConsentPrototype] = useState(false);
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<RegisterFormData>();
 
+  const canSubmit = consentTerms && consentPrototype;
+
   const onSubmit = async (data: RegisterFormData) => {
+    if (!canSubmit) return;
     setAuthError(null);
     try {
       const { error } = await signUp.email({
@@ -91,10 +96,53 @@ export default function RegisterPage() {
                 validate: (val) => val === watch("password") || "Passwords do not match",
               })}
             />
+
+            {/* Consent block */}
+            <div className="flex flex-col gap-3 py-3 px-3.5 bg-surface-2 border border-border rounded-[10px] text-sm">
+              <label className="flex gap-2.5 items-start cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={consentTerms}
+                  onChange={(e) => setConsentTerms(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-border accent-accent cursor-pointer"
+                />
+                <span className="text-text-2 leading-snug group-hover:text-text-1 transition-colors">
+                  I have read and agree to DuoSign&apos;s{" "}
+                  <Link href="/terms" target="_blank" className="text-accent hover:underline font-medium">
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" target="_blank" className="text-accent hover:underline font-medium">
+                    Privacy Policy
+                  </Link>
+                  , including the WLASL C-UDA data use obligations.
+                </span>
+              </label>
+
+              <label className="flex gap-2.5 items-start cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={consentPrototype}
+                  onChange={(e) => setConsentPrototype(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-border accent-accent cursor-pointer"
+                />
+                <span className="text-text-2 leading-snug group-hover:text-text-1 transition-colors">
+                  I understand that DuoSign is an academic prototype and not a certified accessibility tool.
+                </span>
+              </label>
+            </div>
+
             {authError && (
               <p className="text-sm text-red-500 text-center">{authError}</p>
             )}
-            <Button type="submit" variant="primary" size="lg" className="w-full mt-2" isLoading={isSubmitting}>
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className={`w-full mt-2 transition-opacity ${!canSubmit ? "opacity-40 cursor-not-allowed" : ""}`}
+              isLoading={isSubmitting}
+              disabled={!canSubmit || isSubmitting}
+            >
               Create Account
             </Button>
           </form>

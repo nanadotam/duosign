@@ -13,6 +13,10 @@ const ExportVideoModal = dynamic(
   () => import("@/features/animate-avatar/ui/ExportVideoModal"),
   { ssr: false }
 );
+const GuestLimitModal = dynamic(
+  () => import("@/shared/ui/GuestLimitModal"),
+  { ssr: false }
+);
 import { useTranslate } from "@/features/translate-text/model/useTranslate";
 import { usePlayback } from "@/features/animate-avatar/model/usePlayback";
 import { useHistory } from "@/shared/hooks/useHistory";
@@ -46,6 +50,7 @@ function TranslatePageContent() {
   const { showToast } = useToast();
   const [displayMode, setDisplayMode] = useState<AvatarDisplayMode>("avatar");
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
   const searchParams = useSearchParams();
   const autoplayPending = useRef(false);
   const exportPending = useRef(false);
@@ -145,10 +150,7 @@ function TranslatePageContent() {
       try {
         const guestUsage = await consume();
         if (!guestUsage.allowed) {
-          showToast(
-            guestUsage.message ?? "Guest limit reached. Create an account to continue translating.",
-            "error"
-          );
+          setShowGuestLimitModal(true);
           return false;
         }
       } catch {
@@ -305,6 +307,9 @@ function TranslatePageContent() {
           glossSequence={glossTokens.map((t) => t.text)}
           onClose={() => setShowExportModal(false)}
         />
+      )}
+      {showGuestLimitModal && (
+        <GuestLimitModal onClose={() => setShowGuestLimitModal(false)} />
       )}
       {/*
         MOBILE LAYOUT STRATEGY

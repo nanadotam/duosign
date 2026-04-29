@@ -10,6 +10,7 @@ import Button from "@/shared/ui/Button";
 import NavigationBar from "@/widgets/navigation-bar/NavigationBar";
 import { signIn } from "@/lib/auth-client";
 
+
 interface LoginFormData {
   email: string;
   password: string;
@@ -99,6 +100,18 @@ export default function LoginPage() {
               </Button>
             </Link>
           </div>
+
+          {/* Terms reminder */}
+          <p className="mt-5 text-xs text-text-3 text-center leading-relaxed border-t border-border pt-4">
+            By logging in, you reaffirm your agreement to DuoSign&apos;s{" "}
+            <Link href="/terms" target="_blank" className="text-accent hover:underline">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" target="_blank" className="text-accent hover:underline">
+              Privacy Policy
+            </Link>.
+          </p>
         </div>
       </main>
     </div>
