@@ -1,0 +1,248 @@
+{
+  "source": "70032026_Nana-Kwaku-Amoako_APPLIED-PROJECT_2026.pdf",
+  "words": 25501,
+  "minutes": 111,
+  "abstract": "Communication tools for deaf people often work in one direction: they help hearing people understand sign language, but they do not reliably return information in sign language for deaf users. DuoSign was built to address this gap. It is a web-based system that takes English input and presents the output as animated American Sign Language (ASL), without requiring specialised hardware. DuoSign follows a three-stage workflow: it converts English text into ASL gloss, maps each gloss to sign motion data derived from real signing videos, and renders the result through a 3D signing avatar. The system also includes fallback strategies such as synonym matching and fingerspelling to reduce missing-word failures. Because the motion data is grounded in human signing video, the produced animations are generally more natural than purely notation-driven output. A key contribution of this work is portability. The same pipeline can be reused for other sign languages when video resources are available, including low-resource settings where large annotated corpora are limited. In this sense, DuoSign is both a working ASL generation tool and a practical baseline for communities that want to bootstrap their own sign-language accessibility systems.",
+  "headings": [
+    {
+      "id": "chapter-1",
+      "text": "1. Introduction",
+      "level": 1
+    },
+    {
+      "id": "s-1-1",
+      "text": "1.1 Background",
+      "level": 2
+    },
+    {
+      "id": "s-1-2",
+      "text": "1.2 Problem Definition & Context",
+      "level": 2
+    },
+    {
+      "id": "s-1-3",
+      "text": "1.3 Objectives and Significance",
+      "level": 2
+    },
+    {
+      "id": "s-1-4",
+      "text": "1.4 Review of Literature and Related Works",
+      "level": 2
+    },
+    {
+      "id": "chapter-2",
+      "text": "2. Requirements",
+      "level": 1
+    },
+    {
+      "id": "s-2-1",
+      "text": "2.1 Requirements Elicitation",
+      "level": 2
+    },
+    {
+      "id": "s-2-2",
+      "text": "2.2 Key Stakeholders",
+      "level": 2
+    },
+    {
+      "id": "s-2-3",
+      "text": "2.3 Use Case Analysis",
+      "level": 2
+    },
+    {
+      "id": "s-2-4",
+      "text": "2.4 System Requirements",
+      "level": 2
+    },
+    {
+      "id": "s-2-5",
+      "text": "2.5 DuoSign: Proposed System",
+      "level": 2
+    },
+    {
+      "id": "s-2-6",
+      "text": "2.6 Ethics",
+      "level": 2
+    },
+    {
+      "id": "chapter-3",
+      "text": "3. Architecture and Design",
+      "level": 1
+    },
+    {
+      "id": "s-3-1",
+      "text": "3.1 System Architecture",
+      "level": 2
+    },
+    {
+      "id": "s-3-2",
+      "text": "3.2 System Design",
+      "level": 2
+    },
+    {
+      "id": "s-3-3",
+      "text": "3.3 Deployment Architecture",
+      "level": 2
+    },
+    {
+      "id": "s-3-4",
+      "text": "3.4 Summary",
+      "level": 2
+    },
+    {
+      "id": "chapter-4",
+      "text": "4. Implementation",
+      "level": 1
+    },
+    {
+      "id": "s-4-1",
+      "text": "4.1 Software, Tools, and Technologies",
+      "level": 2
+    },
+    {
+      "id": "s-4-2",
+      "text": "4.2 Software Development Approach",
+      "level": 2
+    },
+    {
+      "id": "s-4-3",
+      "text": "4.3 Implementation Details",
+      "level": 2
+    },
+    {
+      "id": "s-4-4",
+      "text": "4.4 Integration of Components",
+      "level": 2
+    },
+    {
+      "id": "chapter-5",
+      "text": "5. Testing and Results",
+      "level": 1
+    },
+    {
+      "id": "s-5-1",
+      "text": "5.1 Introduction",
+      "level": 2
+    },
+    {
+      "id": "s-5-2",
+      "text": "5.2 Component Testing",
+      "level": 2
+    },
+    {
+      "id": "s-5-3",
+      "text": "5.3 Accessibility Compliance",
+      "level": 2
+    },
+    {
+      "id": "s-5-4",
+      "text": "5.4 User Study Design",
+      "level": 2
+    },
+    {
+      "id": "s-5-5",
+      "text": "5.5 User Acceptance",
+      "level": 2
+    },
+    {
+      "id": "s-5-6",
+      "text": "5.6 User Feedback",
+      "level": 2
+    },
+    {
+      "id": "s-5-7",
+      "text": "5.7 Discussion",
+      "level": 2
+    },
+    {
+      "id": "s-5-8",
+      "text": "5.8 Analysis of Test Results",
+      "level": 2
+    },
+    {
+      "id": "chapter-6",
+      "text": "6. Conclusions and Recommendations",
+      "level": 1
+    },
+    {
+      "id": "s-6-1",
+      "text": "6.1 Limitations and Challenges",
+      "level": 2
+    },
+    {
+      "id": "s-6-2",
+      "text": "6.2 Future Work",
+      "level": 2
+    },
+    {
+      "id": "s-6-3",
+      "text": "6.3 Requirements Compliance and Objective Attainment",
+      "level": 2
+    },
+    {
+      "id": "s-6-4",
+      "text": "6.4 Conclusion",
+      "level": 2
+    },
+    {
+      "id": "references",
+      "text": "References",
+      "level": 1
+    },
+    {
+      "id": "appendices",
+      "text": "Appendices",
+      "level": 1
+    },
+    {
+      "id": "appendix-a",
+      "text": "A. AI Use Declaration",
+      "level": 2
+    },
+    {
+      "id": "appendix-b",
+      "text": "B. Project Structure",
+      "level": 2
+    },
+    {
+      "id": "appendix-c",
+      "text": "C. System Comparison Table",
+      "level": 2
+    },
+    {
+      "id": "appendix-d",
+      "text": "D. Related-Works Comparison Matrix",
+      "level": 2
+    },
+    {
+      "id": "appendix-e",
+      "text": "E. User Study Instruments",
+      "level": 2
+    },
+    {
+      "id": "appendix-f",
+      "text": "F. Application Interface Screenshots",
+      "level": 2
+    },
+    {
+      "id": "appendix-g",
+      "text": "G. Kalidokit Retargeting Capability Matrix",
+      "level": 2
+    },
+    {
+      "id": "appendix-h",
+      "text": "H. Kalidokit and VRM implementation findings",
+      "level": 2
+    },
+    {
+      "id": "appendix-i",
+      "text": "I. Project Management",
+      "level": 2
+    },
+    {
+      "id": "appendix-j",
+      "text": "J. External Links and Resources",
+      "level": 2
+    }
+  ]
+}

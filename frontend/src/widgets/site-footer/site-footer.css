@@ -1,0 +1,19 @@
+.sf { background: #0b2a1a; color: #e9f3ec; font-family: var(--font-instrument), "Instrument Sans", system-ui, sans-serif; overflow: hidden; }
+.sf-inner { max-width: 1240px; margin: 0 auto; padding: 84px 28px 34px; }
+.sf-top { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 48px; }
+.sf-logo img { filter: brightness(0) invert(1); height: auto; }
+.sf-brand p { margin: 20px 0 22px; max-width: 40ch; line-height: 1.65; color: rgba(233, 243, 236, .72); }
+.sf-contact { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; font-size: .93rem; }
+.sf-contact li { display: flex; align-items: center; gap: 10px; color: rgba(233, 243, 236, .8); }
+.sf-contact svg { color: #4ade80; flex-shrink: 0; }
+.sf a { color: inherit; text-decoration: none; }
+.sf a:hover { color: #4ade80; }
+.sf-col h3 { font-size: .74rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #4ade80; margin: 6px 0 18px; }
+.sf-col ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; font-size: .97rem; }
+.sf-col a { color: rgba(233, 243, 236, .86); }
+.sf-word { font-family: var(--font-instrument-serif), "Instrument Serif", Georgia, serif; font-size: clamp(5rem, 19vw, 17rem); line-height: .85; letter-spacing: -0.02em;
+  color: transparent; -webkit-text-stroke: 1px rgba(74, 222, 128, .28); margin: 70px 0 26px; white-space: nowrap; user-select: none; }
+.sf-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 30px; padding-top: 22px; border-top: 1px solid rgba(233, 243, 236, .14); font-size: .82rem; color: rgba(233, 243, 236, .6); }
+.sf :focus-visible { outline: 3px solid #4ade80; outline-offset: 3px; border-radius: 6px; }
+@media (max-width: 900px) { .sf-top { grid-template-columns: 1fr 1fr; } .sf-brand { grid-column: 1 / -1; } }
+@media (max-width: 520px) { .sf-top { grid-template-columns: 1fr; } }

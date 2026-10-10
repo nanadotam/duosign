@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { OPEN_BETA } from "@/shared/constants";
 
 interface OnboardingModalProps {
   onComplete: () => void;
@@ -97,7 +98,7 @@ export default function OnboardingModal({ onComplete }: OnboardingModalProps) {
       className="fixed inset-0 z-[9999] flex items-center justify-center"
       role="dialog"
       aria-modal="true"
-      aria-label="Welcome to DuoSign — onboarding"
+      aria-label={OPEN_BETA ? "Welcome to DuoSign Beta — onboarding" : "Welcome to DuoSign — onboarding"}
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
@@ -116,7 +117,7 @@ export default function OnboardingModal({ onComplete }: OnboardingModalProps) {
             <div className="w-6 h-6 rounded-md bg-accent flex items-center justify-center">
               <span className="text-[10px] font-bold text-white">DS</span>
             </div>
-            <span className="text-sm font-semibold text-text-1">DuoSign</span>
+            <span className="text-sm font-semibold text-text-1">{OPEN_BETA ? "DuoSign Beta" : "DuoSign"}</span>
           </div>
           {step < TOTAL_STEPS - 1 && (
             <button
@@ -147,8 +148,33 @@ export default function OnboardingModal({ onComplete }: OnboardingModalProps) {
             </div>
           )}
 
-          {/* ── Step 1: Guest vs Registered ── */}
-          {step === 1 && (
+          {/* ── Step 1 (open beta): full access, no account needed ── */}
+          {step === 1 && OPEN_BETA && (
+            <div className="py-4">
+              <h2 className="text-xl font-semibold text-text-1 text-center mb-3">
+                DuoSign Beta — free and open while in beta.
+              </h2>
+              <p className="text-sm text-text-2 text-center mb-5">
+                No account needed. Translate as much as you like, on any device — your history
+                and settings are kept right here in this browser.
+              </p>
+
+              <div className="bg-accent/5 border border-accent/30 rounded-[12px] p-3">
+                <p className="text-xs font-bold uppercase tracking-widest text-accent mb-3">Everyone gets</p>
+                <div className="grid grid-cols-2 gap-x-3">
+                  <FeatureRow label="Unlimited translation" available={true} />
+                  <FeatureRow label="Avatar playback" available={true} />
+                  <FeatureRow label="Skeleton view" available={true} />
+                  <FeatureRow label="History" available={true} />
+                  <FeatureRow label="MP4 export" available={true} />
+                  <FeatureRow label="Custom settings" available={true} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 1: Guest vs Registered (when the open beta is switched off) ── */}
+          {step === 1 && !OPEN_BETA && (
             <div className="py-4">
               <h2 className="text-xl font-semibold text-text-1 text-center mb-3">
                 Try it as a guest, or create a free account.

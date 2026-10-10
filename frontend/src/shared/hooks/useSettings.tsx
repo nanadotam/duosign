@@ -47,7 +47,7 @@ export interface AppSettings {
 
 const DEFAULT_SETTINGS: AppSettings = {
   skinTone: 0,
-  accentColorIndex: 2, // DuoSign Pro: green
+  accentColorIndex: 2, // DuoSign Beta: green
   avatarStyle: "Stylized",
   avatarModelId: "ama",
   avatarBackground: "Transparent",
@@ -75,6 +75,7 @@ const DEFAULT_SETTINGS: AppSettings = {
 };
 
 // Separate key so the Pro build starts on its own defaults (green, Ama)
+// Legacy key name kept on purpose: renaming it would reset everyone's saved settings.
 const STORAGE_KEY = "duosign-pro:settings";
 
 // ── Context ─────────────────────────────────────────────────────────

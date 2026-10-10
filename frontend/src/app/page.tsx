@@ -1,32 +1,28 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
+import {
+  ArrowRight, ArrowUpRight, Play, ChatCircleText, TextAa, UsersThree, Trophy, Buildings, Quotes,
+} from "@phosphor-icons/react/dist/ssr";
+import SiteNav from "@/widgets/site-nav/SiteNav";
+import Journey from "@/widgets/journey/Journey";
 import "./impact.css";
-import { IMPACT_STATS, TIMELINE, RESEARCH_REFS } from "./impact-content";
+import { IMPACT_STATS, JOURNEY, TESTER_QUOTES } from "./impact-content";
+
+export const metadata: Metadata = {
+  title: { absolute: "DuoSign Beta — the internet, in sign language" },
+  description:
+    "DuoSign turns written and spoken English into sign language, signed by avatars that look like the people who use them. Built in Ghana. Free and open while in beta.",
+};
 
 /**
- * DuoSign Pro landing page — the story and the impact, not the tech.
- * Content (stats, timeline, references) lives in impact-content.ts so it can be updated without touching layout.
+ * DuoSign Beta landing page — the story and the impact, not the tech.
+ * Content (stats, journey, quotes) lives in impact-content.ts.
  */
 export default function LandingPage() {
   return (
     <main className="ip">
-      {/* ── Nav ─────────────────────────────────────────── */}
-      <header className="ip-nav">
-        <Link href="/" className="ip-brand" aria-label="DuoSign home">
-          <Image src="/logos/DuoSign_logomark.svg" alt="" width={26} height={26} className="ip-logo" />
-          <span>DuoSign</span>
-          <em>Pro</em>
-          <small>Beta</small>
-        </Link>
-        <nav aria-label="Sections">
-          <a href="#why">Why</a>
-          <a href="#how">How it works</a>
-          <a href="#built-with">Built with</a>
-          <a href="#next">What&apos;s next</a>
-          <a href="#research">Research</a>
-        </nav>
-        <Link href="/translate" className="ip-btn ip-btn-sm">Try the beta</Link>
-      </header>
+      <SiteNav />
 
       {/* ── Hero ────────────────────────────────────────── */}
       <section className="ip-hero">
@@ -42,16 +38,45 @@ export default function LandingPage() {
             meets people in their first language.
           </p>
           <div className="ip-cta">
-            <Link href="/translate" className="ip-btn">Try DuoSign Pro (beta)</Link>
-            <a href="#why" className="ip-btn ip-btn-ghost">Read the story</a>
+            <Link href="/translate" className="ip-btn">Try the beta <ArrowRight size={18} weight="bold" /></Link>
+            <a href="#demo" className="ip-btn ip-btn-ghost"><Play size={18} weight="fill" /> Watch the demo</a>
           </div>
-          <p className="ip-note">Built in Ghana at Ashesi University · reviewed by its accessibility team</p>
+          <p className="ip-note">
+            <Trophy size={16} weight="duotone" /> Outstanding Capstone Project, Ashesi University 2026 · free and open while in beta
+          </p>
         </div>
         <div className="ip-hero-art" aria-hidden="true">
           <Image src="/landing/signer_kofi.webp" alt="" width={420} height={520} className="ip-signer ip-signer-l" priority />
           <Image src="/landing/signer_ama.webp" alt="" width={480} height={600} className="ip-signer ip-signer-c" priority />
           <Image src="/landing/signer_esi.webp" alt="" width={420} height={520} className="ip-signer ip-signer-r" priority />
           <div className="ip-gloss">HELLO · THANK-YOU · YOU</div>
+        </div>
+      </section>
+
+      {/* ── Demo ────────────────────────────────────────── */}
+      <section id="demo" className="ip-demo">
+        <div className="ip-wrap">
+          <div className="ip-demo-head">
+            <div>
+              <p className="ip-eyebrow">See it in action</p>
+              <h2>Type a sentence. Watch it signed.</h2>
+            </div>
+            <ul className="ip-chips" aria-label="What the demo shows">
+              <li><ChatCircleText size={18} weight="duotone" /> English in</li>
+              <li><TextAa size={18} weight="duotone" /> Sign grammar</li>
+              <li><UsersThree size={18} weight="duotone" /> Choose your signer</li>
+            </ul>
+          </div>
+          <figure className="ip-video">
+            <div className="ip-video-chrome" aria-hidden="true"><i /><i /><i /><span>duosign — beta</span></div>
+            <video
+              src="/landing/demo.mp4"
+              poster="/landing/demo_poster.webp"
+              autoPlay muted loop playsInline controls preload="metadata"
+              aria-label="Screen recording: a sentence is typed into DuoSign and Ama signs it"
+            />
+          </figure>
+          <p className="ip-demo-cap">Real screen recording of DuoSign Beta. Signs play from motion captured from real signers.</p>
         </div>
       </section>
 
@@ -89,9 +114,7 @@ export default function LandingPage() {
             <li><b>2</b><h3>Sign grammar</h3><p>DuoSign rewrites English into sign order: time first, questions last, names fingerspelled.</p></li>
             <li><b>3</b><h3>A signer you recognise</h3><p>Ama, Kofi or Esi signs it from motion captured from real signers, with facial expression.</p></li>
           </ol>
-          <figure className="ip-shot">
-            <Image src="/landing/app_signing.webp" alt="DuoSign Pro: an English sentence on the left, Ama signing HELLO on the right" width={2000} height={1250} />
-          </figure>
+          <Link href="/how-it-works" className="ip-more">See how it works, in depth <ArrowRight size={18} weight="bold" /></Link>
         </div>
       </section>
 
@@ -110,15 +133,58 @@ export default function LandingPage() {
       </section>
 
       {/* ── Journey ─────────────────────────────────────── */}
-      <section className="ip-section">
+      <section id="journey" className="ip-section">
         <div className="ip-wrap">
           <p className="ip-eyebrow">The journey so far</p>
-          <h2>From a capstone to a conversation across Africa.</h2>
-          <ol className="ip-timeline">
-            {TIMELINE.map((t) => (
-              <li key={t.when + t.title}><time>{t.when}</time><div><h3>{t.title}</h3><p>{t.body}</p></div></li>
-            ))}
-          </ol>
+          <h2>From a simple question to a conversation across Africa.</h2>
+          <Journey steps={JOURNEY} />
+        </div>
+      </section>
+
+      {/* ── Recognition ─────────────────────────────────── */}
+      <section id="recognition" className="ip-section ip-recog">
+        <div className="ip-wrap">
+          <p className="ip-eyebrow">Recognition</p>
+          <h2>How the work has been received.</h2>
+          <div className="ip-recog-grid">
+            <figure className="ip-recog-card ip-recog-award">
+              <Image src="/landing/quasar_award.webp" alt="Nana Kwaku Amoako receiving the Outstanding Capstone Project award at Ashesi University's 2026 Quasar Awards" width={1200} height={800} />
+              <figcaption>
+                <span className="ip-pill"><Trophy size={14} weight="fill" /> Award</span>
+                <h3>Outstanding Capstone Project, Computer Science &amp; Information Systems</h3>
+                <p>Ashesi University 2026 Quasar Awards, for &ldquo;DuoSign: A Gloss-Based Approach to Automated ASL Generation&rdquo;.</p>
+                <a href="https://ashesi.edu.gh/celebrating-excellence-student-research-and-innovation-2/" target="_blank" rel="noreferrer" className="ip-ext">
+                  Read Ashesi&apos;s story <ArrowUpRight size={16} weight="bold" />
+                </a>
+              </figcaption>
+            </figure>
+            <figure className="ip-recog-card ip-recog-video">
+              <video src="/landing/presenting_loop.mp4" poster="/landing/presenting_poster.webp" autoPlay muted loop playsInline aria-label="Nana Kwaku Amoako speaking at Ashesi University" />
+              <figcaption>
+                <span className="ip-pill">On stage</span>
+                <h3>Speaking at Ashesi University</h3>
+                <p>Nana Kwaku Amoako, the developer of DuoSign.</p>
+              </figcaption>
+            </figure>
+            <article className="ip-recog-card ip-recog-un">
+              <span className="ip-pill"><Buildings size={14} weight="fill" /> United Nations</span>
+              <h3>UNECA Disability Inclusion Desk</h3>
+              <p>
+                Introduced by Christina Abraham, DuoSign was taken up by staff with disabilities at the UN Economic
+                Commission for Africa, who are sharing it with colleagues across the UN as an example of technology
+                built with, and not just for, the Deaf community.
+              </p>
+            </article>
+            <article className="ip-recog-card ip-recog-quotes">
+              <span className="ip-pill"><Quotes size={14} weight="fill" /> From the pilot</span>
+              <ul>
+                {TESTER_QUOTES.map((q) => (
+                  <li key={q}><blockquote>&ldquo;{q}&rdquo;</blockquote></li>
+                ))}
+              </ul>
+              <p className="ip-small">Early testers, DuoSign pilot study, March–April 2026.</p>
+            </article>
+          </div>
         </div>
       </section>
 
@@ -144,36 +210,35 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Research ────────────────────────────────────── */}
+      {/* ── Research teaser ─────────────────────────────── */}
       <section id="research" className="ip-section">
         <div className="ip-wrap ip-research">
           <div>
             <p className="ip-eyebrow">Research</p>
             <h2>Grounded in evidence.</h2>
             <p className="ip-body">
-              DuoSign began as a Computer Science capstone at Ashesi University and won the Outstanding Capstone
-              Project Award. The research paper covers the translation pipeline, avatar animation, accessibility
-              testing (WCAG 2.1 AA, Lighthouse 100) and a pilot usability study (SUS 73.5, “good”).
+              DuoSign began as an applied research project in Computer Science at Ashesi University. The thesis covers
+              the translation pipeline, avatar animation, accessibility testing (WCAG 2.1 AA, Lighthouse 100) and a
+              pilot usability study. Read it in full, right here.
             </p>
-            <p className="ip-body">Selected references:</p>
-            <ul className="ip-refs">
-              {RESEARCH_REFS.map((r) => (
-                <li key={r.title}>{r.url ? <a href={r.url} target="_blank" rel="noreferrer">{r.title}</a> : r.title}<span>{r.note}</span></li>
-              ))}
-            </ul>
+            <Link href="/research" className="ip-btn">Read the research <ArrowRight size={18} weight="bold" /></Link>
           </div>
           <aside className="ip-contact">
             <h3>Work with us</h3>
             <p>We are looking to collaborate with Deaf associations, universities, funders and institutions that publish public information.</p>
             <a className="ip-btn" href="mailto:nana.amoako@alumni.ashesi.edu.gh">Get in touch</a>
-            <Link className="ip-link" href="/translate">Or try the beta →</Link>
           </aside>
         </div>
       </section>
 
-      <p className="ip-beta-note">
-        Beta: American Sign Language today. Sign data comes from the WLASL research dataset (non-commercial use).
-      </p>
+      {/* ── Final CTA ───────────────────────────────────── */}
+      <section className="ip-final">
+        <div className="ip-wrap">
+          <h2>Try DuoSign Beta.</h2>
+          <p>Free and open while in beta. No account, no limits, nothing to install.</p>
+          <Link href="/translate" className="ip-btn ip-btn-light">Try the beta <ArrowRight size={18} weight="bold" /></Link>
+        </div>
+      </section>
     </main>
   );
 }

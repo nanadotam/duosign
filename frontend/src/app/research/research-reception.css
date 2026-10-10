@@ -1,0 +1,45 @@
+.rc { --g9: #0b2a1a; --g7: #14532d; --g6: #16a34a; --g1: #e7f6ec; --ink: #15201a; --ink2: #4b5a51; --line: #dcd6c9;
+  background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 96px 0;
+  font-family: var(--font-instrument), "Instrument Sans", system-ui, sans-serif; color: var(--ink); }
+.rc-wrap { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+.rc-eyebrow { font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--g6); margin: 0 0 1rem; }
+.rc h2 { font-family: var(--font-instrument-serif), "Instrument Serif", Georgia, serif; font-weight: 400; font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.05; margin: 0 0 2.2rem; max-width: 20ch; }
+.rc h3, .rc h4 { margin: 0; }
+.rc a { color: var(--g7); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.rc a:hover { text-decoration: underline; }
+.rc-pill { display: inline-flex; align-items: center; gap: 6px; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--g7); background: var(--g1); border-radius: 999px; padding: 4px 10px; }
+
+.rc-hero { display: grid; grid-template-columns: 1.4fr 1fr; gap: 22px; }
+.rc-award, .rc-video { margin: 0; border: 1px solid var(--line); border-radius: 24px; overflow: hidden; background: #f6f2ea; }
+.rc-award img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; }
+.rc-award figcaption { padding: 22px 26px 26px; }
+.rc-award h3 { font-size: 1.2rem; margin: 10px 0 6px; }
+.rc-award p { color: var(--ink2); line-height: 1.6; margin: 0 0 12px; }
+.rc-side { display: grid; gap: 22px; align-content: start; }
+.rc-video video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; }
+.rc-video figcaption { display: flex; align-items: center; gap: 8px; padding: 14px 18px; font-weight: 600; font-size: .95rem; }
+.rc-video svg { color: var(--g6); }
+.rc-mini { border: 1px solid var(--line); border-radius: 20px; padding: 20px 22px; background: #f6f2ea; }
+.rc-mini p { margin: 10px 0 0; color: var(--ink2); line-height: 1.55; }
+@media (max-width: 900px) { .rc-hero { grid-template-columns: 1fr; } }
+
+.rc-sub { font-family: var(--font-instrument-serif), Georgia, serif; font-weight: 400; font-size: 1.9rem; margin: 3.4rem 0 1.2rem !important; }
+.rc-convos { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.rc-convos li { display: flex; gap: 16px; align-items: flex-start; border: 1px solid var(--line); border-radius: 20px; padding: 22px; background: #f6f2ea; }
+.rc-icon { flex-shrink: 0; width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: var(--g1); color: var(--g7); }
+.rc-when { margin: 0 0 4px; font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--g6); }
+.rc-convos h4 { font-size: 1.06rem; margin-bottom: 6px; }
+.rc-convos p:last-child { margin: 0; color: var(--ink2); line-height: 1.6; font-size: .96rem; }
+@media (max-width: 860px) { .rc-convos { grid-template-columns: 1fr; } }
+
+.rc-quotes { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.rc-quotes > div { border: 1px solid var(--line); border-radius: 22px; padding: 24px 26px; }
+.rc-quotes > div:last-child { background: #fffaf0; }
+.rc-qhead { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; font-weight: 700; }
+.rc-qhead svg { color: var(--g6); }
+.rc-quotes > div:last-child .rc-qhead svg { color: #b45309; }
+.rc blockquote { margin: 0 0 14px; font-family: var(--font-instrument-serif), Georgia, serif; font-size: 1.22rem; line-height: 1.4; }
+.rc blockquote svg { color: var(--g6); vertical-align: -1px; opacity: .6; }
+@media (max-width: 860px) { .rc-quotes { grid-template-columns: 1fr; } }
+.rc-foot { margin: 22px 0 0; font-size: .9rem; color: var(--ink2); line-height: 1.6; max-width: 80ch; }
+.rc :focus-visible { outline: 3px solid var(--g6); outline-offset: 3px; border-radius: 6px; }

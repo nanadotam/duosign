@@ -26,37 +26,56 @@ export const IMPACT_STATS: ImpactStat[] = [
   },
 ];
 
-export interface TimelineItem {
-  when: string;
-  title: string;
-  body: string;
-}
+import type { JourneyStep } from "@/widgets/journey/Journey";
 
-export const TIMELINE: TimelineItem[] = [
+export const JOURNEY: JourneyStep[] = [
   {
-    when: "2025–26",
-    title: "A capstone at Ashesi University",
-    body: "A working text-to-sign system, reviewed by Ashesi's accessibility team and piloted with early testers.",
+    when: "Late 2025", icon: "question", title: "A simple question",
+    body: "If I can call someone and talk in my own language, why does a Deaf person still have to read everything online? Why isn't digital content available in their primary language?",
   },
   {
-    when: "2026",
-    title: "Outstanding Capstone Project Award",
-    body: "Ashesi's top capstone award for Computer Science.",
+    when: "2025–26", icon: "database", title: "Teaching a computer to sign",
+    body: "11,980 videos of real signers from the WLASL research dataset were processed into body, hand and face motion for 2,000 American Sign Language signs, in about 76 minutes on a laptop.",
   },
   {
-    when: "Jul 2026",
-    title: "African Disability Forum",
-    body: "A conversation with Shuaib Chalklen, head of the African Disability Forum, on taking DuoSign further across the continent.",
+    when: "2025–26", icon: "cube", title: "The first DuoSign",
+    body: "A rule-based engine rewrites English into sign order, and a 3D avatar in the browser signs it. Typing or speaking both work, with no install.",
   },
   {
-    when: "Oct 2026",
-    title: "UNECA Disability Inclusion Desk",
-    body: "Introduced through Christina Abraham, DuoSign was taken up by staff with disabilities at the UN Economic Commission for Africa and shared with colleagues across the Commission.",
+    when: "Mar 2026", icon: "presentation", tag: "Research", title: "Ashesi Undergraduate Research Conference",
+    body: "The research behind DuoSign was written up and submitted to Ashesi's undergraduate research conference.",
   },
   {
-    when: "Oct 2026",
-    title: "DuoSign Pro beta",
-    body: "Ghanaian signers, smoother motion captured from real signers, facial expression, and the full fingerspelling alphabet.",
+    when: "Mar–Apr 2026", icon: "clipboard", tag: "Pilot", title: "Putting it in front of people",
+    body: "Ashesi's accessibility team reviewed the signing, and early testers completed a usability study (SUS 73.5, \u201cgood\u201d). Everyone said the same thing: easy to use, but the avatar must get clearer.",
+  },
+  {
+    when: "May 2026", icon: "trophy", tag: "Award", title: "Outstanding Capstone Project",
+    body: "At Ashesi's 2026 Quasar Awards, DuoSign received the Outstanding Capstone Project award in Computer Science & Information Systems.",
+  },
+  {
+    when: "Jul 2026", icon: "handshake", title: "African Disability Forum",
+    body: "A conversation with Shuaib Chalklen, head of the African Disability Forum and former UN Special Rapporteur on Disability, about taking DuoSign further across the continent.",
+  },
+  {
+    when: "Sep 2026", icon: "envelope", title: "An introduction to the UN",
+    body: "Christina Abraham of the Ashesi University Foundation introduced DuoSign to the UN Economic Commission for Africa's disability inclusion working group.",
+  },
+  {
+    when: "Oct 2026", icon: "film", tag: "Rebuild", title: "Rebuilding how it signs",
+    body: "Acting on the pilot feedback: motion pre-captured from real signers, facial expression on 1,749 signs, the full fingerspelling alphabet, and Ghanaian signers Ama, Kofi and Esi.",
+  },
+  {
+    when: "Oct 2026", icon: "buildings", tag: "UNECA", title: "UNECA Disability Inclusion Desk",
+    body: "Staff with disabilities at UNECA took up DuoSign at their weekly meeting, met with Nana, and are sharing it with colleagues across the UN.",
+  },
+  {
+    when: "Oct 2026", icon: "rocket", tag: "Now", title: "DuoSign Beta opens",
+    body: "Free and open to everyone while in beta. No account needed.",
+  },
+  {
+    when: "Next", icon: "globe", next: true, title: "African sign languages, built with Deaf communities",
+    body: "Seeking to work with the Ghana National Association of the Deaf to build and evaluate Ghanaian Sign Language with Deaf signers, then more of the continent's sign languages.",
   },
 ];
 
@@ -92,4 +111,11 @@ export const RESEARCH_REFS: ResearchRef[] = [
     note: "The sign data behind today's ASL beta",
     url: "https://dxli94.github.io/WLASL/",
   },
+];
+
+/** Verbatim from the pilot survey (anonymised); see the thesis, section 5.6. */
+export const TESTER_QUOTES: string[] = [
+  "It's such a lovely UI. I think it's clean and smooth and you don't need so much guidance.",
+  "I really appreciate that I can use it to learn sign language at my own pace.",
+  "I like how the breakdown of the words and letters is visible.",
 ];

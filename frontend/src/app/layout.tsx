@@ -45,8 +45,8 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://duosign.vercel.app";
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
-    default: "DuoSign Pro (Beta) — Text to Sign Language",
-    template: "%s · DuoSign Pro",
+    default: "DuoSign Beta — Text to Sign Language",
+    template: "%s · DuoSign Beta",
   },
   description:
     "DuoSign translates English text into ASL gloss and animates a 3D avatar signing in real time. Built for the Deaf and hard-of-hearing community.",
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
     type: "website",
     url: APP_URL,
     siteName: "DuoSign",
-    title: "DuoSign — Text to Sign Language",
+    title: "DuoSign Beta — Text to Sign Language",
     description:
       "Translate English into ASL gloss and watch a 3D avatar sign it in real time.",
     images: [
@@ -76,14 +76,14 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1024,
         height: 1024,
-        alt: "DuoSign — Text to Sign Language",
+        alt: "DuoSign Beta — Text to Sign Language",
       },
     ],
   },
 
   twitter: {
     card: "summary",
-    title: "DuoSign — Text to Sign Language",
+    title: "DuoSign Beta — Text to Sign Language",
     description: "Translate English into ASL gloss and watch a 3D avatar sign it in real time.",
     images: ["/og-image.png"],
   },

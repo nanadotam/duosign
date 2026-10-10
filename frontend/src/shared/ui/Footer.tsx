@@ -1,6 +1,15 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import SiteFooter from "@/widgets/site-footer/SiteFooter";
+
+// Public pages get the full footer; the app keeps this compact one.
+const SITE_ROUTES = ["/", "/how-it-works", "/research"];
 
 export default function Footer() {
+  const pathname = usePathname();
+  if (SITE_ROUTES.includes(pathname)) return <SiteFooter />;
   return (
     <footer className="border-t border-border mt-auto">
       <div className="max-w-[1300px] mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">

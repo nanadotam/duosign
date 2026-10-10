@@ -18,7 +18,7 @@ export const AVATAR_MODELS: AvatarModel[] = [
   { id: "ds-g-proto", name: "DS G Proto", path: "/avatars/DuoSign-G-Proto-2.vrm" },
 ];
 
-/** Avatars for Pro Motion (baked .dsanim clips, three-vrm v3). Files live in /public/motion/avatars. */
+/** Avatars for the Motion stage (baked .dsanim clips, three-vrm v3). Files live in /public/motion/avatars. */
 export const MOTION_AVATARS = [
   { id: "ama", name: "Ama", file: "ama.vrm", thumb: "/motion/thumbs/ama.jpg" },
   { id: "kofi", name: "Kofi", file: "kofi.vrm", thumb: "/motion/thumbs/kofi.jpg" },
@@ -30,6 +30,14 @@ export const MOTION_AVATARS = [
 export const MAX_INPUT_LENGTH = 500;
 
 export const GUEST_TRANSLATION_LIMIT = 3;
+
+/**
+ * Open beta: full access for everyone, no account needed.
+ * When on (default), there is no guest translation cap, no sign-up nags,
+ * and /history + /settings are open to guests (both work from localStorage).
+ * Set NEXT_PUBLIC_OPEN_BETA="false" to restore the guest limit and login walls.
+ */
+export const OPEN_BETA = process.env.NEXT_PUBLIC_OPEN_BETA !== "false";
 
 export const PLAYBACK_SPEEDS = [0.5, 1, 1.5, 2] as const;
 export const SPEED_LABELS: Record<number, string> = {

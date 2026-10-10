@@ -145,14 +145,24 @@ const REST = {
   leftLowerArm: [0, -0.15, 0], rightLowerArm: [0, 0.15, 0],
   leftHand: [0, 0, -0.1], rightHand: [0, 0, 0.1],
 };
-const _e = new THREE.Euler();
-function applyRest() {
+const _e = new THREE.Euler(), _q = new THREE.Quaternion();
+let restFrom = null, restT = 1; // pose captured when signing ends, eased back to rest
+function captureForRest() {
+  const h = vrm.humanoid; restFrom = {};
+  for (const name of Object.keys(h.humanBones)) { const n = h.getNormalizedBoneNode(name); if (n) restFrom[name] = n.quaternion.clone(); }
+  restT = 0;
+}
+function applyRest(dt = 0) {
   const h = vrm.humanoid;
+  restT = Math.min(1, restT + dt / 0.6);
+  const k = restT * restT * (3 - 2 * restT);
   for (const name of Object.keys(h.humanBones)) {
     const n = h.getNormalizedBoneNode(name); if (!n) continue;
     const r = REST[name];
-    if (r) n.quaternion.setFromEuler(_e.set(r[0], r[1], r[2])); else n.quaternion.identity();
+    if (r) _q.setFromEuler(_e.set(r[0], r[1], r[2])); else _q.identity();
+    if (restFrom?.[name] && k < 1) n.quaternion.slerpQuaternions(restFrom[name], _q, k); else n.quaternion.copy(_q);
   }
+  if (k >= 1) restFrom = null;
 }
 
 let seq = { items: [], total: 0, words: [] }, time = 0, playing = false, speed = 1, endedSent = true, lastIdx = -1;
@@ -223,9 +233,12 @@ function tick() {
       pose = blendPose(player.framePose(p.clip, p.out - 1), pose, s);
     }
     player.applyPose(pose); player.applyReach(it.clip, local); player.applyFace(it.clip, local);
-    if (playing && !endedSent && time >= seq.total + HOLD_SEC) { endedSent = true; playing = false; post({ type: 'ended' }); }
+    if (playing && !endedSent && time >= seq.total + HOLD_SEC) {
+      endedSent = true; playing = false; post({ type: 'ended' });
+      captureForRest(); seq = { items: [], total: 0, words: [] }; // ease back to rest
+    }
   }
-  else if (vrm) applyRest();
+  else if (vrm) applyRest(dt);
   vrm?.update(dt);
   renderer.render(scene, camera);
 }

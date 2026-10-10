@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { PlaybackState, PlaybackSpeed } from "@/entities/avatar/types";
 
 /**
- * MotionStage — Pro Motion renderer.
+ * MotionStage — Motion stage renderer.
  * Hosts /motion/stage.html (baked duosign-motion clips on a three-vrm v3 avatar) in an iframe
  * and drives it with postMessage from the app's playback state.
  */
@@ -111,7 +111,7 @@ export default function MotionStage({
         <iframe
           ref={frameRef}
           src={src}
-          title="DuoSign Pro Motion avatar"
+          title="DuoSign Motion avatar"
           className="w-full h-full border-0 bg-transparent"
           allow="fullscreen"
         />

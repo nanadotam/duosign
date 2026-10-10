@@ -155,7 +155,7 @@ export default function AvatarPanel({
   const isLive = playbackState === "playing";
   const isReady = hasTokens;
 
-  const modeLabel = isSkeleton ? "Skeleton" : isMotion ? "Pro Motion" : "Avatar";
+  const modeLabel = isSkeleton ? "Skeleton" : isMotion ? "Motion" : "Avatar";
   const statusText = {
     idle: `${modeLabel} — Idle`,
     playing: `${modeLabel} — Signing`,
@@ -208,7 +208,7 @@ export default function AvatarPanel({
     updateSetting("avatarModelId", model.id);
   }, [updateSetting]);
 
-  // Thumbnail strip: Pro Motion avatars, or the classic models (with portraits where we have them)
+  // Thumbnail strip: Motion stage avatars, or the classic models (with portraits where we have them)
   const thumbAvatars = useMemo(
     () => isMotion
       ? MOTION_AVATARS
@@ -563,8 +563,7 @@ export default function AvatarPanel({
         )}
 
         {/* Export Video button — lives outside the playback pill so it's always accessible */}
-        {/* TODO: Guest User - Guest users cannot export MP4 videos and cannot access translation history actions. */}
-        {/* TODO: Registered User - Export any translation—current or historical—as a downloadable MP4 video of the avatar performing the sign sequence. */}
+        {/* Export is client-side (no account or DB needed), so everyone can use it during the open beta. */}
         {overlayVisible && (
           <button
             onClick={handleExport}

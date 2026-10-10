@@ -415,7 +415,7 @@ export default function DocsPage() {
                     </Link>
                     <Link href="/auth/register" className="p-4 rounded-[12px] bg-surface border border-border shadow-raised-sm hover:border-accent transition-colors block">
                       <div className="text-[13px] font-semibold text-text-1 mb-1">Create an Account</div>
-                      <div className="text-[12px] text-text-2">Save your translation history and preferences.</div>
+                      <div className="text-[12px] text-text-2">Optional — everything works without one during the beta.</div>
                     </Link>
                   </div>
                 </section>
@@ -503,7 +503,7 @@ export default function DocsPage() {
                   <P>
                     Every translation you make is saved to your history with a timestamp and source type (typed or voice).
                     You can replay any past translation, filter by date or input type, and export entries.
-                    History is available when you&apos;re signed in — guest translations aren&apos;t saved permanently.
+                    No account needed: your history is saved in this browser, so it stays on this device. Clearing your browser data clears it too.
                   </P>
                 </section>
 
@@ -535,7 +535,7 @@ export default function DocsPage() {
                   <div className="space-y-4 mb-6">
                     {[
                       { q: "Is DuoSign free?",                    a: "Yes — completely free to use. No hidden costs, no premium tier." },
-                      { q: "Do I need to create an account?",     a: "No. You can translate without signing up. Create an account to save history and unlock unlimited translations." },
+                      { q: "Do I need to create an account?",     a: "No. DuoSign Beta is free and open while in beta — translation, history, export, and settings all work without an account." },
                       { q: "Which sign language does it use?",    a: "American Sign Language (ASL)." },
                       { q: "Can I use it on my phone?",           a: "Yes — DuoSign works in mobile browsers, though the avatar panel is optimised for larger screens." },
                       { q: "Who made this?",                      a: "DuoSign was built by Nana Amoako as a final-year CS capstone at Ashesi University, Ghana (Class of 2026)." },

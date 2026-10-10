@@ -91,7 +91,8 @@ class VocabularyManager:
                 parts = line.split("\t")
                 # Support both "id\tgloss" and plain "gloss" formats
                 gloss = parts[1] if len(parts) >= 2 else parts[0]
-                gloss_upper = gloss.strip().upper()
+                # Multi-word signs are stored as "thank you"; clips and pose files use THANK_YOU
+                gloss_upper = gloss.strip().upper().replace(" ", "_")
                 self.glosses.add(gloss_upper)
                 self.gloss_info[gloss_upper] = {
                     "id": parts[0] if len(parts) >= 2 else None,
