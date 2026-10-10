@@ -101,6 +101,8 @@ export default function NavigationBar() {
         <Link href="/translate" className="flex items-center gap-[6px] select-none no-underline">
           <Image src="/logos/DuoSign_logomark.svg" alt="DuoSign" width={24} height={24} className="logo-adaptive transition-all duration-250" />
           <Image src="/logos/DuoSign_textmark.svg" alt="DuoSign" width={80} height={18} className="logo-adaptive transition-all duration-250 hidden sm:block" />
+          <span className="text-[13px] font-semibold text-[var(--accent)] leading-none">Pro</span>
+          <span className="ml-[2px] px-[6px] py-[2px] rounded-full border border-[var(--accent)] text-[9px] font-semibold uppercase tracking-[0.08em] text-[var(--accent)] leading-none">Beta</span>
         </Link>
 
         {/* Desktop nav tabs — absolutely centered */}

@@ -64,7 +64,8 @@ export async function GET(request: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("guest-usage GET error:", msg);
-    return NextResponse.json({ error: "db_error", detail: msg }, { status: 500 });
+    // Fail open: a database outage shouldn't lock guests out of translating.
+    return attachCookie(degraded(), hashedId, isNew);
   }
 
   const response = NextResponse.json({
@@ -76,8 +77,27 @@ export async function GET(request: Request) {
   return attachCookie(response, hashedId, isNew);
 }
 
+function degraded() {
+  return NextResponse.json({
+    count: 0,
+    remaining: GUEST_TRANSLATION_LIMIT,
+    limit: GUEST_TRANSLATION_LIMIT,
+    degraded: true,
+  });
+}
+
 export async function POST(request: Request) {
   const { hashedId, isNew } = getGuestId(request);
+  try {
+    return await recordGuestTranslation(hashedId, isNew);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("guest-usage POST error:", msg);
+    return attachCookie(degraded(), hashedId, isNew);
+  }
+}
+
+async function recordGuestTranslation(hashedId: string, isNew: boolean) {
   const hashedIdentifier = hashedId;
 
   await pool.query(

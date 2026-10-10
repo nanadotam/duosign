@@ -6,6 +6,12 @@ export const API_BASE_URL =
   (process.env.NODE_ENV === "development" ? "http://localhost:8000" : "");
 
 export const AVATAR_MODELS: AvatarModel[] = [
+  // October 2026 semi-realistic Ghanaian avatars (VRM 0.x exports, ARKit face)
+  { id: "ama", name: "Ama", path: "/avatars/Ama.vrm" },
+  { id: "kofi", name: "Kofi", path: "/avatars/Kofi.vrm" },
+  { id: "esi", name: "Esi", path: "/avatars/Esi.vrm" },
+  // Upgraded DS-Proto: contrast 1.54 -> 6.20, ARKit face, 19.9 MB -> 5.8 MB
+  { id: "ds-proto-2-2", name: "DS Proto 2.2", path: "/avatars/DS-Proto-2.2.vrm" },
   { id: "ds-proto", name: "DS Proto", path: "/avatars/DS-Proto-2.1.vrm" },
   { id: "ashtra", name: "Ashtra", path: "/avatars/Ashtra.vrm" },
   { id: "val", name: "Val", path: "/avatars/VAL.vrm" },

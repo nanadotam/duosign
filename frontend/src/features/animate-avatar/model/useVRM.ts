@@ -94,7 +94,7 @@ export function useVRM({ scene, initialPath }: UseVRMOptions): UseVRMReturn {
         setModelName(path.split("/").pop()?.replace(".vrm", "") ?? "Unknown");
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Failed to load VRM";
-        console.error("VRM load error:", msg);
+        console.error("VRM load error:", msg, err instanceof Error ? err.stack : "");
         setError(msg);
       } finally {
         setIsLoading(false);

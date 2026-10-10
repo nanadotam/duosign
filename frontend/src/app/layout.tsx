@@ -45,8 +45,8 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://duosign.vercel.app";
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
-    default: "DuoSign — Text to Sign Language",
-    template: "%s · DuoSign",
+    default: "DuoSign Pro (Beta) — Text to Sign Language",
+    template: "%s · DuoSign Pro",
   },
   description:
     "DuoSign translates English text into ASL gloss and animates a 3D avatar signing in real time. Built for the Deaf and hard-of-hearing community.",
@@ -108,7 +108,7 @@ export default function RootLayout({
       <head>
         <ThemeScript />
         {/* Preload default avatar so it fetches in parallel with JS bundles */}
-        <link rel="preload" href="/avatars/DS-Proto-2.1.vrm" as="fetch" crossOrigin="anonymous" />
+        <link rel="preload" href="/avatars/Ama.vrm" as="fetch" crossOrigin="anonymous" />
       </head>
       <body className="font-sans antialiased">
         <SettingsProvider>

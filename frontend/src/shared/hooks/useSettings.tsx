@@ -47,9 +47,9 @@ export interface AppSettings {
 
 const DEFAULT_SETTINGS: AppSettings = {
   skinTone: 0,
-  accentColorIndex: 0,
+  accentColorIndex: 2, // DuoSign Pro: green
   avatarStyle: "Stylized",
-  avatarModelId: "ds-proto",
+  avatarModelId: "ama",
   avatarBackground: "Transparent",
 
   translationEngine: "Hybrid (Rule + LLM)",
@@ -74,7 +74,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   productUpdates: false,
 };
 
-const STORAGE_KEY = "duosign:settings";
+// Separate key so the Pro build starts on its own defaults (green, Ama)
+const STORAGE_KEY = "duosign-pro:settings";
 
 // ── Context ─────────────────────────────────────────────────────────
 

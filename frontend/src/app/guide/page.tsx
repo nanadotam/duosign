@@ -883,6 +883,9 @@ export default function DocsPage() {
                   <P>Four VRM models bundled — switch in <Link href="/settings" className="text-accent hover:underline">Settings → Avatar</Link>.</P>
                   <div className="grid grid-cols-2 gap-3 mb-4">
                     {[
+                      { name: "Ama",        file: "Ama.vrm",               note: "Semi-realistic Ghanaian avatar (Oct 2026), default" },
+                      { name: "Kofi",       file: "Kofi.vrm",              note: "Semi-realistic Ghanaian avatar (Oct 2026)" },
+                      { name: "Esi",        file: "Esi.vrm",               note: "Semi-realistic Ghanaian avatar (Oct 2026)" },
                       { name: "DS Proto",   file: "DS-Proto-2.1.vrm",      note: "Default male-presenting prototype" },
                       { name: "Ashtra",     file: "Ashtra.vrm",            note: "Stylized androgynous model" },
                       { name: "Val",        file: "VAL.vrm",               note: "Female-presenting model" },
