@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import SiteFooter from "@/widgets/site-footer/SiteFooter";
 
 // Public pages get the full footer; the app keeps this compact one.
-const SITE_ROUTES = ["/", "/how-it-works", "/research", "/get-involved"];
+const SITE_ROUTES = ["/", "/how-it-works", "/research", "/get-involved", "/demo"];
 
 export default function Footer() {
   const pathname = usePathname();
