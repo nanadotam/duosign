@@ -108,7 +108,6 @@ export default function RootLayout({
       <head>
         <ThemeScript />
         {/* Preload default avatar so it fetches in parallel with JS bundles */}
-        <link rel="preload" href="/avatars/Ama.vrm" as="fetch" crossOrigin="anonymous" />
       </head>
       <body className="font-sans antialiased">
         <SettingsProvider>
