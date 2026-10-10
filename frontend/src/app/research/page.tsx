@@ -85,7 +85,8 @@ export default function ResearchStoryPage() {
             cannot hear at all (as reported by the Ghana National Association of the Deaf). Many public health
             facilities have no sign language interpreter, and Ghana&apos;s disability law, Act 715, says nothing about
             sign language. Interpreters rightly go to courts, clinics and ceremonies. The internet, where more and more
-            of life happens, is left almost entirely unsigned.
+            of life happens, is left almost entirely unsigned. Captions help, but they are written English: for many Deaf
+            people that is a second language, not their natural, first way of communicating.
           </p>
           <WhoInterprets />
         </div>

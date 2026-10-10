@@ -44,7 +44,7 @@ export function DayJourney() {
 const COVERAGE = [
   { icon: Gavel, title: "Live & high-stakes", where: "Courts, hospitals, ceremonies", level: 3, who: "Qualified interpreters, when one can be found", note: "Must stay human" },
   { icon: Television, title: "Broadcast", where: "State addresses, some news", level: 2, who: "Sometimes an interpreter in the corner", note: "Patchy" },
-  { icon: Globe, title: "Everything online", where: "Videos, webinars, forms, feeds, voice notes", level: 1, who: "Almost no one", note: "Where DuoSign works" },
+  { icon: Globe, title: "Everything online", where: "Videos, webinars, forms, feeds, voice notes", level: 1, who: "Captions, at best: written English, not a first language", note: "Where DuoSign works" },
 ];
 
 export function WhoInterprets() {
