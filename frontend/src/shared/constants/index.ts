@@ -23,8 +23,8 @@ export const MOTION_AVATARS = [
   { id: "ama", name: "Ama", file: "ama.vrm", thumb: "/motion/thumbs/ama.jpg" },
   { id: "kofi", name: "Kofi", file: "kofi.vrm", thumb: "/motion/thumbs/kofi.jpg" },
   { id: "esi", name: "Esi", file: "esi.vrm", thumb: "/motion/thumbs/esi.jpg" },
-  { id: "ds-proto-2-2", name: "DS Proto 2.2", file: "ds-proto-sign.vrm", thumb: "/motion/thumbs/ds-proto-sign.jpg" },
-  { id: "ds-proto", name: "DS Proto", file: "avatar.vrm", thumb: "/motion/thumbs/ds-proto.jpg" },
+  { id: "ds-proto-2-2", name: "DS Proto 2.2", file: "ds-proto-sign.vrm", thumb: "/motion/thumbs/ds-proto-sign.jpg", legacy: true },
+  { id: "ds-proto", name: "DS Proto", file: "avatar.vrm", thumb: "/motion/thumbs/ds-proto.jpg", legacy: true },
 ] as const;
 
 export const MAX_INPUT_LENGTH = 500;

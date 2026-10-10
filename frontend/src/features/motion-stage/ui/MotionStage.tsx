@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { PlaybackState, PlaybackSpeed } from "@/entities/avatar/types";
+import type { PlaybackState } from "@/entities/avatar/types";
 
 /**
  * MotionStage — Motion stage renderer.
@@ -13,7 +13,8 @@ export type MotionCam = "sign" | "full" | "three" | "face";
 interface MotionStageProps {
   glossSequence: string[];
   playbackState: PlaybackState;
-  speed: PlaybackSpeed;
+  /** Playback multiplier (player speed chip × the Signing Speed setting) */
+  speed: number;
   avatarFile: string;
   cam: MotionCam;
   onProgress?: (index: number, gloss: string, total: number) => void;

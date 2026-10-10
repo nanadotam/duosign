@@ -8,36 +8,30 @@ import { useHistory } from "@/shared/hooks/useHistory";
 import { useGuestLimit } from "@/shared/hooks/useGuestLimit";
 import { deleteUser, updateUser, useSession } from "@/lib/auth-client";
 import Link from "next/link";
-import { API_BASE_URL, AVATAR_MODELS, OPEN_BETA } from "@/shared/constants";
+import { MOTION_AVATARS, OPEN_BETA } from "@/shared/constants";
 import { ACCENT_COLORS } from "@/shared/ui/SettingsApplicator";
 import VoiceRecordingPane from "@/features/translate-text/ui/VoiceRecordingPane";
 import Button from "@/shared/ui/Button";
 import Modal from "@/shared/ui/Modal";
 
 /* ═══ SIDEBAR DATA ═══ */
-const SIDEBAR = [
+const SIDEBAR: { section: string; items: { id: string; label: string; icon: string; badge?: string }[] }[] = [
   {
     section: "Account",
-    items: [
-      { id: "profile", label: "Profile", icon: "user" },
-      { id: "preferences", label: "Preferences", icon: "settings" },
-      { id: "avatar", label: "Avatar & Theme", icon: "users" },
-      { id: "accessibility", label: "Accessibility", icon: "smile" },
-    ],
+    items: [{ id: "profile", label: "Profile", icon: "user" }],
   },
   {
-    section: "Translation",
+    section: "Experience",
     items: [
-      { id: "nlp", label: "NLP Engine", icon: "code" },
+      { id: "preferences", label: "Translation", icon: "settings" },
+      { id: "avatar", label: "Signer & Theme", icon: "users" },
+      { id: "accessibility", label: "Accessibility", icon: "smile" },
       { id: "voice", label: "Voice Input", icon: "mic" },
     ],
   },
   {
-    section: "Developer",
-    items: [
-      { id: "api", label: "API Keys", icon: "terminal", badge: "NEW" },
-      { id: "webhooks", label: "Webhooks", icon: "file" },
-    ],
+    section: "Coming soon",
+    items: [{ id: "api", label: "API & Integrations", icon: "terminal", badge: "SOON" }],
   },
   {
     section: "Support",
@@ -181,38 +175,11 @@ function SettingsPageInner() {
   // Voice sheet
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  // Dynamic vocabulary stats from backend
-  const [lexiconSize, setLexiconSize] = useState<number | null>(null);
-
-  // Real microphone device list
-  const [micDevices, setMicDevices] = useState<string[]>(["System Default"]);
-
   const handleSave = useCallback(() => {
     save();
     setSavedFlash(true);
     setTimeout(() => setSavedFlash(false), 1800);
   }, [save]);
-
-  // Fetch vocabulary stats when NLP section is active
-  useEffect(() => {
-    if (activeSection !== "nlp") return;
-    fetch(`${API_BASE_URL}/api/vocabulary`)
-      .then((r) => r.json())
-      .then((d) => { if (typeof d.total === "number") setLexiconSize(d.total); })
-      .catch(() => {});
-  }, [activeSection]);
-
-  // Enumerate real microphones when voice section is active
-  useEffect(() => {
-    if (activeSection !== "voice") return;
-    if (!navigator.mediaDevices?.enumerateDevices) return;
-    navigator.mediaDevices.enumerateDevices().then((devices) => {
-      const mics = devices
-        .filter((d) => d.kind === "audioinput")
-        .map((d) => d.label || `Microphone ${d.deviceId.slice(0, 4)}`);
-      if (mics.length > 0) setMicDevices(["System Default", ...mics]);
-    }).catch(() => {});
-  }, [activeSection]);
 
   useEffect(() => {
     if (validSection) {
@@ -454,17 +421,17 @@ function SettingsPageInner() {
             <>
               <div className="mb-6">
                 <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
-                  Account <span className="inline-block w-5 h-px bg-border-hi" />
+                  Experience <span className="inline-block w-5 h-px bg-border-hi" />
                 </div>
-                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">Preferences</h1>
-                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Customize how DuoSign looks and behaves.</p>
+                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">Translation</h1>
+                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">How DuoSign turns your words into signs.</p>
               </div>
 
               <SettingsCard title="Translation" chip="engine">
-                <SettingRow label="Translation Engine" desc="Rule-based handles 75–85% of phrases in under 50ms. LLM fallback covers edge cases.">
+                <SettingRow label="Translation Engine" desc="Grammar rules translate in a few milliseconds; an AI model double-checks in the background and improves the result when it can.">
                   <Select options={["Hybrid (Rule + LLM)", "Rule-based only", "LLM only"]} value={settings.translationEngine} onChange={(v) => updateSetting("translationEngine", v as typeof settings.translationEngine)} />
                 </SettingRow>
-                <SettingRow label="Animation Speed" desc="Playback speed for signing animations">
+                <SettingRow label="Signing Speed" desc="Base speed of the signer. The 1× chip on the player multiplies this.">
                   <div className="flex items-center gap-[9px]">
                     <input
                       type="range" min="50" max="200" value={settings.animationSpeed}
@@ -476,31 +443,17 @@ function SettingsPageInner() {
                     </span>
                   </div>
                 </SettingRow>
-                <SettingRow label="Show Gloss Strip" desc="Display ASL gloss tokens above the avatar panel">
+                <SettingRow label="Show Gloss" desc="Show the ASL gloss and sign tokens next to your input">
                   <Toggle on={settings.showGloss} onChange={() => updateSetting("showGloss", !settings.showGloss)} />
                 </SettingRow>
                 <SettingRow label="Auto-translate on Paste" desc="Instantly translate when text is pasted into the input">
                   <Toggle on={settings.autoPaste} onChange={() => updateSetting("autoPaste", !settings.autoPaste)} />
                 </SettingRow>
-                <SettingRow label="Loop Animations" desc="Automatically replay the signing sequence after completion">
+                <SettingRow label="Loop Signing" desc="Replay the signed sentence automatically when it finishes">
                   <Toggle on={settings.loop} onChange={() => updateSetting("loop", !settings.loop)} />
-                </SettingRow>
-                <SettingRow label="Fingerspelling Fallback" desc="Use fingerspelling when a sign is not in the lexicon">
-                  <Toggle on={settings.fingerspell} onChange={() => updateSetting("fingerspell", !settings.fingerspell)} />
                 </SettingRow>
               </SettingsCard>
 
-              <SettingsCard title="Notifications" chip="alerts">
-                <SettingRow label="New Gloss Updates" desc="When new signs are added to the WLASL lexicon">
-                  <Toggle on={settings.glossUpdates} onChange={() => updateSetting("glossUpdates", !settings.glossUpdates)} />
-                </SettingRow>
-                <SettingRow label="API Usage Alerts" desc="Notify when approaching rate limits">
-                  <Toggle on={settings.apiAlerts} onChange={() => updateSetting("apiAlerts", !settings.apiAlerts)} />
-                </SettingRow>
-                <SettingRow label="Product Updates" desc="Feature announcements and release notes">
-                  <Toggle on={settings.productUpdates} onChange={() => updateSetting("productUpdates", !settings.productUpdates)} />
-                </SettingRow>
-              </SettingsCard>
 
               <SettingsCard title="Data" chip="storage" danger>
                 <SettingRow label="Clear Translation History" desc={isAuthenticated ? "Permanently removes all saved translations from your account history" : "Permanently removes all saved translations from this browser"} danger>
@@ -524,35 +477,52 @@ function SettingsPageInner() {
             <>
               <div className="mb-6">
                 <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
-                  Account <span className="inline-block w-5 h-px bg-border-hi" />
+                  Experience <span className="inline-block w-5 h-px bg-border-hi" />
                 </div>
-                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">Avatar</h1>
-                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Customize the 3D signing avatar appearance.</p>
+                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">Signer &amp; Theme</h1>
+                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Choose who signs for you and how DuoSign looks.</p>
               </div>
 
-              <SettingsCard title="3D Avatar" chip="appearance">
-                <SettingRow label="Avatar Model" desc="Select the 3D avatar used for signing" stack>
-                  <div className="flex gap-2 flex-wrap">
-                    {AVATAR_MODELS.map((model) => (
-                      <button
-                        key={model.id}
-                        onClick={() => updateSetting("avatarModelId", model.id)}
-                        className={[
-                          "flex flex-col items-center justify-center gap-1 w-[82px] h-[60px] rounded-[12px] border cursor-pointer text-center transition-all duration-120 shadow-raised-sm px-2",
-                          settings.avatarModelId === model.id
-                            ? "border-accent bg-[color-mix(in_srgb,var(--accent)_10%,var(--surface-2))] shadow-[var(--raised-sm),0_0_0_2px_color-mix(in_srgb,var(--accent)_30%,transparent)]"
-                            : "border-border-hi bg-surface-2 hover:border-accent hover:-translate-y-0.5 hover:shadow-raised",
-                        ].join(" ")}
-                      >
-                        <span className="text-[10px] font-bold text-text-2 leading-tight">{model.name}</span>
-                        {settings.avatarModelId === model.id && (
-                          <span className="text-[9px] font-semibold text-accent">Active</span>
-                        )}
-                      </button>
+              <SettingsCard title="Signer" chip="motion">
+                <SettingRow label="Your Signer" desc="Ama, Kofi and Esi sign with motion captured from real signers, including facial expression" stack>
+                  <div className="flex flex-col gap-3">
+                    {[false, true].map((legacy) => (
+                      <div key={String(legacy)}>
+                        {legacy && <div className="text-[9.5px] font-bold tracking-[0.1em] uppercase text-text-3 mb-2">Legacy</div>}
+                        <div className="flex gap-2 flex-wrap">
+                          {MOTION_AVATARS.filter((m) => Boolean((m as { legacy?: boolean }).legacy) === legacy).map((model) => {
+                            const active = settings.avatarModelId === model.id;
+                            return (
+                              <button
+                                key={model.id}
+                                onClick={() => updateSetting("avatarModelId", model.id)}
+                                aria-pressed={active}
+                                className={[
+                                  "flex items-center gap-2.5 pl-1.5 pr-3.5 py-1.5 rounded-[14px] border cursor-pointer transition-all duration-120 shadow-raised-sm",
+                                  active
+                                    ? "border-accent bg-[color-mix(in_srgb,var(--accent)_10%,var(--surface-2))] shadow-[var(--raised-sm),0_0_0_2px_color-mix(in_srgb,var(--accent)_30%,transparent)]"
+                                    : "border-border-hi bg-surface-2 hover:border-accent hover:-translate-y-0.5",
+                                  legacy && !active ? "opacity-75" : "",
+                                ].join(" ")}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={model.thumb} alt="" width={legacy ? 30 : 38} height={legacy ? 30 : 38} className="rounded-[10px] object-cover" />
+                                <span className="flex flex-col items-start leading-tight">
+                                  <span className="text-[12px] font-semibold text-text-1">{model.name}</span>
+                                  <span className={`text-[10px] ${active ? "text-accent font-semibold" : "text-text-3"}`}>{active ? "Signing" : legacy ? "Legacy avatar" : "Select"}</span>
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </SettingRow>
-                <SettingRow label="Accent Color" desc="Highlight color used in avatar animations">
+              </SettingsCard>
+
+              <SettingsCard title="Theme" chip="appearance">
+                <SettingRow label="Accent Color" desc="Highlight colour used for buttons, captions and focus rings">
                   <div className="flex gap-[7px] items-center">
                     {ACCENT_COLORS.map((c, i) => (
                       <button
@@ -569,7 +539,7 @@ function SettingsPageInner() {
                     ))}
                   </div>
                 </SettingRow>
-                <SettingRow label="Background" desc="Scene backdrop behind the signing avatar">
+                <SettingRow label="Background" desc="Backdrop behind the signer (also used in exported videos)">
                   <Select options={["Transparent", "Studio White", "Studio Grey", "Dark Stage", "Gradient Blue"]} value={settings.avatarBackground} onChange={(v) => updateSetting("avatarBackground", v as typeof settings.avatarBackground)} />
                 </SettingRow>
               </SettingsCard>
@@ -581,7 +551,7 @@ function SettingsPageInner() {
             <>
               <div className="mb-6">
                 <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
-                  Account <span className="inline-block w-5 h-px bg-border-hi" />
+                  Experience <span className="inline-block w-5 h-px bg-border-hi" />
                 </div>
                 <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">Accessibility</h1>
                 <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Adjust display and interaction settings for your comfort.</p>
@@ -604,56 +574,21 @@ function SettingsPageInner() {
             </>
           )}
 
-          {/* ═══ NLP ENGINE ═══ */}
-          {activeSection === "nlp" && (
-            <>
-              <div className="mb-6">
-                <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
-                  Translation <span className="inline-block w-5 h-px bg-border-hi" />
-                </div>
-                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">NLP Engine</h1>
-                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Configure the text-to-gloss translation pipeline.</p>
-              </div>
-
-              <SettingsCard title="Engine Configuration" chip="pipeline">
-                <SettingRow label="Translation Engine" desc="Rule-based handles 75–85% of phrases in under 50ms. LLM fallback covers edge cases.">
-                  <Select options={["Hybrid (Rule + LLM)", "Rule-based only", "LLM only"]} value={settings.translationEngine} onChange={(v) => updateSetting("translationEngine", v as typeof settings.translationEngine)} />
-                </SettingRow>
-                <SettingRow label="Fingerspelling Fallback" desc="Use fingerspelling when a sign is not in the lexicon">
-                  <Toggle on={settings.fingerspell} onChange={() => updateSetting("fingerspell", !settings.fingerspell)} />
-                </SettingRow>
-              </SettingsCard>
-
-              <SettingsCard title="Performance" chip="metrics">
-                <SettingRow label="Lexicon Size" desc="Total number of ASL signs loaded from the dataset">
-                  <span className="font-mono text-[14px] font-semibold text-accent">
-                    {lexiconSize !== null ? lexiconSize.toLocaleString() : "—"}
-                  </span>
-                </SettingRow>
-              </SettingsCard>
-            </>
-          )}
 
           {/* ═══ VOICE INPUT ═══ */}
           {activeSection === "voice" && (
             <>
               <div className="mb-6">
                 <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
-                  Translation <span className="inline-block w-5 h-px bg-border-hi" />
+                  Experience <span className="inline-block w-5 h-px bg-border-hi" />
                 </div>
                 <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">Voice Input</h1>
-                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Configure microphone and speech recognition settings.</p>
+                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Speak instead of typing. Press the microphone on the Translate page, or test it here.</p>
               </div>
 
               <SettingsCard title="Voice Input" chip="microphone">
-                <SettingRow label="Default Microphone" desc="Input device used for voice translation">
-                  <Select options={micDevices} value={settings.defaultMic} onChange={(v) => updateSetting("defaultMic", v)} />
-                </SettingRow>
-                <SettingRow label="Recognition Language" desc="Language used for speech-to-text (Whisper via Groq)">
+                <SettingRow label="Recognition Language" desc="Speech is transcribed to text with Whisper, then translated like typed text">
                   <span className="font-sans text-[12.5px] font-medium text-text-2">English (US)</span>
-                </SettingRow>
-                <SettingRow label="Auto-send after silence" desc="Automatically translate after recording stops">
-                  <Toggle on={settings.autoSend} onChange={() => updateSetting("autoSend", !settings.autoSend)} />
                 </SettingRow>
               </SettingsCard>
 
@@ -683,38 +618,30 @@ function SettingsPageInner() {
             <>
               <div className="mb-6">
                 <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
-                  Developer <span className="inline-block w-5 h-px bg-border-hi" />
+                  Coming soon <span className="inline-block w-5 h-px bg-border-hi" />
                 </div>
-                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">API Keys</h1>
-                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Manage your API credentials for programmatic access.</p>
+                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">API &amp; Integrations</h1>
+                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Bring DuoSign into your own websites and apps.</p>
               </div>
 
-              <SettingsCard title="API Access" chip="status">
-                <div className="py-6 text-[14px] text-text-3 transition-colors duration-250">
-                  Coming soon
-                </div>
+              <SettingsCard title="On the roadmap" chip="coming soon">
+                <SettingRow label="API keys" desc="Programmatic access to text-to-sign translation and motion clips">
+                  <span className="text-[11px] font-semibold text-text-3 uppercase tracking-[0.08em]">Soon</span>
+                </SettingRow>
+                <SettingRow label="Embeddable signer" desc="A picture-in-picture signer for websites, videos and webinars">
+                  <span className="text-[11px] font-semibold text-text-3 uppercase tracking-[0.08em]">Soon</span>
+                </SettingRow>
+                <SettingRow label="Chrome extension" desc="Sign any page or video in your browser. In accessibility and compliance review">
+                  <span className="text-[11px] font-semibold text-text-3 uppercase tracking-[0.08em]">In review</span>
+                </SettingRow>
+                <SettingRow label="Webhooks" desc="Get notified when translations or exports finish">
+                  <span className="text-[11px] font-semibold text-text-3 uppercase tracking-[0.08em]">Later</span>
+                </SettingRow>
               </SettingsCard>
             </>
           )}
 
           {/* ═══ WEBHOOKS ═══ */}
-          {activeSection === "webhooks" && (
-            <>
-              <div className="mb-6">
-                <div className="text-[10px] font-bold tracking-[0.1em] uppercase text-text-3 mb-1.5 font-mono flex items-center gap-2 transition-colors duration-250">
-                  Developer <span className="inline-block w-5 h-px bg-border-hi" />
-                </div>
-                <h1 className="font-serif text-[26px] text-text-1 tracking-tight transition-colors duration-250">Webhooks</h1>
-                <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Receive real-time notifications for translation events.</p>
-              </div>
-
-              <SettingsCard title="Webhook Configuration" chip="status">
-                <div className="py-6 text-[14px] text-text-3 transition-colors duration-250">
-                  Coming soon
-                </div>
-              </SettingsCard>
-            </>
-          )}
 
           {/* ═══ HELP & DOCS ═══ */}
           {activeSection === "help" && (
@@ -739,7 +666,7 @@ function SettingsPageInner() {
                   </Link>
                 </SettingRow>
                 <SettingRow label="Keyboard Shortcuts" desc="Complete list of available keyboard shortcuts">
-                  <Link href="/docs#shortcuts" className="text-[12.5px] font-medium text-accent hover:underline whitespace-nowrap">
+                  <Link href="/guide" className="text-[12.5px] font-medium text-accent hover:underline whitespace-nowrap">
                     View All →
                   </Link>
                 </SettingRow>
@@ -747,10 +674,10 @@ function SettingsPageInner() {
 
               <SettingsCard title="About DuoSign" chip="info">
                 <SettingRow label="Version" desc="Current application version">
-                  <span className="font-mono text-[12px] text-text-2">0.1.0-alpha</span>
+                  <span className="font-mono text-[12px] text-text-2">Beta · October 2026</span>
                 </SettingRow>
                 <SettingRow label="Lexicon" desc="Sign language dataset powering the avatar">
-                  <span className="font-mono text-[12px] text-text-2">WLASL v0.3</span>
+                  <span className="font-mono text-[12px] text-text-2">WLASL · 2,000 signs + A–Z</span>
                 </SettingRow>
               </SettingsCard>
             </>

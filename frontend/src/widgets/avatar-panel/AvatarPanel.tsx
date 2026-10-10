@@ -212,7 +212,10 @@ export default function AvatarPanel({
   const thumbAvatars = useMemo(
     () => isMotion
       ? MOTION_AVATARS
-      : AVATAR_MODELS.map((m) => ({ id: m.id, name: m.name, thumb: MOTION_AVATARS.find((a) => a.id === m.id)?.thumb })),
+      : AVATAR_MODELS.map((m) => ({
+          id: m.id, name: m.name, thumb: MOTION_AVATARS.find((a) => a.id === m.id)?.thumb,
+          legacy: !["ama", "kofi", "esi"].includes(m.id),
+        })),
     [isMotion]
   );
   const handleThumbSelect = useCallback((id: string) => {
@@ -391,7 +394,7 @@ export default function AvatarPanel({
             <MotionStage
               glossSequence={glossNames}
               playbackState={playbackState}
-              speed={speed}
+              speed={speed * (settings.animationSpeed / 100)}
               avatarFile={motionAvatar.file}
               cam={MOTION_CAM[viewMode]}
               onProgress={handleMotionProgress}

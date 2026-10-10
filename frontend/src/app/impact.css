@@ -183,3 +183,6 @@
 .ip-final p { color: rgba(255,255,255,.75); font-size: 1.15rem; margin-bottom: 2rem !important; }
 
 .ip-recog-card .ip-pill { align-self: flex-start; }
+.ip-recog-quotes { grid-column: 1 / -1; }
+.ip-recog-quotes ul { grid-template-columns: repeat(3, 1fr); gap: 22px; }
+@media (max-width: 900px) { .ip-recog-quotes ul { grid-template-columns: 1fr; } }

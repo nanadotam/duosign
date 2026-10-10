@@ -11,6 +11,10 @@ const nextConfig = {
   async rewrites() {
     return [
       {
+        source: "/api/health",
+        destination: `${BACKEND_URL}/api/health`,
+      },
+      {
         source: "/api/translate/:path*",
         destination: `${BACKEND_URL}/api/translate/:path*`,
       },

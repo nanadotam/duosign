@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 import {
-  ArrowRight, ArrowUpRight, Play, ChatCircleText, TextAa, UsersThree, Trophy, Buildings, Quotes,
+  ArrowRight, ArrowUpRight, Play, ChatCircleText, TextAa, UsersThree, Trophy, Quotes,
 } from "@phosphor-icons/react/dist/ssr";
 import SiteNav from "@/widgets/site-nav/SiteNav";
 import Journey from "@/widgets/journey/Journey";
@@ -166,15 +166,6 @@ export default function LandingPage() {
                 <p>Nana Kwaku Amoako, the developer of DuoSign.</p>
               </figcaption>
             </figure>
-            <article className="ip-recog-card ip-recog-un">
-              <span className="ip-pill"><Buildings size={14} weight="fill" /> United Nations</span>
-              <h3>UNECA Disability Inclusion Desk</h3>
-              <p>
-                Introduced by Christina Abraham, DuoSign was taken up by staff with disabilities at the UN Economic
-                Commission for Africa, who are sharing it with colleagues across the UN as an example of technology
-                built with, and not just for, the Deaf community.
-              </p>
-            </article>
             <article className="ip-recog-card ip-recog-quotes">
               <span className="ip-pill"><Quotes size={14} weight="fill" /> From the pilot</span>
               <ul>

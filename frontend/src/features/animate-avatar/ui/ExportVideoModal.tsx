@@ -1,5 +1,7 @@
 "use client";
 
+import { API_BASE_URL } from "@/shared/constants";
+
 /**
  * ExportVideoModal
  * ================
@@ -24,7 +26,8 @@ interface ExportVideoModalProps {
   onClose: () => void;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// Same-origin in production (Next rewrites /api/export to the backend); localhost:8000 in dev
+const API_BASE = API_BASE_URL;
 
 // Pronoun tokens -> actual sign file names (covers raw IX and display forms)
 const IX_TO_SIGN: Record<string, string> = {

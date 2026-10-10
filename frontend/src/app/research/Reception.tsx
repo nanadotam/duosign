@@ -59,10 +59,6 @@ export default function Reception() {
               <video src="/landing/presenting_loop.mp4" poster="/landing/presenting_poster.webp" autoPlay muted loop playsInline aria-label="Nana Kwaku Amoako speaking at Ashesi University" />
               <figcaption><Presentation size={16} weight="duotone" /> Speaking at Ashesi University</figcaption>
             </figure>
-            <div className="rc-mini">
-              <span className="rc-pill">Mar 2026</span>
-              <p>Submitted to the Ashesi Undergraduate Research Conference.</p>
-            </div>
           </div>
         </div>
 
