@@ -16,8 +16,8 @@ const COLUMNS = [
   {
     title: "Research",
     links: [
-      { href: "/research", label: "The thesis" },
-      { href: "/research#reception", label: "How it was received" },
+      { href: "/research/paper", label: "The full thesis" },
+      { href: "/research#received", label: "How it was received" },
       { href: "/#journey", label: "Our journey" },
       { href: "https://github.com/dxli94/WLASL", label: "WLASL dataset", external: true },
     ],

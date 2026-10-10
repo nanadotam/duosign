@@ -186,3 +186,13 @@
 .ip-recog-quotes { grid-column: 1 / -1; }
 .ip-recog-quotes ul { grid-template-columns: repeat(3, 1fr); gap: 22px; }
 @media (max-width: 900px) { .ip-recog-quotes ul { grid-template-columns: 1fr; } }
+
+/* key findings */
+.ip-findings { list-style: none; padding: 0; margin: 2.2rem 0 2rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.ip-findings li { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 24px; }
+.ip-findings span { font: 700 .8rem var(--font-jetbrains), monospace; color: var(--g-600); }
+.ip-findings h3 { margin: 10px 0 8px; font-size: 1.08rem; }
+.ip-findings p { color: var(--ink-2); line-height: 1.55; font-size: .95rem; }
+.ip-findings-cta { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+@media (max-width: 960px) { .ip-findings { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .ip-findings { grid-template-columns: 1fr; } }

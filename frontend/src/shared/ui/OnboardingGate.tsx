@@ -9,7 +9,7 @@ const OnboardingModal = dynamic(() => import("./OnboardingModal"), { ssr: false 
 const STORAGE_KEY = "duosign_onboarded";
 
 // Pages where the modal should never appear — user hasn't entered the app yet
-const SUPPRESSED_PATHS = ["/", "/how-it-works", "/research", "/terms", "/privacy", "/licenses"];
+const SUPPRESSED_PATHS = ["/", "/how-it-works", "/research", "/research/paper", "/terms", "/privacy", "/licenses"];
 
 export default function OnboardingGate() {
   const pathname = usePathname();

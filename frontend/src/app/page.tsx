@@ -201,24 +201,21 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Research teaser ─────────────────────────────── */}
+      {/* ── Key findings ─────────────────────────────────── */}
       <section id="research" className="ip-section">
-        <div className="ip-wrap ip-research">
-          <div>
-            <p className="ip-eyebrow">Research</p>
-            <h2>Grounded in evidence.</h2>
-            <p className="ip-body">
-              DuoSign began as an applied research project in Computer Science at Ashesi University. The thesis covers
-              the translation pipeline, avatar animation, accessibility testing (WCAG 2.1 AA, Lighthouse 100) and a
-              pilot usability study. Read it in full, right here.
-            </p>
-            <Link href="/research" className="ip-btn">Read the research <ArrowRight size={18} weight="bold" /></Link>
+        <div className="ip-wrap">
+          <p className="ip-eyebrow">From the research</p>
+          <h2>What we&apos;ve learned so far.</h2>
+          <ol className="ip-findings">
+            <li><span>01</span><h3>The internet is the unsigned gap</h3><p>Interpreters go to courts, clinics and ceremonies. Videos, webinars, forms and feeds are left almost entirely unsigned.</p></li>
+            <li><span>02</span><h3>The data isn&apos;t in Africa yet</h3><p>American Sign Language has large public datasets; most African sign languages have little or none. Ghanaian Sign Language must be recorded with Deaf signers.</p></li>
+            <li><span>03</span><h3>Clear signing matters most</h3><p>Testers found DuoSign easy to use but the avatar hard to follow, so we rebuilt the signing from real signers&apos; motion, with facial expression.</p></li>
+            <li><span>04</span><h3>With, not for</h3><p>Avatars complement interpreters, never replace them. The next sign languages will be built and judged by Deaf communities.</p></li>
+          </ol>
+          <div className="ip-findings-cta">
+            <Link href="/research" className="ip-btn">Explore the research <ArrowRight size={18} weight="bold" /></Link>
+            <a className="ip-more" href="mailto:nana.amoako@alumni.ashesi.edu.gh">Work with us <ArrowRight size={18} weight="bold" /></a>
           </div>
-          <aside className="ip-contact">
-            <h3>Work with us</h3>
-            <p>We are looking to collaborate with Deaf associations, universities, funders and institutions that publish public information.</p>
-            <a className="ip-btn" href="mailto:nana.amoako@alumni.ashesi.edu.gh">Get in touch</a>
-          </aside>
         </div>
       </section>
 
