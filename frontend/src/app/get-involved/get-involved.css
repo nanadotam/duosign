@@ -26,7 +26,8 @@
 .gi-hp { position: absolute; left: -9999px; width: 1px; height: 1px; }
 .gi-actions { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 .gi-actions .ip-btn[disabled] { opacity: .6; cursor: wait; }
-.gi-mail { display: inline-flex; align-items: center; gap: 6px; color: var(--g-700); font-weight: 600; text-decoration: none; font-size: .92rem; }
+.gi-mail { background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 6px; color: var(--g-700); font-weight: 600; text-decoration: none; font-size: .92rem; }
+.gi-mail span { text-decoration: underline; text-underline-offset: 3px; }
 .gi-error { display: flex; align-items: center; gap: 8px; color: #b4473c; background: #fbe4e1; border-radius: 12px; padding: 10px 14px; }
 .gi-error a { color: inherit; font-weight: 600; }
 .gi-privacy { font-size: .82rem; color: var(--ink-2); }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Handshake, BookOpenText, CheckCircle, EnvelopeSimple, PaperPlaneTilt, WarningCircle } from "@phosphor-icons/react";
 
@@ -60,24 +60,16 @@ export default function GetInvolvedForm() {
   const update = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const mailto = useMemo(() => {
-    const subject = kind === "research" ? "Request: the DuoSign thesis" : "Partnering with DuoSign";
-    const lines = [
-      `Hello Nana,`,
-      ``,
-      kind === "research" ? `I'd like to request access to the full DuoSign thesis.` : `I'd like to explore partnering with DuoSign.`,
-      ``,
-      `Name: ${form.name}`,
-      `Email: ${form.email}`,
-      form.organisation ? `Organisation: ${form.organisation}` : "",
-      form.role ? `I am: ${form.role}` : "",
-      form.country ? `Country: ${form.country}` : "",
-      interests.length ? `${kind === "research" ? "Purpose" : "Interested in"}: ${interests.join(", ")}` : "",
-      ``,
-      form.message,
-    ].filter((l, i, all) => l !== "" || all[i - 1] !== "");
-    return `mailto:${OWNER_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join("\n"))}`;
-  }, [kind, form, interests]);
+  const [copied, setCopied] = useState(false);
+  const copyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(OWNER_EMAIL);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      window.prompt("Copy this email address:", OWNER_EMAIL);
+    }
+  };
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -116,7 +108,6 @@ export default function GetInvolvedForm() {
               ? "Your request for the DuoSign thesis has been received. Nana will reply by email with the paper."
               : "Your message has reached Nana. Expect a reply by email, usually within a few days."}
           </p>
-          <a className="ip-btn ip-btn-ghost" href={mailto}><EnvelopeSimple size={18} weight="duotone" /> Also send it as an email</a>
         </div>
       ) : (
         <form onSubmit={submit} className="gi-form" noValidate>
@@ -152,14 +143,16 @@ export default function GetInvolvedForm() {
           <input className="gi-hp" tabIndex={-1} autoComplete="off" value={form.website} onChange={update("website")} aria-hidden="true" />
           {state === "error" && (
             <p className="gi-error" role="alert">
-              <WarningCircle size={18} weight="duotone" /> {error} You can <a href={mailto}>send it as an email instead</a>.
+              <WarningCircle size={18} weight="duotone" /> {error} You can also email <strong>{OWNER_EMAIL}</strong> directly.
             </p>
           )}
           <div className="gi-actions">
             <button type="submit" className="ip-btn" disabled={state === "sending"}>
               <PaperPlaneTilt size={18} weight="duotone" /> {state === "sending" ? "Sending…" : kind === "research" ? "Request the thesis" : "Send"}
             </button>
-            <a className="gi-mail" href={mailto}><EnvelopeSimple size={16} weight="duotone" /> Prefer email? Open a pre-filled draft</a>
+            <button type="button" className="gi-mail" onClick={copyEmail}>
+              <EnvelopeSimple size={16} weight="duotone" /> {copied ? "Email address copied" : <>Prefer email? <span>{OWNER_EMAIL}</span></>}
+            </button>
           </div>
           <p className="gi-privacy">We only use your details to reply to you. They are never shared or sold.</p>
         </form>
