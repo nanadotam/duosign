@@ -860,7 +860,8 @@ class TextToGloss:
     @staticmethod
     def _to_display_form(gloss: str) -> str:
         """Convert internal IX markers to readable pronouns for display."""
-        return " ".join(IX_DISPLAY.get(t, t) for t in gloss.split())
+        # Compound signs are stored as THANK_YOU (file names) but written THANK-YOU in gloss notation
+        return " ".join(IX_DISPLAY.get(t, t).replace("_", "-") for t in gloss.split())
 
     @staticmethod
     def _normalize_llm_gloss(gloss: str) -> str:

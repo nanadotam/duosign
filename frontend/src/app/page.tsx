@@ -1,401 +1,179 @@
-"use client";
-
-import { useEffect, useRef, useCallback, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import "./landing.css";
+import "./impact.css";
+import { IMPACT_STATS, TIMELINE, RESEARCH_REFS } from "./impact-content";
 
-const GLOSS: Record<string, string | null> = {
-  hello: "HELLO", hi: "HI", how: "HOW", you: "YOU", are: null,
-  good: "GOOD", morning: "MORNING", my: "MY", name: "NAME", is: null,
-  what: "WHAT", thank: "THANK", thanks: "THANK", please: "PLEASE",
-  yes: "YES", no: "NO", sorry: "SORRY", help: "HELP", i: "ME",
-  love: "LOVE", sign: "SIGN", language: "LANGUAGE", nice: "NICE",
-  meet: "MEET", understand: "UNDERSTAND", again: "AGAIN", today: "TODAY",
-  want: "WANT", need: "NEED", time: "TIME", know: "KNOW",
-};
-const STOP = new Set(["a","an","the","of","in","to","for","with","on","at","by","it","this","that"]);
-
-function toGloss(text: string) {
-  const words = text.toLowerCase().replace(/[^a-z\s]/g, "").split(/\s+/).filter(Boolean);
-  const out: string[] = [];
-  words.forEach((w) => {
-    if (GLOSS[w] != null) out.push(GLOSS[w]!);
-    else if (!STOP.has(w) && w.length > 0) out.push(w.toUpperCase());
-  });
-  if (text.includes("?")) out.push("Q");
-  return out.slice(0, 9);
-}
-
-function useScrollReveal() {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!ref.current) return;
-    const els = ref.current.querySelectorAll(".l-reveal");
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            e.target.classList.add("in");
-            obs.unobserve(e.target);
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
-    );
-    els.forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
-  }, []);
-  return ref;
-}
-
-function useCounterAnimation() {
-  useEffect(() => {
-    const countEls = document.querySelectorAll("[data-count]");
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            const target = parseInt((e.target as HTMLElement).dataset.count || "0");
-            if (!target) return;
-            const el = e.target as HTMLElement;
-            const dur = 2000;
-            const start = performance.now();
-            const tick = (now: number) => {
-              const p = Math.min((now - start) / dur, 1);
-              const v = Math.round(target * (1 - Math.pow(1 - p, 3)));
-              el.textContent = v >= 1000 ? v.toLocaleString() : String(v);
-              if (p < 1) requestAnimationFrame(tick);
-              else el.textContent = target.toLocaleString();
-            };
-            requestAnimationFrame(tick);
-            obs.unobserve(e.target);
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-    countEls.forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
-  }, []);
-}
-
+/**
+ * DuoSign Pro landing page — the story and the impact, not the tech.
+ * Content (stats, timeline, references) lives in impact-content.ts so it can be updated without touching layout.
+ */
 export default function LandingPage() {
-  const containerRef = useScrollReveal();
-  useCounterAnimation();
-
-  const [glossChips, setGlossChips] = useState<string[]>([]);
-  const [litIndex, setLitIndex] = useState(0);
-  const chipTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const runTranslate = useCallback((text: string) => {
-    if (!text.trim()) return;
-    const glosses = toGloss(text);
-    setGlossChips(glosses);
-    setLitIndex(0);
-    if (chipTimerRef.current) clearInterval(chipTimerRef.current);
-    let idx = 0;
-    chipTimerRef.current = setInterval(() => {
-      idx = (idx + 1) % glosses.length;
-      setLitIndex(idx);
-    }, 750);
-  }, []);
-
-  const handleInput = useCallback(
-    (val: string) => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => runTranslate(val), 600);
-    },
-    [runTranslate]
-  );
-
-  useEffect(() => {
-    runTranslate("Hello, how are you?");
-    return () => {
-      if (chipTimerRef.current) clearInterval(chipTimerRef.current);
-    };
-  }, [runTranslate]);
-
   return (
-    <div className="landing" ref={containerRef}>
-      {/* NAV */}
-      <nav className="l-nav">
-        <Link href="/" className="l-nav-logo">
-          <Image src="/logos/DuoSign_logomark.svg" alt="DuoSign" className="logo-white" width={28} height={28} />
-          <Image src="/logos/DuoSign_textmark.svg" alt="DuoSign" className="l-nav-logo-text logo-white" width={90} height={22} />
+    <main className="ip">
+      {/* ── Nav ─────────────────────────────────────────── */}
+      <header className="ip-nav">
+        <Link href="/" className="ip-brand" aria-label="DuoSign home">
+          <Image src="/logos/DuoSign_logomark.svg" alt="" width={26} height={26} className="ip-logo" />
+          <span>DuoSign</span>
+          <em>Pro</em>
+          <small>Beta</small>
         </Link>
-        <div className="l-nav-links">
-          <a href="#how" className="l-nav-link">How it works</a>
-          <a href="#demo" className="l-nav-link">Demo</a>
-          <a href="#features" className="l-nav-link">Features</a>
-          <Link href="/guide" className="l-nav-link">Docs</Link>
-          <a href="#contact" className="l-nav-link">Contact</a>
-        </div>
-      </nav>
+        <nav aria-label="Sections">
+          <a href="#why">Why</a>
+          <a href="#how">How it works</a>
+          <a href="#built-with">Built with</a>
+          <a href="#next">What&apos;s next</a>
+          <a href="#research">Research</a>
+        </nav>
+        <Link href="/translate" className="ip-btn ip-btn-sm">Try the beta</Link>
+      </header>
 
-      {/* HERO */}
-      <section className="l-hero">
-        <div className="l-hero-glow" />
-        <div className="l-hero-logo-wrap">
-          <Image src="/logos/DuoSign_logo.svg" alt="DuoSign" className="logo-white" width={280} height={86} style={{ height: 'auto' }} />
+      {/* ── Hero ────────────────────────────────────────── */}
+      <section className="ip-hero">
+        <div className="ip-hero-copy">
+          <p className="ip-eyebrow">Text and speech → sign language</p>
+          <h1>
+            The internet,<br />
+            <span>in sign language.</span>
+          </h1>
+          <p className="ip-lede">
+            For Deaf and hard-of-hearing people, most of digital life arrives as text. DuoSign turns written and
+            spoken English into sign language, signed by avatars that look like the people who use them, so content
+            meets people in their first language.
+          </p>
+          <div className="ip-cta">
+            <Link href="/translate" className="ip-btn">Try DuoSign Pro (beta)</Link>
+            <a href="#why" className="ip-btn ip-btn-ghost">Read the story</a>
+          </div>
+          <p className="ip-note">Built in Ghana at Ashesi University · reviewed by its accessibility team</p>
         </div>
-        <h1 className="l-hero-headline">
-          Sign language,<br />everywhere you go.
-        </h1>
-        <p className="l-hero-sub">
-          DuoSign translates English into American Sign Language —<br />
-          animated live by a 3D avatar, right in your browser.
-        </p>
-        <div className="l-hero-actions">
-          <Link href="/translate" className="l-btn-primary">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="5,3 19,12 5,21 5,3" />
-            </svg>
-            Try DuoSign Free
-          </Link>
-          <Link href="/guide" className="l-btn-ghost">Read the Docs →</Link>
-        </div>
-        <div className="l-trust-row">
-          <span className="l-trust-item">Made for the Deaf &amp; Hard-of-Hearing community</span>
-          <span className="l-trust-sep" />
-          <span className="l-trust-item">No account needed to start</span>
-          <span className="l-trust-sep" />
-          <span className="l-trust-item">Browser-native — no downloads</span>
+        <div className="ip-hero-art" aria-hidden="true">
+          <Image src="/landing/signer_kofi.webp" alt="" width={420} height={520} className="ip-signer ip-signer-l" priority />
+          <Image src="/landing/signer_ama.webp" alt="" width={480} height={600} className="ip-signer ip-signer-c" priority />
+          <Image src="/landing/signer_esi.webp" alt="" width={420} height={520} className="ip-signer ip-signer-r" priority />
+          <div className="ip-gloss">HELLO · THANK-YOU · YOU</div>
         </div>
       </section>
 
-      {/* WAVE */}
-      <div className="l-wave">
-        <svg viewBox="0 0 1440 60" fill="none" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0,0 C360,60 1080,60 1440,0 L1440,60 L0,60 Z" fill="#F5F0E8" />
-        </svg>
-      </div>
-
-      {/* HOW IT WORKS */}
-      <section className="l-how" id="how">
-        <div className="l-how-inner">
-          <div className="l-reveal">
-            <div className="l-eyebrow">How It Works</div>
-            <h2 className="l-section-title">
-              From words to motion<br /><em>in three steps</em>
-            </h2>
-            <p className="l-section-sub">
-              Type anything in English. DuoSign figures out the signs, looks them up, and brings them to life on screen — all in under a second.
-            </p>
-          </div>
-          <div className="l-steps-grid l-reveal" style={{ transitionDelay: ".1s" }}>
-            <div className="l-step-cell">
-              <div className="l-step-num">01</div>
-              <div className="l-step-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M4 12h16M4 18h7" /></svg>
-              </div>
-              <div className="l-step-name">Text to Signs</div>
-              <p className="l-step-desc">DuoSign reads your English sentence and converts it into ASL Gloss — the written form of American Sign Language grammar.</p>
-              <span className="l-step-tag">spaCy + LLM</span>
-            </div>
-            <div className="l-step-cell">
-              <div className="l-step-num">02</div>
-              <div className="l-step-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M6.343 6.343a8 8 0 1 0 11.314 11.314A8 8 0 0 0 6.343 6.343z" /></svg>
-              </div>
-              <div className="l-step-name">Sign Lookup</div>
-              <p className="l-step-desc">Each sign is matched to a real ASL reference from a library of over 2,000 signs — extracted from thousands of ASL videos.</p>
-              <span className="l-step-tag">MediaPipe · WLASL</span>
-            </div>
-            <div className="l-step-cell">
-              <div className="l-step-num">03</div>
-              <div className="l-step-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /></svg>
-              </div>
-              <div className="l-step-name">Avatar Signs It</div>
-              <p className="l-step-desc">A 3D avatar performs the signs in real time — smooth, accurate, and directly in your browser window.</p>
-              <span className="l-step-tag">Kalidokit · Three.js · VRM</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* DEMO */}
-      <section className="l-demo" id="demo">
-        <div className="l-demo-inner">
-          <div className="l-reveal">
-            <div className="l-eyebrow l-demo-eyebrow">Live Preview</div>
-            <h2 className="l-section-title l-demo-title">
-              Type anything.<br /><em style={{ color: "rgba(255,255,255,0.55)" }}>Watch it sign.</em>
-            </h2>
-            <p className="l-section-sub l-demo-sub">
-              Try it below — enter any English phrase and see DuoSign convert it to ASL in real time.
-            </p>
-            <div className="l-stat-row">
-              <div>
-                <div className="l-stat-num" data-count="21000">0</div>
-                <div className="l-stat-label">ASL reference videos</div>
-              </div>
-              <div>
-                <div className="l-stat-num" data-count="2000">0</div>
-                <div className="l-stat-label">Signs in library</div>
-              </div>
-              <div>
-                <div className="l-stat-num">&lt;50ms</div>
-                <div className="l-stat-label">Translation speed</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Mock UI */}
-          <div className="l-mock-wrap l-reveal" style={{ transitionDelay: ".12s" }}>
-            <div className="l-mock-titlebar">
-              <div className="l-mock-dot" style={{ background: "#FF5F57" }} />
-              <div className="l-mock-dot" style={{ background: "#FEBC2E" }} />
-              <div className="l-mock-dot" style={{ background: "#28C840" }} />
-              <span className="l-mock-label">DuoSign Translate</span>
-            </div>
-            <div className="l-mock-body">
-              <textarea
-                className="l-mock-input-area"
-                defaultValue="Hello, how are you?"
-                onChange={(e) => handleInput(e.target.value)}
-              />
-              <div className="l-mock-row">
-                <button className="l-mock-btn-icon" title="Voice input">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
-                </button>
-                <button className="l-mock-btn-go" onClick={() => {
-                  const ta = document.querySelector(".l-mock-input-area") as HTMLTextAreaElement;
-                  if (ta) runTranslate(ta.value);
-                }}>
-                  Translate →
-                </button>
-              </div>
-              <div className="l-mock-gloss-row">
-                {glossChips.map((g, i) => (
-                  <span
-                    key={`${g}-${i}`}
-                    className={`l-mock-gloss${i === litIndex ? " lit" : ""}`}
-                    style={{ animationDelay: `${i * 0.07}s` }}
-                  >
-                    {g}
-                  </span>
-                ))}
-              </div>
-              <div className="l-mock-divider" />
-              <div className="l-mock-avatar-stage">
-                <div className="l-av-body" />
-              </div>
-              <div className="l-mock-playbar">
-                <button className="l-pb-btn"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="19,20 9,12 19,4" /></svg></button>
-                <button className="l-pb-btn play"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg></button>
-                <button className="l-pb-btn"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,4 15,12 5,20" /></svg></button>
-                <div className="l-pb-bar"><div className="l-pb-fill" /></div>
-                <span style={{ fontSize: "10px", color: "var(--white-40)", fontFamily: "var(--font-jetbrains), monospace" }}>1.0×</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURES */}
-      <section className="l-features" id="features">
-        <div className="l-features-inner">
-          <div className="l-reveal">
-            <div className="l-eyebrow">What&apos;s Inside</div>
-            <h2 className="l-section-title">Everything you need<br /><em>to communicate</em></h2>
-          </div>
-          <div className="l-feat-grid">
-            {[
-              { icon: "mic", name: "Voice Input", desc: "Speak naturally and DuoSign signs it back. Browser-native speech recognition — no extra setup, no extra apps." },
-              { icon: "monitor", name: "Chrome Extension", desc: "Select any text on any website and see it signed instantly in a floating panel. Coming soon — sign up to be notified.", upcoming: true },
-              { icon: "code", name: "REST API", desc: "POST English text, get back ASL gloss and pose data. Simple JSON — great for building accessible apps.", orange: true },
-              { icon: "chat", name: "Translation History", desc: "Every translation saved with timestamps and replay. Filter by voice or typed input, export anytime." },
-              { icon: "globe", name: "2,000+ Signs", desc: "A growing library of ASL signs from the WLASL dataset. Unknown words fall back to fingerspelling automatically.", orange: true },
-              { icon: "user", name: "Guest Access", desc: "No account, no barrier. Jump in and start translating — create an account to save your history and preferences." },
-            ].map((f, i) => (
-              <div key={f.name} className="l-feat-card l-reveal" style={{ transitionDelay: `${0.05 + i * 0.05}s` }}>
-                <div className={`l-feat-icon${f.orange ? " orange" : ""}`}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    {f.icon === "mic" && <><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /></>}
-                    {f.icon === "monitor" && <><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></>}
-                    {f.icon === "code" && <><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></>}
-                    {f.icon === "chat" && <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />}
-                    {f.icon === "globe" && <><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></>}
-                    {f.icon === "user" && <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></>}
-                  </svg>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                  <div className="l-feat-name">{f.name}</div>
-                  {f.upcoming && (
-                    <span style={{
-                      fontSize: "10px", fontWeight: 700, letterSpacing: "0.06em",
-                      padding: "2px 7px", borderRadius: "20px",
-                      background: "color-mix(in srgb, var(--accent) 14%, transparent)",
-                      border: "1px solid color-mix(in srgb, var(--accent) 35%, transparent)",
-                      color: "var(--accent)", fontFamily: "var(--font-jetbrains), monospace",
-                      textTransform: "uppercase",
-                    }}>
-                      Coming Soon
-                    </span>
-                  )}
-                </div>
-                <p className="l-feat-desc">{f.desc}</p>
-              </div>
+      {/* ── Why ─────────────────────────────────────────── */}
+      <section id="why" className="ip-section ip-why">
+        <div className="ip-wrap">
+          <p className="ip-eyebrow">The gap</p>
+          <h2>Captions are not the same as your own language.</h2>
+          <p className="ip-body">
+            Sign languages are full languages with their own grammar, not English on the hands. Yet almost every tool
+            built for Deaf people works in one direction: helping hearing people understand them. Interpreters appear
+            on televised addresses, but rarely on the videos, webinars, forms and feeds where life now happens.
+            Access to information is a right under Article 21 of the UN Convention on the Rights of Persons with
+            Disabilities, and it is still one of the most persistent barriers.
+          </p>
+          <ul className="ip-stats">
+            {IMPACT_STATS.map((s) => (
+              <li key={s.value}>
+                <strong>{s.value}</strong>
+                <span>{s.label}</span>
+                <cite>{s.source}</cite>
+              </li>
             ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ── How ─────────────────────────────────────────── */}
+      <section id="how" className="ip-section">
+        <div className="ip-wrap">
+          <p className="ip-eyebrow">How it works</p>
+          <h2>Type it or say it. See it signed.</h2>
+          <ol className="ip-steps">
+            <li><b>1</b><h3>Write or speak</h3><p>Type a sentence, paste text, or use your voice.</p></li>
+            <li><b>2</b><h3>Sign grammar</h3><p>DuoSign rewrites English into sign order: time first, questions last, names fingerspelled.</p></li>
+            <li><b>3</b><h3>A signer you recognise</h3><p>Ama, Kofi or Esi signs it from motion captured from real signers, with facial expression.</p></li>
+          </ol>
+          <figure className="ip-shot">
+            <Image src="/landing/app_signing.webp" alt="DuoSign Pro: an English sentence on the left, Ama signing HELLO on the right" width={2000} height={1250} />
+          </figure>
+        </div>
+      </section>
+
+      {/* ── Built with ──────────────────────────────────── */}
+      <section id="built-with" className="ip-section ip-dark">
+        <div className="ip-wrap">
+          <p className="ip-eyebrow">Nothing about us without us</p>
+          <h2>Built to be led by the people it serves.</h2>
+          <div className="ip-cards">
+            <article><h3>Honest about where we are</h3><p>Reviewed by Ashesi University&apos;s accessibility team and piloted with early testers. The clearest feedback: the signing must get easier to read. That is what this year&apos;s work is about.</p></article>
+            <article><h3>Deaf signers as owners</h3><p>The next sign languages will be recorded and evaluated with Deaf signers and Deaf associations, as paid contributors with consent and a say in how their language is used.</p></article>
+            <article><h3>Not a replacement</h3><p>Interpreters are a right and a profession. DuoSign is for the web, documents and video, where there is usually no interpreter at all.</p></article>
+            <article><h3>Representation</h3><p>The first avatars were stock characters. DuoSign&apos;s signers now look like the people of the continent it was built on.</p></article>
           </div>
         </div>
       </section>
 
-      {/* STATS */}
-      <div className="l-stats">
-        <div className="l-stats-inner l-reveal">
-          <div className="l-stat-cell">
-            <div className="l-stat-cell-num" data-count="21000">0</div>
-            <div className="l-stat-cell-label">ASL videos processed</div>
-          </div>
-          <div className="l-stat-cell">
-            <div className="l-stat-cell-num" data-count="2000">0</div>
-            <div className="l-stat-cell-label">Signs in library</div>
-          </div>
-          <div className="l-stat-cell">
-            <div className="l-stat-cell-num">50ms</div>
-            <div className="l-stat-cell-label">Avg. translation time</div>
-          </div>
-          <div className="l-stat-cell">
-            <div className="l-stat-cell-num">100%</div>
-            <div className="l-stat-cell-label">Browser-native</div>
-          </div>
+      {/* ── Journey ─────────────────────────────────────── */}
+      <section className="ip-section">
+        <div className="ip-wrap">
+          <p className="ip-eyebrow">The journey so far</p>
+          <h2>From a capstone to a conversation across Africa.</h2>
+          <ol className="ip-timeline">
+            {TIMELINE.map((t) => (
+              <li key={t.when + t.title}><time>{t.when}</time><div><h3>{t.title}</h3><p>{t.body}</p></div></li>
+            ))}
+          </ol>
         </div>
-      </div>
+      </section>
 
-      {/* CTA */}
-      <section className="l-cta" id="api">
-        <div className="l-cta-inner l-reveal">
-          <h2 className="l-cta-title">Ready to break down<br /><em>barriers?</em></h2>
-          <p className="l-cta-sub">DuoSign is completely free. No account required — just open the app and start. Create an account to save your translations and unlock unlimited use.</p>
-          <div className="l-cta-actions">
-            <Link href="/translate" className="l-btn-primary">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}>
-                <polygon points="5,3 19,12 5,21 5,3" />
-              </svg>
-              Open DuoSign
-            </Link>
-            <Link href="/guide" className="l-btn-ghost">Read the Docs →</Link>
+      {/* ── Next ────────────────────────────────────────── */}
+      <section id="next" className="ip-section ip-tint">
+        <div className="ip-wrap">
+          <p className="ip-eyebrow">Where it&apos;s going</p>
+          <h2>Google Translate for sign language.</h2>
+          <p className="ip-body">
+            The goal is a sign interpreter wherever there are words and no captions: webinars, lectures, public
+            service pages, short videos and social feeds, on any device.
+          </p>
+          <figure className="ip-shot ip-shot-flat">
+            <Image src="/landing/pip_mockup.webp" alt="Concept: a DuoSign signer in a picture-in-picture window over a webinar and over a social video" width={2000} height={1125} />
+            <figcaption>Concept: picture-in-picture signing over any video, webinar or feed.</figcaption>
+          </figure>
+          <div className="ip-roadmap">
+            <article><span className="ip-pill">In progress</span><h3>African sign languages</h3><p>Starting with Ghanaian Sign Language. We are seeking to work with the Ghana National Association of the Deaf and Deaf signers to build it together.</p></article>
+            <article><span className="ip-pill">Coming soon</span><h3>Chrome extension</h3><p>Sign any page or video in your browser. Now in accessibility and compliance review before public release.</p></article>
+            <article><span className="ip-pill">Coming soon</span><h3>API &amp; integrations</h3><p>An API and plugins so websites and apps can offer sign language next to their captions.</p></article>
+            <article><span className="ip-pill">Research</span><h3>Two-way conversation</h3><p>Sign in, text out — and text in, sign out — so a Deaf person can hold a conversation in their own language.</p></article>
           </div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="l-footer" id="contact">
-        <div className="l-footer-left">
-          <Image src="/logos/DuoSign_logomark.svg" alt="DuoSign" className="logo-white" width={18} height={18} style={{ opacity: 0.5 }}  />
-          <span className="l-footer-copy">© 2026 DuoSign. Built at Ashesi University, Ghana.</span>
+      {/* ── Research ────────────────────────────────────── */}
+      <section id="research" className="ip-section">
+        <div className="ip-wrap ip-research">
+          <div>
+            <p className="ip-eyebrow">Research</p>
+            <h2>Grounded in evidence.</h2>
+            <p className="ip-body">
+              DuoSign began as a Computer Science capstone at Ashesi University and won the Outstanding Capstone
+              Project Award. The research paper covers the translation pipeline, avatar animation, accessibility
+              testing (WCAG 2.1 AA, Lighthouse 100) and a pilot usability study (SUS 73.5, “good”).
+            </p>
+            <p className="ip-body">Selected references:</p>
+            <ul className="ip-refs">
+              {RESEARCH_REFS.map((r) => (
+                <li key={r.title}>{r.url ? <a href={r.url} target="_blank" rel="noreferrer">{r.title}</a> : r.title}<span>{r.note}</span></li>
+              ))}
+            </ul>
+          </div>
+          <aside className="ip-contact">
+            <h3>Work with us</h3>
+            <p>We are looking to collaborate with Deaf associations, universities, funders and institutions that publish public information.</p>
+            <a className="ip-btn" href="mailto:nana.amoako@alumni.ashesi.edu.gh">Get in touch</a>
+            <Link className="ip-link" href="/translate">Or try the beta →</Link>
+          </aside>
         </div>
-        <div className="l-footer-links">
-          <Link href="/guide" className="l-footer-link">Documentation</Link>
-          <a href="https://github.com/nanadotam" className="l-footer-link">GitHub</a>
-          <Link href="/api-docs" className="l-footer-link">API</Link>
-          <a href="#contact" className="l-footer-link">Contact</a>
-        </div>
-      </footer>
-    </div>
+      </section>
+
+      <p className="ip-beta-note">
+        Beta: American Sign Language today. Sign data comes from the WLASL research dataset (non-commercial use).
+      </p>
+    </main>
   );
 }
