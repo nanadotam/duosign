@@ -4,6 +4,12 @@ Branch: `october-2026-improvements` (from `main` @ `28364ee`)
 Date: 10 October 2026
 
 ## New
+- **Pro Motion (default).** The October `duosign-motion` engine now runs inside the DuoSign UI. Signs play from **baked motion clips**: 2,000 WLASL signs, plus HELLO and MOTHER baked from video with facial expression. Nothing is solved in the browser anymore, so signing starts almost instantly and blends smoothly from one sign to the next. Typing, voice input, gloss tokens, captions, play/pause, replay and speed all drive it.
+  - Words without a clip are fingerspelled from the letter clips. C, L, X, Y and Z have no clip yet, so they're skipped.
+  - The avatar stands in a natural arms-down pose instead of a T-pose.
+  - Close-up, Full Body and 3D World camera presets.
+  - **Motion / Avatar / Skeleton** toggle: "Avatar" is the classic engine, kept as a fallback.
+- **Signer picker with thumbnails.** A row of portrait buttons (Ama, Kofi, Esi, DS Proto 2.2, DS Proto) sits right under the panel header. One click changes who is signing.
 - **DuoSign Pro (Beta) branding.** The nav bar shows **DuoSign Pro** with a **BETA** pill. The page title is now "DuoSign Pro (Beta) — Text to Sign Language".
 - **Green theme by default.** The Pro build ships green as the default accent in both dark and light mode. You can still pick blue, teal, purple or orange in Settings.
 - **New avatars.**
@@ -31,5 +37,7 @@ Date: 10 October 2026
 ## Known issues
 - **The Supabase project is unreachable** ("tenant/user not found"; it's probably paused on the free tier). This means **login/sign-up, history sync and Supabase storage don't work** until it's restored from the Supabase dashboard. Guest translation works.
 - **Ama, Kofi and Esi signing motion hasn't been visually checked yet.** They load and the translation pipeline runs, but the browser tab was hidden during testing. If an arm twists oddly, switch to DS Proto 2.1 or 2.2 in Settings → Avatar.
-- The baked motion clips from `duosign-motion` (`.dsanim`, 2,000 signs, facial expression) **aren't wired into the web app yet**. They need a player on three-vrm v3, which is the next step.
+- Pro Motion loads three.js and three-vrm v3 from the jsDelivr CDN, so it needs internet. It runs in an iframe (`/motion/stage.html`) beside the app's older three r137 engine.
+- Export video still uses the classic engine.
+- Most clips come from 288×192 source video, so some signs will look rough. That's the data ceiling, not the player.
 - Still ASL only.

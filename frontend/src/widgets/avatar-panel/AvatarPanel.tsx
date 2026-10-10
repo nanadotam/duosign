@@ -3,7 +3,9 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import SegmentedControl from "@/shared/ui/SegmentedControl";
-import { SPEED_LABELS, AVATAR_MODELS } from "@/shared/constants";
+import { SPEED_LABELS, AVATAR_MODELS, MOTION_AVATARS } from "@/shared/constants";
+import AvatarThumbStrip from "@/features/motion-stage/ui/AvatarThumbStrip";
+import type { MotionCam } from "@/features/motion-stage/ui/MotionStage";
 import type {
   PlaybackState,
   PlaybackSpeed,
@@ -57,6 +59,10 @@ const AvatarSwitcher = dynamic(
   () => import("@/features/animate-avatar/ui/AvatarSwitcher"),
   { ssr: false }
 );
+const MotionStage = dynamic(
+  () => import("@/features/motion-stage/ui/MotionStage"),
+  { ssr: false }
+);
 const SkeletonCanvas = dynamic(
   () => import("@/features/skeleton-viewer/ui/SkeletonCanvas"),
   { ssr: false }
@@ -78,6 +84,18 @@ interface AvatarPanelProps {
   onActiveGlossChange?: (index: number) => void;
   onPlaybackComplete?: () => void;
 }
+
+const MOTION_CAM: Record<ViewMode, MotionCam> = {
+  interpreter: "sign",
+  fullbody: "full",
+  world: "three",
+};
+
+const DISPLAY_MODE_LABELS: Record<AvatarDisplayMode, string> = {
+  motion: "Motion",
+  avatar: "Avatar",
+  skeleton: "Skeleton",
+};
 
 const VIEW_MODE_LABELS: Record<ViewMode, string> = {
   interpreter: "Close-up",
@@ -109,6 +127,7 @@ export default function AvatarPanel({
   }, [onExport]);
   const [viewMode, setViewMode] = useState<ViewMode>("interpreter");
   const isSkeleton = displayMode === "skeleton";
+  const isMotion = displayMode === "motion";
   const [currentModel, setCurrentModel] = useState<AvatarModel>(
     () => AVATAR_MODELS.find((m) => m.id === settings.avatarModelId) ?? AVATAR_MODELS[0]
   );
@@ -136,7 +155,7 @@ export default function AvatarPanel({
   const isLive = playbackState === "playing";
   const isReady = hasTokens;
 
-  const modeLabel = isSkeleton ? "Skeleton" : "Avatar";
+  const modeLabel = isSkeleton ? "Skeleton" : isMotion ? "Pro Motion" : "Avatar";
   const statusText = {
     idle: `${modeLabel} — Idle`,
     playing: `${modeLabel} — Signing`,
@@ -189,6 +208,24 @@ export default function AvatarPanel({
     updateSetting("avatarModelId", model.id);
   }, [updateSetting]);
 
+  // Thumbnail strip: Pro Motion avatars, or the classic models (with portraits where we have them)
+  const thumbAvatars = useMemo(
+    () => isMotion
+      ? MOTION_AVATARS
+      : AVATAR_MODELS.map((m) => ({ id: m.id, name: m.name, thumb: MOTION_AVATARS.find((a) => a.id === m.id)?.thumb })),
+    [isMotion]
+  );
+  const handleThumbSelect = useCallback((id: string) => {
+    const classic = AVATAR_MODELS.find((m) => m.id === id);
+    if (classic) setCurrentModel(classic);
+    updateSetting("avatarModelId", id);
+  }, [updateSetting]);
+  const motionAvatar = MOTION_AVATARS.find((a) => a.id === settings.avatarModelId) ?? MOTION_AVATARS[0];
+
+  const handleMotionProgress = useCallback((index: number, gloss: string, total: number) => {
+    setDebugStats((prev) => ({ ...prev, currentGloss: gloss, currentGlossIndex: index, totalGlosses: total }));
+  }, []);
+
   // Map IX pronoun markers to actual sign file names, then normalize
   const glossNames = useMemo(
     () => expandGlossSequence(glossSequence).map((g) => {
@@ -232,11 +269,14 @@ export default function AvatarPanel({
             {/* TODO: Guest User - Switch between display modes—3D avatar, skeleton overlay, or hidden—to examine pose data at different levels of abstraction. */}
             {onDisplayModeChange && (
               <SegmentedControl
-                options={["Avatar", "Skeleton"]}
-                value={isSkeleton ? "Skeleton" : "Avatar"}
-                onChange={(val) =>
-                  onDisplayModeChange(val === "Skeleton" ? "skeleton" : "avatar")
-                }
+                options={Object.values(DISPLAY_MODE_LABELS)}
+                value={DISPLAY_MODE_LABELS[displayMode]}
+                onChange={(val) => {
+                  const mode = Object.entries(DISPLAY_MODE_LABELS).find(
+                    ([, label]) => label === val
+                  )?.[0] as AvatarDisplayMode | undefined;
+                  if (mode) onDisplayModeChange(mode);
+                }}
                 size="sm"
               />
             )}
@@ -296,6 +336,15 @@ export default function AvatarPanel({
         </div>
       )}
 
+      {/* Signer picker — one tap to change avatar */}
+      {overlayVisible && !isSkeleton && (
+        <AvatarThumbStrip
+          avatars={thumbAvatars}
+          currentId={isMotion ? motionAvatar.id : currentModel.id}
+          onSelect={handleThumbSelect}
+        />
+      )}
+
       {/* Avatar Canvas Area — locked to 4:3 so the avatar scales proportionally like an interpreter box */}
       <div
         className={[
@@ -337,6 +386,16 @@ export default function AvatarPanel({
               loopCount={3}
               onPlaybackComplete={onPlaybackComplete}
               onGlossChange={handleGlossChange}
+            />
+          ) : isMotion ? (
+            <MotionStage
+              glossSequence={glossNames}
+              playbackState={playbackState}
+              speed={speed}
+              avatarFile={motionAvatar.file}
+              cam={MOTION_CAM[viewMode]}
+              onProgress={handleMotionProgress}
+              onPlaybackComplete={onPlaybackComplete}
             />
           ) : (
             <AvatarCanvas
@@ -418,7 +477,7 @@ export default function AvatarPanel({
           >
             {/* Avatar Switcher — leftmost in bar, avatar mode only */}
             {/* TODO: Guest User - Select from multiple avatar models and choose between close-up, full-body, and 3D world view modes. */}
-            {!isSkeleton && (
+            {displayMode === "avatar" && (
               <>
                 <AvatarSwitcher
                   models={AVATAR_MODELS}

@@ -1,4 +1,4 @@
-export type AvatarDisplayMode = "avatar" | "skeleton";
+export type AvatarDisplayMode = "motion" | "avatar" | "skeleton";
 
 export type PlaybackState = "idle" | "playing" | "paused" | "complete";
 

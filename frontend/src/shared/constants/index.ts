@@ -18,6 +18,15 @@ export const AVATAR_MODELS: AvatarModel[] = [
   { id: "ds-g-proto", name: "DS G Proto", path: "/avatars/DuoSign-G-Proto-2.vrm" },
 ];
 
+/** Avatars for Pro Motion (baked .dsanim clips, three-vrm v3). Files live in /public/motion/avatars. */
+export const MOTION_AVATARS = [
+  { id: "ama", name: "Ama", file: "ama.vrm", thumb: "/motion/thumbs/ama.jpg" },
+  { id: "kofi", name: "Kofi", file: "kofi.vrm", thumb: "/motion/thumbs/kofi.jpg" },
+  { id: "esi", name: "Esi", file: "esi.vrm", thumb: "/motion/thumbs/esi.jpg" },
+  { id: "ds-proto-2-2", name: "DS Proto 2.2", file: "ds-proto-sign.vrm", thumb: "/motion/thumbs/ds-proto-sign.jpg" },
+  { id: "ds-proto", name: "DS Proto", file: "avatar.vrm", thumb: "/motion/thumbs/ds-proto.jpg" },
+] as const;
+
 export const MAX_INPUT_LENGTH = 500;
 
 export const GUEST_TRANSLATION_LIMIT = 3;

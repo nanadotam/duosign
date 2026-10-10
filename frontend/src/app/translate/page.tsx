@@ -48,7 +48,7 @@ export default function TranslatePage() {
 function TranslatePageContent() {
   const { settings } = useSettings();
   const { showToast } = useToast();
-  const [displayMode, setDisplayMode] = useState<AvatarDisplayMode>("avatar");
+  const [displayMode, setDisplayMode] = useState<AvatarDisplayMode>("motion");
   const [showExportModal, setShowExportModal] = useState(false);
   const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
   const searchParams = useSearchParams();
