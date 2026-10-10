@@ -36,7 +36,7 @@ Date: 10 October 2026
 
 ## Known issues
 - **The Supabase project is unreachable** ("tenant/user not found"; it's probably paused on the free tier). This means **login/sign-up, history sync and Supabase storage don't work** until it's restored from the Supabase dashboard. Guest translation works.
-- **Ama, Kofi and Esi signing motion hasn't been visually checked yet.** They load and the translation pipeline runs, but the browser tab was hidden during testing. If an arm twists oddly, switch to DS Proto 2.1 or 2.2 in Settings → Avatar.
+- In **Pro Motion**, Ama and Kofi were checked signing end to end in a headless browser. In the **classic Avatar** engine, the VRM 0 exports of Ama, Kofi and Esi load, but their KalidoKit motion hasn't been visually checked. Use Pro Motion for demos.
 - Pro Motion loads three.js and three-vrm v3 from the jsDelivr CDN, so it needs internet. It runs in an iframe (`/motion/stage.html`) beside the app's older three r137 engine.
 - Export video still uses the classic engine.
 - Most clips come from 288×192 source video, so some signs will look rough. That's the data ceiling, not the player.
