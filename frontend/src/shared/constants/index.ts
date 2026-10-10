@@ -6,15 +6,38 @@ export const API_BASE_URL =
   (process.env.NODE_ENV === "development" ? "http://localhost:8000" : "");
 
 export const AVATAR_MODELS: AvatarModel[] = [
+  // October 2026 semi-realistic Ghanaian avatars (VRM 0.x exports, ARKit face)
+  { id: "ama", name: "Ama", path: "/avatars/Ama.vrm" },
+  { id: "kofi", name: "Kofi", path: "/avatars/Kofi.vrm" },
+  { id: "esi", name: "Esi", path: "/avatars/Esi.vrm" },
+  // Upgraded DS-Proto: contrast 1.54 -> 6.20, ARKit face, 19.9 MB -> 5.8 MB
+  { id: "ds-proto-2-2", name: "DS Proto 2.2", path: "/avatars/DS-Proto-2.2.vrm" },
   { id: "ds-proto", name: "DS Proto", path: "/avatars/DS-Proto-2.1.vrm" },
   { id: "ashtra", name: "Ashtra", path: "/avatars/Ashtra.vrm" },
   { id: "val", name: "Val", path: "/avatars/VAL.vrm" },
   { id: "ds-g-proto", name: "DS G Proto", path: "/avatars/DuoSign-G-Proto-2.vrm" },
 ];
 
+/** Avatars for the Motion stage (baked .dsanim clips, three-vrm v3). Files live in /public/motion/avatars. */
+export const MOTION_AVATARS = [
+  { id: "ama", name: "Ama", file: "ama.vrm", thumb: "/motion/thumbs/ama.jpg" },
+  { id: "kofi", name: "Kofi", file: "kofi.vrm", thumb: "/motion/thumbs/kofi.jpg" },
+  { id: "esi", name: "Esi", file: "esi.vrm", thumb: "/motion/thumbs/esi.jpg" },
+  { id: "ds-proto-2-2", name: "DS Proto 2.2", file: "ds-proto-sign.vrm", thumb: "/motion/thumbs/ds-proto-sign.jpg" },
+  { id: "ds-proto", name: "DS Proto", file: "avatar.vrm", thumb: "/motion/thumbs/ds-proto.jpg" },
+] as const;
+
 export const MAX_INPUT_LENGTH = 500;
 
 export const GUEST_TRANSLATION_LIMIT = 3;
+
+/**
+ * Open beta: full access for everyone, no account needed.
+ * When on (default), there is no guest translation cap, no sign-up nags,
+ * and /history + /settings are open to guests (both work from localStorage).
+ * Set NEXT_PUBLIC_OPEN_BETA="false" to restore the guest limit and login walls.
+ */
+export const OPEN_BETA = process.env.NEXT_PUBLIC_OPEN_BETA !== "false";
 
 export const PLAYBACK_SPEEDS = [0.5, 1, 1.5, 2] as const;
 export const SPEED_LABELS: Record<number, string> = {

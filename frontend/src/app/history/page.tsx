@@ -9,6 +9,7 @@ import { ToastProvider } from "@/shared/ui/Toast";
 import { useHistory } from "@/shared/hooks/useHistory";
 import { useGuestLimit } from "@/shared/hooks/useGuestLimit";
 import type { HistoryEntry } from "@/shared/hooks/useHistory";
+import { OPEN_BETA } from "@/shared/constants";
 
 
 const DATE_CHIPS = ["Today", "This Week", "This Month", "All Time"];
@@ -44,7 +45,8 @@ function TypeIcon({ type }: { type: "typed" | "voiced" | "api" }) {
 }
 
 
-// TODO: Guest User - Guest users cannot export MP4 videos and cannot access translation history actions (search, filter, replay from history, re-edit, or delete saved entries).
+// Open beta: guests get the full history page, backed by localStorage (useHistory),
+// so search, filter, replay, edit, export and delete all work without an account.
 // TODO: Registered User - View previously translated phrases in a searchable, filterable translation history, grouped by date and annotated with input type (typed, voiced).
 export default function HistoryPage() {
   return <HistoryPageInner />;
@@ -113,7 +115,15 @@ function HistoryPageInner() {
     <ToastProvider>
       <div className="min-h-screen flex flex-col">
         <NavigationBar />
-        {!isAuthenticated && <GuestBanner remaining={remaining} />}
+        {!isAuthenticated && !OPEN_BETA && <GuestBanner remaining={remaining} />}
+        {!isAuthenticated && OPEN_BETA && (
+          <div
+            className="flex items-center justify-center gap-2 px-6 py-2 border-b text-[12.5px] text-text-2"
+            style={{ background: "var(--banner-bg)", borderColor: "var(--banner-border)" }}
+          >
+            Your recent translations are saved in this browser — no account needed during the beta.
+          </div>
+        )}
         <main className="flex-1 grid grid-cols-[280px_1fr] max-w-[1300px] w-full mx-auto p-5 gap-[18px]">
 
           {/* ═══ FILTER SIDEBAR ═══ */}

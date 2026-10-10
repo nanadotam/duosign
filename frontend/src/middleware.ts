@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
 const AUTH_ROUTES = ["/auth/login", "/auth/register", "/auth/sign-in"];
-const PROTECTED_ROUTES = ["/history", "/settings"];
+// Open beta: /history and /settings work for guests (both are backed by
+// localStorage), so nothing is login-gated. Set NEXT_PUBLIC_OPEN_BETA="false"
+// to restore the login wall.
+const OPEN_BETA = process.env.NEXT_PUBLIC_OPEN_BETA !== "false";
+const PROTECTED_ROUTES = OPEN_BETA ? [] : ["/history", "/settings"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

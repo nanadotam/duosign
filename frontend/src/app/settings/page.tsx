@@ -8,7 +8,7 @@ import { useHistory } from "@/shared/hooks/useHistory";
 import { useGuestLimit } from "@/shared/hooks/useGuestLimit";
 import { deleteUser, updateUser, useSession } from "@/lib/auth-client";
 import Link from "next/link";
-import { API_BASE_URL, AVATAR_MODELS } from "@/shared/constants";
+import { API_BASE_URL, AVATAR_MODELS, OPEN_BETA } from "@/shared/constants";
 import { ACCENT_COLORS } from "@/shared/ui/SettingsApplicator";
 import VoiceRecordingPane from "@/features/translate-text/ui/VoiceRecordingPane";
 import Button from "@/shared/ui/Button";
@@ -342,49 +342,52 @@ function SettingsPageInner() {
                 <p className="text-[13px] text-text-3 mt-[5px] transition-colors duration-250">Manage your identity and account details.</p>
               </div>
 
-              <SettingsCard title="Personal Information" chip="identity">
-                <SettingRow label="Display Name" desc="How your name appears across DuoSign" stack>
-                  <div className="flex items-center gap-2 flex-wrap">
+              {/* Open beta: account details need the DB, so hide them for guests rather than show disabled fields. */}
+              {(isAuthenticated || !OPEN_BETA) && (
+                <SettingsCard title="Personal Information" chip="identity">
+                  <SettingRow label="Display Name" desc="How your name appears across DuoSign" stack>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <input
+                        type="text"
+                        value={profileName}
+                        onChange={(e) => {
+                          setProfileName(e.target.value);
+                          if (profileError) setProfileError(null);
+                          if (profileSaved) setProfileSaved(false);
+                        }}
+                        disabled={!isAuthenticated || isSavingProfile}
+                        placeholder={isAuthenticated ? "Enter your display name" : "Sign in to set a display name"}
+                        className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-1 w-[240px] outline-none shadow-inset transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        isLoading={isSavingProfile}
+                        disabled={!isAuthenticated || profileName.trim().length === 0}
+                        onClick={() => void handleProfileSave()}
+                      >
+                        {profileSaved ? "Saved" : "Save Name"}
+                      </Button>
+                    </div>
+                    {profileError && (
+                      <p className="text-[12px] text-error">{profileError}</p>
+                    )}
+                    {!profileError && profileSaved && (
+                      <p className="text-[12px] text-success">Display name updated.</p>
+                    )}
+                  </SettingRow>
+                  <SettingRow label="Email Address" desc="Used for account recovery and notifications">
                     <input
-                      type="text"
-                      value={profileName}
-                      onChange={(e) => {
-                        setProfileName(e.target.value);
-                        if (profileError) setProfileError(null);
-                        if (profileSaved) setProfileSaved(false);
-                      }}
-                      disabled={!isAuthenticated || isSavingProfile}
-                      placeholder={isAuthenticated ? "Enter your display name" : "Sign in to set a display name"}
-                      className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-1 w-[240px] outline-none shadow-inset transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed focus:border-[color-mix(in_srgb,var(--accent)_60%,transparent)] focus:shadow-[var(--inset),0_0_0_3px_var(--accent-glow)]"
+                      key={`email-${session?.user?.id ?? "guest"}`}
+                      type="email"
+                      value={session?.user?.email ?? "Guest mode"}
+                      readOnly
+                      disabled
+                      className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-2 w-[240px] outline-none shadow-inset opacity-80 cursor-not-allowed"
                     />
-                    <Button
-                      type="button"
-                      size="sm"
-                      isLoading={isSavingProfile}
-                      disabled={!isAuthenticated || profileName.trim().length === 0}
-                      onClick={() => void handleProfileSave()}
-                    >
-                      {profileSaved ? "Saved" : "Save Name"}
-                    </Button>
-                  </div>
-                  {profileError && (
-                    <p className="text-[12px] text-error">{profileError}</p>
-                  )}
-                  {!profileError && profileSaved && (
-                    <p className="text-[12px] text-success">Display name updated.</p>
-                  )}
-                </SettingRow>
-                <SettingRow label="Email Address" desc="Used for account recovery and notifications">
-                  <input
-                    key={`email-${session?.user?.id ?? "guest"}`}
-                    type="email"
-                    value={session?.user?.email ?? "Guest mode"}
-                    readOnly
-                    disabled
-                    className="py-1.5 px-[10px] rounded-btn border border-border-hi bg-surface-3 font-sans text-[12.5px] text-text-2 w-[240px] outline-none shadow-inset opacity-80 cursor-not-allowed"
-                  />
-                </SettingRow>
-              </SettingsCard>
+                  </SettingRow>
+                </SettingsCard>
+              )}
 
               <SettingsCard title="Session" chip="auth">
                 <SettingRow label="Account Status" desc="Your current authentication state">
@@ -397,13 +400,22 @@ function SettingsPageInner() {
                     {isAuthenticated ? "Signed In" : "Guest Mode"}
                   </span>
                 </SettingRow>
-                <SettingRow label="Guest Translations Remaining" desc="Free translations available before sign-up">
-                  <span className="font-mono text-[14px] font-semibold text-accent">
-                    {isAuthenticated ? "Unlimited" : `${remaining} / 3`}
-                  </span>
-                </SettingRow>
+                {OPEN_BETA ? (
+                  <SettingRow label="Translations" desc="DuoSign Beta is free and open while in beta — no account needed">
+                    <span className="font-mono text-[14px] font-semibold text-accent">Unlimited</span>
+                  </SettingRow>
+                ) : (
+                  <SettingRow label="Guest Translations Remaining" desc="Free translations available before sign-up">
+                    <span className="font-mono text-[14px] font-semibold text-accent">
+                      {isAuthenticated ? "Unlimited" : `${remaining} / 3`}
+                    </span>
+                  </SettingRow>
+                )}
                 {!isAuthenticated && (
-                  <SettingRow label="Upgrade Guest Session" desc="Create an account to unlock unlimited translations and cloud history">
+                  <SettingRow
+                    label={OPEN_BETA ? "Account (optional)" : "Upgrade Guest Session"}
+                    desc={OPEN_BETA ? "Everything works without an account. Your history and settings are saved in this browser." : "Create an account to unlock unlimited translations and cloud history"}
+                  >
                     <div className="flex items-center gap-2">
                       <Link href="/auth/login" className="px-3 py-[5px] rounded-btn border border-border-hi bg-surface-2 text-text-1 font-sans text-[12px] font-semibold no-underline shadow-raised-sm transition-all duration-120 hover:bg-surface-3">
                         Log In
@@ -416,21 +428,24 @@ function SettingsPageInner() {
                 )}
               </SettingsCard>
 
-              <SettingsCard title="Danger Zone" chip="irreversible" danger>
-                <SettingRow label="Delete Account" desc="Permanently deletes your account and all associated data" danger>
-                  <button
-                    onClick={() => {
-                      setDeleteError(null);
-                      setDeletePhrase("");
-                      setDeleteModalStage("verify");
-                    }}
-                    disabled={!isAuthenticated}
-                    className="px-3.5 py-[5px] rounded-btn border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,var(--surface-2))] text-error font-sans text-[12.5px] font-semibold cursor-pointer shadow-raised-sm transition-all duration-120 whitespace-nowrap hover:bg-[color-mix(in_srgb,var(--error)_16%,var(--surface-2))] active:shadow-inset-press active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
-                  >
-                    Delete Account
-                  </button>
-                </SettingRow>
-              </SettingsCard>
+              {/* Open beta: there is no account to delete for guests. */}
+              {(isAuthenticated || !OPEN_BETA) && (
+                <SettingsCard title="Danger Zone" chip="irreversible" danger>
+                  <SettingRow label="Delete Account" desc="Permanently deletes your account and all associated data" danger>
+                    <button
+                      onClick={() => {
+                        setDeleteError(null);
+                        setDeletePhrase("");
+                        setDeleteModalStage("verify");
+                      }}
+                      disabled={!isAuthenticated}
+                      className="px-3.5 py-[5px] rounded-btn border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,var(--surface-2))] text-error font-sans text-[12.5px] font-semibold cursor-pointer shadow-raised-sm transition-all duration-120 whitespace-nowrap hover:bg-[color-mix(in_srgb,var(--error)_16%,var(--surface-2))] active:shadow-inset-press active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
+                    >
+                      Delete Account
+                    </button>
+                  </SettingRow>
+                </SettingsCard>
+              )}
             </>
           )}
 

@@ -21,6 +21,7 @@ import { useTranslate } from "@/features/translate-text/model/useTranslate";
 import { usePlayback } from "@/features/animate-avatar/model/usePlayback";
 import { useHistory } from "@/shared/hooks/useHistory";
 import { useGuestLimit } from "@/shared/hooks/useGuestLimit";
+import { OPEN_BETA } from "@/shared/constants";
 import { useSettings } from "@/shared/hooks/useSettings";
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
@@ -48,7 +49,7 @@ export default function TranslatePage() {
 function TranslatePageContent() {
   const { settings } = useSettings();
   const { showToast } = useToast();
-  const [displayMode, setDisplayMode] = useState<AvatarDisplayMode>("avatar");
+  const [displayMode, setDisplayMode] = useState<AvatarDisplayMode>("motion");
   const [showExportModal, setShowExportModal] = useState(false);
   const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
   const searchParams = useSearchParams();
@@ -146,7 +147,8 @@ function TranslatePageContent() {
     const text = rawText.trim();
     if (!text) return false;
 
-    if (!isAuthenticated) {
+    // Open beta: guests translate without a cap (and without touching the DB).
+    if (!isAuthenticated && !OPEN_BETA) {
       try {
         const guestUsage = await consume();
         if (!guestUsage.allowed) {
@@ -327,7 +329,7 @@ function TranslatePageContent() {
       */}
       <div className="min-h-screen flex flex-col">
         <NavigationBar />
-        {!isAuthenticated && <GuestBanner remaining={guestRemaining} />}
+        {!isAuthenticated && !OPEN_BETA && <GuestBanner remaining={guestRemaining} />}
         <WelcomeTips />
 
         <main className="flex flex-col flex-1">

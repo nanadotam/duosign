@@ -1,13 +1,14 @@
 "use client";
 
-import { GUEST_TRANSLATION_LIMIT } from "@/shared/constants";
+import { GUEST_TRANSLATION_LIMIT, OPEN_BETA } from "@/shared/constants";
 
 interface GuestBannerProps {
   remaining?: number | null;
 }
 
 export default function GuestBanner({ remaining = GUEST_TRANSLATION_LIMIT }: GuestBannerProps) {
-  if (remaining === null) return null;
+  // Open beta: no guest cap, so nothing to count down.
+  if (OPEN_BETA || remaining === null) return null;
 
   return (
     <div className="hidden md:flex items-center justify-center gap-2 px-6 py-2 border-b transition-all duration-250"

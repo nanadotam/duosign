@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@/lib/auth-client";
-import { GUEST_TRANSLATION_LIMIT } from "@/shared/constants";
+import { GUEST_TRANSLATION_LIMIT, OPEN_BETA } from "@/shared/constants";
 
 interface GuestUsageResponse {
   count: number;
@@ -19,7 +19,8 @@ export function useGuestLimit() {
   const isAuthenticated = Boolean(session?.user);
 
   const refresh = useCallback(async () => {
-    if (isAuthenticated) {
+    // Open beta: no cap, and no dependency on the guest-usage DB table.
+    if (isAuthenticated || OPEN_BETA) {
       setCount(0);
       setHydrated(true);
       return {
@@ -49,7 +50,7 @@ export function useGuestLimit() {
   }, [isPending, refresh]);
 
   const consume = useCallback(async () => {
-    if (isAuthenticated) {
+    if (isAuthenticated || OPEN_BETA) {
       return {
         allowed: true,
         count: 0,
@@ -75,7 +76,9 @@ export function useGuestLimit() {
     hydrated,
     isAuthenticated,
     remaining: Math.max(0, GUEST_TRANSLATION_LIMIT - count),
-    hasReachedLimit: hydrated && count >= GUEST_TRANSLATION_LIMIT,
+    hasReachedLimit: !OPEN_BETA && hydrated && count >= GUEST_TRANSLATION_LIMIT,
+    /** True when guests have no translation cap (open beta). */
+    unlimited: OPEN_BETA || isAuthenticated,
     refresh,
     consume,
   };

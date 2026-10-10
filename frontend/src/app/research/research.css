@@ -1,0 +1,221 @@
+/* ═══ /research — scoped styles (hero, stats, thesis reader) ═══
+   Reading layout adapted from the portfolio "corner" essay reader. */
+
+.rs {
+  --bg: #f6f2ea;
+  --bg-2: #fbf9f4;
+  --ink: #15201a;
+  --ink-2: #3c4a42;
+  --muted: #5b6a61;
+  --faint: #8a958e;
+  --line: #dcd6c9;
+  --g9: #0b2a1a;
+  --g7: #14532d;
+  --g6: #16a34a;
+  --g1: #e7f6ec;
+  --serif: var(--font-instrument-serif), "Instrument Serif", Georgia, serif;
+  --sans: var(--font-instrument), "Instrument Sans", system-ui, sans-serif;
+  --mono: var(--font-jetbrains), ui-monospace, "SFMono-Regular", Menlo, monospace;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  min-height: 100vh;
+}
+.rs *, .rs *::before, .rs *::after { box-sizing: border-box; }
+.rs-wrap { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+.rs-wrap-wide { max-width: 1240px; }
+.rs-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.rs :focus-visible { outline: 3px solid var(--g6); outline-offset: 3px; border-radius: 6px; }
+
+/* ── Hero ───────────────────────────────────────────────────────────── */
+.rs-hero { padding: 132px 0 80px; }
+.rs-eyebrow { font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--g6); margin: 0 0 1rem; }
+.rs-hero h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(2.4rem, 5.6vw, 4.6rem); line-height: 1.02; letter-spacing: -.01em; margin: 0; max-width: 19ch; }
+.rs-lede { margin: 1.4rem 0 0; font-size: clamp(1.05rem, 1.6vw, 1.25rem); color: var(--ink-2); max-width: 60ch; }
+.rs-byline { display: flex; flex-wrap: wrap; gap: 14px 40px; margin: 1.8rem 0 0; }
+.rs-byline dt { font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.rs-byline dd { margin: 4px 0 0; font-size: 1.05rem; font-weight: 600; }
+.rs-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 2rem; }
+
+.rs-btn {
+  display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 20px; border-radius: 999px;
+  background: var(--g7); color: #fff; font-weight: 600; font-size: .95rem; text-decoration: none;
+  border: 1px solid var(--g7); transition: background .2s, transform .2s, border-color .2s;
+}
+.rs-btn:hover { background: var(--g9); transform: translateY(-1px); }
+.rs-btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.rs-btn-ghost:hover { background: #fff; border-color: var(--ink); }
+
+.rs-stats { list-style: none; padding: 0; margin: 3.2rem 0 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.rs-stats li { background: #fff; border: 1px solid var(--line); border-radius: 22px; padding: 22px 22px 24px; display: flex; flex-direction: column; gap: 6px; }
+.rs-stat-value { font-family: var(--serif); font-size: clamp(2.2rem, 3.6vw, 3rem); line-height: 1; color: var(--g7); }
+.rs-stat-label { font-weight: 700; font-size: .98rem; }
+.rs-stat-note { font-size: .88rem; color: var(--muted); line-height: 1.45; }
+@media (max-width: 900px) { .rs-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .rs-stats { grid-template-columns: 1fr; } .rs-hero { padding-top: 104px; } }
+
+/* ── Reader layout ──────────────────────────────────────────────────── */
+.rs-reader { padding: 40px 0 140px; scroll-margin-top: 64px; }
+.rs-article { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 72px; }
+.rs-article[data-view="pdf"] { grid-template-columns: minmax(0, 1fr); }
+.rs-article[data-view="pdf"] .rs-toc { display: none; }
+.rs-article > * { min-width: 0; }
+.rs-read-target { max-width: 780px; }
+.rs-article[data-view="pdf"] .rs-read-target { max-width: none; }
+
+.rs-caps { font-size: .78rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.rs-head { padding-top: 56px; }
+.rs-head h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(2rem, 4vw, 3rem); line-height: 1.08; letter-spacing: -.01em; margin: 14px 0 0; overflow-wrap: anywhere; }
+.rs-sub { font-size: 1.15rem; color: var(--ink-2); margin: 14px 0 0; }
+.rs-date { margin-top: 18px; }
+.rs-rule { height: 1px; background: var(--line); border: 0; margin: 36px 0; }
+.rs-abstract { font-size: 1.06rem; line-height: 1.7; color: var(--ink-2); margin: 0; }
+.rs-abstract b { color: var(--ink); }
+
+.rs-reader-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 30px; }
+.rs-bar-dl { margin-left: auto; height: 40px; }
+.rs-seg { display: inline-flex; padding: 4px; border-radius: 999px; background: #fff; border: 1px solid var(--line); }
+.rs-seg button {
+  height: 32px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: .85rem; color: var(--muted);
+  background: transparent; border: 0; cursor: pointer; transition: background .2s, color .2s;
+}
+.rs-seg button:hover { color: var(--ink); }
+.rs-seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.rs-seg .rs-seg-cm { font-family: "Computer Modern Serif", "Latin Modern Roman", "CMU Serif", Georgia, serif; font-size: .95rem; }
+
+.rs-pdf { margin-top: 30px; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); background: #525659; height: min(88vh, 1100px); }
+.rs-pdf iframe { width: 100%; height: 100%; border: 0; display: block; }
+.rs-pdf-fallback { font-size: .88rem; color: var(--muted); margin: 10px 2px 0; }
+
+.rs-after { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 48px; }
+
+/* Mobile contents (the rail is hidden below 1000px) */
+.rs-toc-mobile { display: none; margin-top: 18px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+.rs-toc-mobile summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
+.rs-toc-mobile nav { display: flex; flex-direction: column; padding: 0 16px 14px; max-height: 50vh; overflow-y: auto; }
+.rs-toc-mobile a { color: var(--ink-2); text-decoration: none; padding: 5px 0; font-size: .95rem; }
+.rs-toc-mobile a[data-level="2"] { padding-left: 14px; font-size: .9rem; color: var(--muted); }
+
+/* ── Table of contents ─────────────────────────────────────────────── */
+.rs-toc { position: sticky; top: 96px; align-self: start; margin-top: 66px; max-height: calc(100vh - 150px); display: flex; flex-direction: column; }
+.rs-toc-count { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-left: 8px; letter-spacing: 0; }
+.rs-toc-list {
+  overflow-y: auto; overscroll-behavior: contain; padding: 8px 8px 8px 0; margin-right: -8px; margin-top: 6px;
+  scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+  mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 24px), transparent 100%);
+  border-left: 1px solid var(--line);
+}
+.rs-toc-list a {
+  display: block; font-size: 14px; line-height: 1.35; color: var(--muted); padding: 6px 0 6px 12px; margin-left: -1px;
+  border-left: 2px solid transparent; text-decoration: none; transition: color .2s, border-color .2s;
+}
+.rs-toc-list a[data-level="1"] { font-weight: 600; color: var(--ink-2); margin-top: 8px; }
+.rs-toc-list a[data-level="2"] { padding-left: 24px; font-size: 13px; }
+.rs-toc-list a:hover { color: var(--ink); }
+.rs-toc-list a[data-active="true"] { color: var(--g7); border-left-color: var(--g6); }
+
+@media (max-width: 1000px) {
+  .rs-article { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .rs-toc { display: none; }
+  .rs-toc-mobile { display: block; }
+  .rs-bar-dl { margin-left: 0; }
+}
+
+/* ── Reading progress pill ─────────────────────────────────────────── */
+.rs-progress {
+  position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 0); z-index: 40;
+  display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-radius: 999px;
+  background: color-mix(in srgb, #fff 86%, transparent); border: 1px solid var(--line);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 12px 30px -16px rgba(11, 42, 26, .45);
+  font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+  transition: opacity .25s, transform .25s;
+}
+.rs-progress[data-visible="false"] { opacity: 0; transform: translate(-50%, 12px); pointer-events: none; }
+.rs-progress-label { color: var(--ink); min-width: 8ch; white-space: nowrap; }
+.rs-progress-track { position: relative; width: clamp(110px, 18vw, 220px); height: 4px; border-radius: 4px; background: rgba(21, 32, 26, .12); overflow: hidden; }
+.rs-progress-track span { position: absolute; inset: 0; background: var(--g6); transform-origin: left; transition: transform .15s linear; }
+.rs-progress[data-done="true"] .rs-progress-track span { background: var(--g7); }
+@media (max-width: 720px) { .rs-progress-left { display: none; } }
+
+/* ── Thesis body ───────────────────────────────────────────────────── */
+.rs-latex {
+  margin-top: 28px; font-size: 19px; line-height: 1.72; color: #1d2a22;
+  text-rendering: optimizeLegibility; font-feature-settings: "kern", "liga";
+}
+.rs-latex[data-font="latex"] { font-family: "Computer Modern Serif", "Latin Modern Roman", "CMU Serif", Georgia, serif; font-size: 20px; }
+.rs-latex[data-font="sans"] { font-family: var(--sans); font-size: 18px; }
+.rs-latex p { margin: 0 0 1.05em; text-align: justify; hyphens: auto; }
+.rs-latex[data-font="latex"] p + p { text-indent: 1.4em; margin-top: -0.6em; }
+.rs-latex h3, .rs-latex h4, .rs-latex h5, .rs-latex h6 { font-family: inherit; color: var(--ink); scroll-margin-top: 96px; line-height: 1.25; }
+.rs-latex h3[data-l1] { font-size: 1.6em; font-weight: 700; margin: 2.6em 0 .8em; padding-top: 1.2em; border-top: 1px solid var(--line); }
+.rs-latex > div > h3[data-l1]:first-child { margin-top: 1.2em; }
+.rs-latex h3 .h-num { display: block; font-family: var(--sans); font-size: .5em; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--g6); margin-bottom: .4em; }
+.rs-latex h4 { font-size: 1.25em; font-weight: 700; margin: 1.9em 0 .5em; }
+.rs-latex h5 { font-size: 1.07em; font-weight: 700; margin: 1.6em 0 .4em; }
+.rs-latex h6 { font-size: 1em; font-style: italic; font-weight: 600; margin: 1.3em 0 .3em; }
+.rs-latex .h-num { color: var(--g7); margin-right: .35em; font-variant-numeric: tabular-nums; }
+.rs-latex strong { color: var(--ink); }
+.rs-latex a { color: var(--g7); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.rs-latex a:hover { color: var(--g6); }
+.rs-latex .cites { white-space: nowrap; }
+.rs-latex .cites a, .rs-latex sup a { text-decoration: none; }
+.rs-latex sup { font-size: .68em; line-height: 0; }
+.rs-latex code { font-family: var(--mono); font-size: .8em; background: rgba(21, 32, 26, .06); padding: .08em .3em; border-radius: 4px; overflow-wrap: anywhere; }
+.rs-latex pre { font-family: var(--mono); font-size: 13.5px; line-height: 1.55; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; overflow-x: auto; margin: 1.4em 0; }
+.rs-latex pre code { background: none; padding: 0; font-size: inherit; }
+.rs-latex ul, .rs-latex ol { padding-left: 1.4em; margin: 0 0 1.05em; }
+.rs-latex ul { list-style: disc; }
+.rs-latex ol { list-style: decimal; }
+.rs-latex li { margin: .35em 0; }
+.rs-latex li p { text-indent: 0 !important; }
+
+.rs-latex figure { margin: 2em 0; text-align: center; }
+.rs-latex figure img { max-width: 100%; max-height: 82vh; width: auto; height: auto; object-fit: contain; border-radius: 10px; background: #fff; border: 1px solid var(--line); display: block; margin: 0 auto; }
+.rs-latex .fig-link { display: block; text-decoration: none; }
+.rs-latex figcaption { font-size: .82em; line-height: 1.5; color: var(--muted); margin-top: .8em; text-align: left; }
+.rs-latex figcaption b, .rs-latex caption b { color: var(--ink); }
+.rs-latex .algorithm img { border: 0; background: transparent; }
+.rs-latex .alt-text { text-align: left; font-size: .8em; margin-top: .5em; }
+.rs-latex .alt-text summary { cursor: pointer; color: var(--muted); }
+
+.rs-latex .table-wrap { margin: 1.8em 0; overflow-x: auto; }
+.rs-latex table { width: 100%; border-collapse: collapse; font-family: var(--sans); font-size: 14.5px; line-height: 1.45; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
+.rs-latex caption { caption-side: top; text-align: left; font-size: 15px; color: var(--muted); padding-bottom: 10px; font-family: inherit; }
+.rs-latex th { text-align: left; font-weight: 700; border-bottom: 1px solid var(--ink); padding: 8px 10px; vertical-align: bottom; }
+.rs-latex td { padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.rs-latex td strong, .rs-latex th strong { font-weight: 700; }
+.rs-latex tr.group th { background: var(--g1); color: var(--g9); font-size: 13px; letter-spacing: .04em; border-bottom: 1px solid var(--line); }
+.rs-latex table code { font-size: .85em; }
+
+.rs-latex dl.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 24px; margin: 1.2em 0 1.6em; font-size: .95em; }
+.rs-latex dl.kv dt { font-weight: 700; }
+.rs-latex dl.kv dd { margin: 0; }
+
+.rs-latex .footnotes { font-size: .78em; line-height: 1.55; color: var(--muted); border-top: 1px solid var(--line); margin: 2.4em 0 0; padding-top: 1em; }
+.rs-latex .footnotes ol { margin: 0; padding-left: 1.6em; }
+.rs-latex .footnotes li { margin: .3em 0; scroll-margin-top: 96px; }
+.rs-latex .fn-back { text-decoration: none; margin-left: 4px; }
+.rs-latex ol.refs { font-size: .84em; line-height: 1.6; padding-left: 2.6em; color: var(--ink-2); }
+.rs-latex ol.refs li { margin: 0 0 .7em; padding-left: .3em; scroll-margin-top: 96px; }
+.rs-latex ol.refs li::marker { content: "[" counter(list-item) "]  "; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rs-latex :target { background: color-mix(in srgb, var(--g6) 14%, transparent); border-radius: 4px; }
+.rs-latex h3:target, .rs-latex h4:target, .rs-latex h5:target { background: none; }
+
+@media (max-width: 720px) {
+  .rs-latex { font-size: 17.5px; }
+  .rs-latex[data-font="latex"] { font-size: 18.5px; }
+  .rs-latex p { text-align: left; }
+  .rs-latex dl.kv { grid-template-columns: 1fr; }
+  .rs-latex table { min-width: 560px; font-size: 13.5px; }
+  .rs-latex dl.kv dd { margin-bottom: .6em; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.rs) { scroll-behavior: smooth; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rs-btn, .rs-progress, .rs-progress-track span, .rs-seg button, .rs-toc-list a { transition: none; }
+  .rs-btn:hover { transform: none; }
+}

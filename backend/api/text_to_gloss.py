@@ -125,9 +125,10 @@ SYNONYM_MAP: dict[str, str] = {
     "later": "GOODBYE",   # "catch you later"
     "farewell": "GOODBYE",
     # Gratitude
-    "thanks": "THANK-YOU",
-    "cheers": "THANK-YOU",
-    "thx": "THANK-YOU",
+    "thank": "THANK_YOU",
+    "thanks": "THANK_YOU",
+    "cheers": "THANK_YOU",
+    "thx": "THANK_YOU",
     # Negation variants
     "nope": "NO",
     "nah": "NO",
@@ -303,18 +304,6 @@ class TextToGloss:
         # ── Step 2: Glossify — convert each token to its gloss form ──
         glossed = self._glossify(kept)
 
-        # ── Step 2b: Expand fingerspelled tokens into individual letters ──
-        # "N-A-N-A" → [("N", t), ("A", t), ("N", t), ("A", t)]
-        # so each letter maps to its own pose file in the avatar.
-        expanded: list[tuple[str, object]] = []
-        for g, t in glossed:
-            if is_fingerspelled(g):
-                for letter in g.split("-"):
-                    expanded.append((letter, t))
-            else:
-                expanded.append((g, t))
-        glossed = expanded
-
         # ── Step 3: Targeted reordering for ASL grammar ──────────────
 
         # 3a. SOV — move verb after its object
@@ -341,6 +330,19 @@ class TextToGloss:
 
         # 3g. Negation (NOT) to very end
         glossed = self._move_to_end(glossed, lambda g, t: g == "NOT")
+
+        # ── Step 3h: Expand fingerspelled tokens into individual letters ──
+        # "N-A-N-A" → [("N", t), ("A", t), ("N", t), ("A", t)]
+        # so each letter maps to its own pose file in the avatar.
+        # Done after reordering so a spelled word moves as one unit.
+        expanded: list[tuple[str, object]] = []
+        for g, t in glossed:
+            if is_fingerspelled(g):
+                for letter in g.split("-"):
+                    expanded.append((letter, t))
+            else:
+                expanded.append((g, t))
+        glossed = expanded
 
         # ── Step 4: Build result ─────────────────────────────────────
         gloss_tokens = [g for g, t in glossed]
@@ -467,10 +469,21 @@ class TextToGloss:
         Token is kept for dependency info used in reordering.
         """
         glossed = []
+        skip_next_you = False
         for token in tokens:
             word = token.text.lower()
             lemma = token.lemma_.lower()
             pos = token.pos_
+
+            # "thank you" / "thanks" is one sign (THANK_YOU); don't sign the "you" again
+            if skip_next_you and word == "you":
+                skip_next_you = False
+                continue
+            skip_next_you = False
+            if lemma in ("thank", "thanks") and self.vocab.has("THANK_YOU"):
+                glossed.append(("THANK_YOU", token))
+                skip_next_you = True
+                continue
 
             # Negation → NOT
             if word in ("not", "n't", "no", "never"):
@@ -847,7 +860,8 @@ class TextToGloss:
     @staticmethod
     def _to_display_form(gloss: str) -> str:
         """Convert internal IX markers to readable pronouns for display."""
-        return " ".join(IX_DISPLAY.get(t, t) for t in gloss.split())
+        # Compound signs are stored as THANK_YOU (file names) but written THANK-YOU in gloss notation
+        return " ".join(IX_DISPLAY.get(t, t).replace("_", "-") for t in gloss.split())
 
     @staticmethod
     def _normalize_llm_gloss(gloss: str) -> str:

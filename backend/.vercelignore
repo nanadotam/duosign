@@ -1,0 +1,12 @@
+.venv
+__pycache__
+**/__pycache__
+.pytest_cache
+tests
+isolate
+scripts
+wlasl_pose_pipeline.py
+run_json_scenarios.py
+test_gloss.py
+.env
+.venv-uv
