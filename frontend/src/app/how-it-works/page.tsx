@@ -19,7 +19,7 @@ const STAGES = [
   { n: "01", icon: ChatCircleText, title: "Your words", body: "Typed, pasted or spoken" },
   { n: "02", icon: TextAa, title: "Sign grammar", body: "English rewritten into sign order" },
   { n: "03", icon: FilmStrip, title: "Motion library", body: "Signs captured from real signers" },
-  { n: "04", icon: UsersThree, title: "Your signer", body: "Ama, Kofi or Esi signs it" },
+  { n: "04", icon: UsersThree, title: "Your signer", body: "“Ama”, “Kofi” or “Esi” signs it" },
 ];
 
 const GLOSS_EXAMPLES = [
@@ -136,7 +136,7 @@ export default function HowItWorksPage() {
             <p className="hw-num">04 · Your signer</p>
             <h2>A signer who looks like the people who use it.</h2>
             <p className="ip-body">
-              Ama, Kofi and Esi are semi-realistic 3D signers made for DuoSign, alongside the original DS Proto. Choose
+              “Ama”, “Kofi” and “Esi” are semi-realistic 3D signers made for DuoSign, alongside the original DS Proto. Choose
               one with a single click. Because every clip also records where the hands are relative to the face and
               chest, a sign lands in the right place on any body, whether a hand touches the chin or rests on the chest.
             </p>

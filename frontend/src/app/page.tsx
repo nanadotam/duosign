@@ -73,7 +73,7 @@ export default function LandingPage() {
               src="/landing/demo.mp4"
               poster="/landing/demo_poster.webp"
               autoPlay muted loop playsInline controls preload="metadata"
-              aria-label="Screen recording: a sentence is typed into DuoSign and Ama signs it"
+              aria-label="Screen recording: a sentence is typed into DuoSign and “Ama” signs it"
             />
           </figure>
           <p className="ip-demo-cap">Real screen recording of DuoSign Beta. Signs play from motion captured from real signers.</p>
@@ -112,7 +112,7 @@ export default function LandingPage() {
           <ol className="ip-steps">
             <li><b>1</b><h3>Write or speak</h3><p>Type a sentence, paste text, or use your voice.</p></li>
             <li><b>2</b><h3>Sign grammar</h3><p>DuoSign rewrites English into sign order: time first, questions last, names fingerspelled.</p></li>
-            <li><b>3</b><h3>A signer you recognise</h3><p>Ama, Kofi or Esi signs it from motion captured from real signers, with facial expression.</p></li>
+            <li><b>3</b><h3>A signer you recognise</h3><p>“Ama”, “Kofi” or “Esi” signs it from motion captured from real signers, with facial expression.</p></li>
           </ol>
           <Link href="/how-it-works" className="ip-more">See how it works, in depth <ArrowRight size={18} weight="bold" /></Link>
         </div>
@@ -214,7 +214,7 @@ export default function LandingPage() {
           </ol>
           <div className="ip-findings-cta">
             <Link href="/research" className="ip-btn">Explore the research <ArrowRight size={18} weight="bold" /></Link>
-            <a className="ip-more" href="mailto:nana.amoako@alumni.ashesi.edu.gh">Work with us <ArrowRight size={18} weight="bold" /></a>
+            <Link className="ip-more" href="/get-involved?type=partner">Partner with us <ArrowRight size={18} weight="bold" /></Link>
           </div>
         </div>
       </section>
@@ -222,9 +222,19 @@ export default function LandingPage() {
       {/* ── Final CTA ───────────────────────────────────── */}
       <section className="ip-final">
         <div className="ip-wrap">
-          <h2>Try DuoSign Beta.</h2>
+          <h2>Help bring sign language to the internet.</h2>
           <p>Free and open while in beta. No account, no limits, nothing to install.</p>
-          <Link href="/translate" className="ip-btn ip-btn-light">Try the beta <ArrowRight size={18} weight="bold" /></Link>
+          <div className="ip-final-grid">
+            <Link href="/translate" className="ip-final-card">
+              <strong>Try the beta</strong><span>Type a sentence and watch it signed.</span><ArrowRight size={20} weight="bold" />
+            </Link>
+            <Link href="/get-involved?type=partner" className="ip-final-card">
+              <strong>Partner with us</strong><span>Deaf organisations, funders, institutions and researchers.</span><ArrowRight size={20} weight="bold" />
+            </Link>
+            <Link href="/get-involved?type=research" className="ip-final-card">
+              <strong>Request the research</strong><span>Read the full DuoSign thesis.</span><ArrowRight size={20} weight="bold" />
+            </Link>
+          </div>
         </div>
       </section>
     </main>

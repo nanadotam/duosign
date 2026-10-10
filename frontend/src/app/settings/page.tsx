@@ -484,7 +484,7 @@ function SettingsPageInner() {
               </div>
 
               <SettingsCard title="Signer" chip="motion">
-                <SettingRow label="Your Signer" desc="Ama, Kofi and Esi sign with motion captured from real signers, including facial expression" stack>
+                <SettingRow label="Your Signer" desc="“Ama”, “Kofi” and “Esi” sign with motion captured from real signers, including facial expression" stack>
                   <div className="flex flex-col gap-3">
                     {[false, true].map((legacy) => (
                       <div key={String(legacy)}>

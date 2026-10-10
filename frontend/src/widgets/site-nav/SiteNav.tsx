@@ -11,7 +11,7 @@ const LINKS = [
   { href: "/how-it-works", label: "How it works" },
   { href: "/#journey", label: "Journey" },
   { href: "/research", label: "Research" },
-  { href: "/#recognition", label: "Recognition" },
+  { href: "/get-involved", label: "Get involved" },
 ];
 
 /** Sticky marketing navigation shared by the landing, how-it-works and research pages. */

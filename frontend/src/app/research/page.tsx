@@ -25,14 +25,6 @@ const SOURCES = [
   { t: "Endangered Languages Project, Adamorobe Sign Language", u: "https://endangeredlanguages.com/lang/6909" },
 ];
 
-const BIBTEX = `@misc{amoako2026duosign,
-  author = {Amoako, Nana Kwaku},
-  title  = {DuoSign: A Gloss-Based Approach to Automated ASL Generation},
-  note   = {Applied Project, B.Sc. Computer Science},
-  school = {Ashesi University},
-  year   = {2026},
-  url    = {https://duosign.nanaamoako.com/research}
-}`;
 
 export default function ResearchStoryPage() {
   return (
@@ -51,7 +43,7 @@ export default function ResearchStoryPage() {
           </p>
           <div className="ip-cta">
             <Link href="/translate" className="ip-btn">Try DuoSign <ArrowRight size={18} weight="bold" /></Link>
-            <Link href="/research/paper" className="ip-btn ip-btn-ghost"><BookOpenText size={18} weight="duotone" /> Read the full thesis</Link>
+            <Link href="/get-involved?type=research" className="ip-btn ip-btn-ghost"><BookOpenText size={18} weight="duotone" /> Request the full thesis</Link>
           </div>
           <ul className="rx-big">
             <li><strong>70M+</strong><span>Deaf people worldwide</span><cite>World Federation of the Deaf</cite></li>
@@ -206,29 +198,27 @@ export default function ResearchStoryPage() {
               researchers already building sign-language data, with Ashesi University as a research home. Deaf signers
               will be paid contributors, and the community decides when it works.
             </p>
-            <a className="ip-btn" href="mailto:nana.amoako@alumni.ashesi.edu.gh">Partner with us <ArrowRight size={18} weight="bold" /></a>
+            <Link className="ip-btn" href="/get-involved?type=partner">Partner with us <ArrowRight size={18} weight="bold" /></Link>
           </div>
           <CoDesignLoop />
         </div>
       </section>
 
-      {/* Thesis + cite + sources */}
+      {/* Thesis request + sources */}
       <section className="ip-section rx-sec rx-white">
         <div className="ip-wrap rx-paper">
           <div className="rx-paper-card">
             <BookOpenText size={36} weight="duotone" />
-            <h2>Read the full thesis.</h2>
-            <p>DuoSign: A Gloss-Based Approach to Automated ASL Generation. Applied Project, B.Sc. Computer Science, Ashesi University, 2026. Outstanding Capstone Project award.</p>
-            <Link href="/research/paper" className="ip-btn">Open the reader <ArrowRight size={18} weight="bold" /></Link>
+            <h2>Request the full thesis.</h2>
+            <p>DuoSign: A Gloss-Based Approach to Automated ASL Generation. Applied Project, B.Sc. Computer Science, Ashesi University, 2026. Outstanding Capstone Project award. Shared on request.</p>
+            <Link href="/get-involved?type=research" className="ip-btn">Request access <ArrowRight size={18} weight="bold" /></Link>
           </div>
-          <div>
-            <h3 className="rx-h3">Cite this work</h3>
-            <pre className="rx-bib">{BIBTEX}</pre>
-            <h3 className="rx-h3">Sources on this page</h3>
+          <details className="rx-sources-box">
+            <summary>Sources on this page <span>({SOURCES.length})</span></summary>
             <ul className="rx-sources">
               {SOURCES.map((s) => <li key={s.u}><a href={s.u} target="_blank" rel="noreferrer">{s.t}</a></li>)}
             </ul>
-          </div>
+          </details>
         </div>
       </section>
     </main>

@@ -144,3 +144,11 @@
 .rx-sources { padding-left: 1.1rem; margin: 0; display: grid; gap: 8px; font-size: .92rem; }
 .rx-sources a { color: var(--g-700); }
 @media (max-width: 860px) { .rx-paper { grid-template-columns: 1fr; } }
+
+.rx-sources-box { border: 1px solid var(--line); border-radius: 18px; background: var(--cream); padding: 4px 22px; align-self: start; }
+.rx-sources-box summary { cursor: pointer; padding: 16px 0; font-weight: 600; list-style: none; display: flex; align-items: center; gap: 8px; }
+.rx-sources-box summary::-webkit-details-marker { display: none; }
+.rx-sources-box summary::before { content: "+"; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--g-100); color: var(--g-700); font-weight: 700; }
+.rx-sources-box[open] summary::before { content: "\2212"; }
+.rx-sources-box summary span { color: var(--ink-2); font-weight: 400; }
+.rx-sources-box .rx-sources { padding-bottom: 18px; }

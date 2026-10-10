@@ -183,7 +183,7 @@ const STEPS = [
   { icon: Microphone, t: "You type or speak", d: "Any English sentence" },
   { icon: TextAa, t: "Meaning becomes sign order", d: "Time first, questions last" },
   { icon: FilmStrip, t: "Signs from real signers", d: "Motion captured from video" },
-  { icon: UsersThree, t: "Your signer signs it", d: "Ama, Kofi or Esi, in your browser" },
+  { icon: UsersThree, t: "Your signer signs it", d: "“Ama”, “Kofi” or “Esi”, in your browser" },
 ];
 
 export function HowStrip() {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { EnvelopeSimple, GithubLogo, MapPin } from "@phosphor-icons/react/dist/ssr";
+import { EnvelopeSimple, MapPin } from "@phosphor-icons/react/dist/ssr";
 import "./site-footer.css";
 
 const COLUMNS = [
@@ -11,12 +11,13 @@ const COLUMNS = [
       { href: "/how-it-works", label: "How it works" },
       { href: "/guide", label: "User guide" },
       { href: "/status", label: "System status" },
+      { href: "/get-involved?type=partner", label: "Partner with us" },
     ],
   },
   {
     title: "Research",
     links: [
-      { href: "/research/paper", label: "The full thesis" },
+      { href: "/get-involved?type=research", label: "Request the thesis" },
       { href: "/research#received", label: "How it was received" },
       { href: "/#journey", label: "Our journey" },
       { href: "https://github.com/dxli94/WLASL", label: "WLASL dataset", external: true },
@@ -48,8 +49,7 @@ export default function SiteFooter() {
             </p>
             <ul className="sf-contact">
               <li><EnvelopeSimple size={18} weight="duotone" /><a href="mailto:nana.amoako@alumni.ashesi.edu.gh">nana.amoako@alumni.ashesi.edu.gh</a></li>
-              <li><MapPin size={18} weight="duotone" /><span>Built in Accra, Ghana · Ashesi University</span></li>
-              <li><GithubLogo size={18} weight="duotone" /><a href="https://github.com/nanadotam" target="_blank" rel="noreferrer">github.com/nanadotam</a></li>
+              <li><MapPin size={18} weight="duotone" /><span>Built in Ghana · Ashesi University</span></li>
             </ul>
           </div>
           {COLUMNS.map((c) => (

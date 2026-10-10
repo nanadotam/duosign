@@ -55,9 +55,9 @@ export default function Reception() {
           </div>
         </div>
         <p className="rc-foot">
-          Pilot study, March–April 2026: 5 completed questionnaires from hearing testers (System Usability Scale 73.5, &ldquo;good&rdquo;)
-          plus an expert review by Ashesi&apos;s accessibility team. A structured evaluation with Deaf users is the next step.
-          The feedback on the avatar is what drove the October 2026 rebuild of how DuoSign signs.
+          Pilot study, March–April 2026: 5 completed questionnaires from testers plus an expert review by
+          Ashesi&apos;s accessibility team. A structured evaluation with Deaf users is the next step. The feedback on
+          the avatar is what drove the October 2026 rebuild of how DuoSign signs.
         </p>
       </div>
     </section>
