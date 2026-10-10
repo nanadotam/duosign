@@ -91,9 +91,9 @@ const MOTION_CAM: Record<ViewMode, MotionCam> = {
   world: "three",
 };
 
-const DISPLAY_MODE_LABELS: Record<AvatarDisplayMode, string> = {
+// The classic "Avatar" engine is legacy and no longer offered here; Motion replaces it.
+const DISPLAY_MODE_LABELS: Partial<Record<AvatarDisplayMode, string>> = {
   motion: "Motion",
-  avatar: "Avatar",
   skeleton: "Skeleton",
 };
 
@@ -271,17 +271,22 @@ export default function AvatarPanel({
             {/* Display Mode Toggle — Avatar / Skeleton */}
             {/* TODO: Guest User - Switch between display modes—3D avatar, skeleton overlay, or hidden—to examine pose data at different levels of abstraction. */}
             {onDisplayModeChange && (
-              <SegmentedControl
-                options={Object.values(DISPLAY_MODE_LABELS)}
-                value={DISPLAY_MODE_LABELS[displayMode]}
-                onChange={(val) => {
-                  const mode = Object.entries(DISPLAY_MODE_LABELS).find(
-                    ([, label]) => label === val
-                  )?.[0] as AvatarDisplayMode | undefined;
-                  if (mode) onDisplayModeChange(mode);
-                }}
-                size="sm"
-              />
+              <div className="relative">
+                <span className="absolute -top-[9px] left-[6px] z-[1] px-[6px] py-[1px] rounded-pill bg-accent-dim text-white text-[8px] font-bold uppercase tracking-[0.08em] leading-[1.5] pointer-events-none shadow-raised-sm">
+                  Improved
+                </span>
+                <SegmentedControl
+                  options={Object.values(DISPLAY_MODE_LABELS) as string[]}
+                  value={DISPLAY_MODE_LABELS[displayMode] ?? "Motion"}
+                  onChange={(val) => {
+                    const mode = Object.entries(DISPLAY_MODE_LABELS).find(
+                      ([, label]) => label === val
+                    )?.[0] as AvatarDisplayMode | undefined;
+                    if (mode) onDisplayModeChange(mode);
+                  }}
+                  size="sm"
+                />
+              </div>
             )}
 
             {/* View Mode Toggle — only for avatar mode */}

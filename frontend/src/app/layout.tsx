@@ -40,19 +40,29 @@ const instrumentSans = Instrument_Sans({
   display: "swap",
 });
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://duosign.vercel.app";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://duosign.nanaamoako.com";
+
+const TITLE = "DuoSign Beta — the internet, in sign language";
+const DESCRIPTION =
+  "Type or speak English and watch it signed in American Sign Language by avatars that look like the people who use them. Free and open beta, built in Ghana at Ashesi University.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
+  applicationName: "DuoSign Beta",
   title: {
-    default: "DuoSign Beta — Text to Sign Language",
+    default: TITLE,
     template: "%s · DuoSign Beta",
   },
-  description:
-    "DuoSign translates English text into ASL gloss and animates a 3D avatar signing in real time. Built for the Deaf and hard-of-hearing community.",
-  keywords: ["ASL", "sign language", "American Sign Language", "deaf", "accessibility", "gloss", "avatar", "translation"],
+  description: DESCRIPTION,
+  keywords: [
+    "DuoSign", "sign language", "text to sign language", "American Sign Language", "ASL", "Ghanaian Sign Language",
+    "Deaf", "hard of hearing", "accessibility", "sign language avatar", "Ghana", "Ashesi University", "assistive technology",
+  ],
   authors: [{ name: "Nana Kwaku Amoako" }],
   creator: "Nana Kwaku Amoako",
+  publisher: "DuoSign",
+  category: "accessibility",
+  alternates: { canonical: "/" },
 
   icons: {
     icon: [
@@ -67,24 +77,24 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: APP_URL,
-    siteName: "DuoSign",
-    title: "DuoSign Beta — Text to Sign Language",
-    description:
-      "Translate English into ASL gloss and watch a 3D avatar sign it in real time.",
+    siteName: "DuoSign Beta",
+    locale: "en_GB",
+    title: TITLE,
+    description: DESCRIPTION,
     images: [
       {
         url: "/og-image.png",
-        width: 1024,
-        height: 1024,
-        alt: "DuoSign Beta — Text to Sign Language",
+        width: 1200,
+        height: 630,
+        alt: "DuoSign Beta: the internet, in sign language. Three signers, Ama, Kofi and Esi, on a deep green background.",
       },
     ],
   },
 
   twitter: {
-    card: "summary",
-    title: "DuoSign Beta — Text to Sign Language",
-    description: "Translate English into ASL gloss and watch a 3D avatar sign it in real time.",
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
     images: ["/og-image.png"],
   },
 
@@ -92,6 +102,13 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+};
+
+export const viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f2ea" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b2a1a" },
+  ],
 };
 
 export default function RootLayout({

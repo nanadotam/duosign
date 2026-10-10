@@ -28,12 +28,18 @@ const ACCENT_THEMES = [
     glow:      "rgba(45,212,191,0.16)",
     btnTop:    "#4de0cb",
   },
-  // 2 — Green
+  // 2 — DuoSign green (Beta default). Deep forest green in light mode; buttons stay deep green in dark mode.
   {
     accent:    "#4ADE80",
-    dim:       "#16a34a",
+    dim:       "#14532d",
     glow:      "rgba(74,222,128,0.16)",
-    btnTop:    "#60e890",
+    btnTop:    "#16a34a",
+    light: {
+      accent:  "#14532d",
+      dim:     "#0f3a24",
+      glow:    "rgba(20,83,45,0.14)",
+      btnTop:  "#166534",
+    },
   },
   // 3 — Purple
   {
@@ -52,7 +58,13 @@ const ACCENT_THEMES = [
 ] as const;
 
 /** Flat accent hex list for swatch rendering in settings. */
-export const ACCENT_COLORS = ACCENT_THEMES.map((t) => t.accent);
+export const ACCENT_COLORS = ACCENT_THEMES.map((t) => ("light" in t ? t.light.accent : t.accent));
+
+type AccentTokens = { accent: string; dim: string; glow: string; btnTop: string };
+function tokensFor(index: number, isLight: boolean): AccentTokens {
+  const t = ACCENT_THEMES[index] ?? ACCENT_THEMES[0];
+  return isLight && "light" in t ? t.light : t;
+}
 
 const CAPTION_SIZES: Record<string, string> = {
   Small:        "0.75rem",
@@ -68,14 +80,24 @@ const CAPTION_SIZES: Record<string, string> = {
 export function SettingsApplicator() {
   const { settings } = useSettings();
 
+  // Accent tokens depend on light/dark mode, so re-apply whenever data-theme changes.
   useEffect(() => {
     const root = document.documentElement;
-    const theme = ACCENT_THEMES[settings.accentColorIndex] ?? ACCENT_THEMES[0];
+    const apply = () => {
+      const theme = tokensFor(settings.accentColorIndex, root.getAttribute("data-theme") === "light");
+      root.style.setProperty("--accent",         theme.accent);
+      root.style.setProperty("--accent-dim",     theme.dim);
+      root.style.setProperty("--accent-glow",    theme.glow);
+      root.style.setProperty("--accent-btn-top", theme.btnTop);
+    };
+    apply();
+    const obs = new MutationObserver(apply);
+    obs.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
+  }, [settings.accentColorIndex]);
 
-    root.style.setProperty("--accent",         theme.accent);
-    root.style.setProperty("--accent-dim",     theme.dim);
-    root.style.setProperty("--accent-glow",    theme.glow);
-    root.style.setProperty("--accent-btn-top", theme.btnTop);
+  useEffect(() => {
+    const root = document.documentElement;
 
     root.style.setProperty(
       "--caption-font-size",
@@ -84,7 +106,6 @@ export function SettingsApplicator() {
     root.classList.toggle("high-contrast", settings.highContrast);
     root.classList.toggle("reduce-motion", settings.reduceMotion);
   }, [
-    settings.accentColorIndex,
     settings.captionSize,
     settings.highContrast,
     settings.reduceMotion,
