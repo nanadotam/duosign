@@ -42,32 +42,16 @@ export const JOURNEY: JourneyStep[] = [
     body: "A rule-based engine rewrites English into sign order, and a 3D avatar in the browser signs it. Typing or speaking both work, with no install.",
   },
   {
-    when: "Mar 2026", icon: "presentation", tag: "Research", title: "Ashesi Undergraduate Research Conference",
-    body: "The research behind DuoSign was written up and submitted to Ashesi's undergraduate research conference.",
-  },
-  {
     when: "Mar–Apr 2026", icon: "clipboard", tag: "Pilot", title: "Putting it in front of people",
-    body: "Ashesi's accessibility team reviewed the signing, and early testers completed a usability study (SUS 73.5, \u201cgood\u201d). Everyone said the same thing: easy to use, but the avatar must get clearer.",
+    body: "Ashesi's accessibility team reviewed the signing, and early testers completed a usability study. Everyone said the same thing: easy to use, but the avatar must get clearer.",
   },
   {
     when: "May 2026", icon: "trophy", tag: "Award", title: "Outstanding Capstone Project",
     body: "At Ashesi's 2026 Quasar Awards, DuoSign received the Outstanding Capstone Project award in Computer Science & Information Systems.",
   },
   {
-    when: "Jul 2026", icon: "handshake", title: "African Disability Forum",
-    body: "A conversation with Shuaib Chalklen, head of the African Disability Forum and former UN Special Rapporteur on Disability, about taking DuoSign further across the continent.",
-  },
-  {
-    when: "Sep 2026", icon: "envelope", title: "An introduction to the UN",
-    body: "Christina Abraham of the Ashesi University Foundation introduced DuoSign to the UN Economic Commission for Africa's disability inclusion working group.",
-  },
-  {
-    when: "Oct 2026", icon: "film", tag: "Rebuild", title: "Rebuilding how it signs",
-    body: "Acting on the pilot feedback: motion pre-captured from real signers, facial expression on 1,749 signs, the full fingerspelling alphabet, and Ghanaian signers Ama, Kofi and Esi.",
-  },
-  {
-    when: "Oct 2026", icon: "buildings", tag: "UNECA", title: "UNECA Disability Inclusion Desk",
-    body: "Staff with disabilities at UNECA took up DuoSign at their weekly meeting, met with Nana, and are sharing it with colleagues across the UN.",
+    when: "Sep 2026", icon: "film", tag: "Improvements", title: "Smarter, smoother signing",
+    body: "Improvements to the translation algorithm, and a rebuilt signing engine that learns from NVIDIA's approach: motion captured from real signers is prepared ahead of time, so signs play smoothly, with facial expression.",
   },
   {
     when: "Oct 2026", icon: "rocket", tag: "Now", title: "DuoSign Beta opens",

@@ -136,7 +136,7 @@ export default function LandingPage() {
       <section id="journey" className="ip-section">
         <div className="ip-wrap">
           <p className="ip-eyebrow">The journey so far</p>
-          <h2>From a simple question to a conversation across Africa.</h2>
+          <h2>From a simple question to an open beta.</h2>
           <Journey steps={JOURNEY} />
         </div>
       </section>
