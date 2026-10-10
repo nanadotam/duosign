@@ -295,11 +295,19 @@ export class DsanimPlayer {
     }
     const n = d.face.channels.length;
     const fi = Math.max(0, Math.min(d.frames - 1, Math.round(t)));
+    // 5-frame triangular smoothing: face tracks from low-res video jitter frame to frame
+    const W = [1, 2, 3, 2, 1];
     const f = {};
     d.face.channels.forEach((c, k) => {
       let name = c;
       if (this.mirror) name = c.replace('Left', '#').replace('Right', 'Left').replace('#', 'Right');
-      f[name] = d.faceData[fi * n + k];
+      let sum = 0, wsum = 0;
+      for (let o = -2; o <= 2; o++) {
+        const j = fi + o;
+        if (j < 0 || j >= d.frames) continue;
+        sum += d.faceData[j * n + k] * W[o + 2]; wsum += W[o + 2];
+      }
+      f[name] = sum / wsum;
     });
     let perfectSync = false;
     for (const c of d.face.channels) {

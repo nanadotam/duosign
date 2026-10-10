@@ -5,7 +5,8 @@ Date: 10 October 2026
 
 ## New
 - **Pro Motion (default).** The October `duosign-motion` engine now runs inside the DuoSign UI. Signs play from **baked motion clips**: 2,000 WLASL signs, plus HELLO and MOTHER baked from video with facial expression. Nothing is solved in the browser anymore, so signing starts almost instantly and blends smoothly from one sign to the next. Typing, voice input, gloss tokens, captions, play/pause, replay and speed all drive it.
-  - Words without a clip are fingerspelled from the letter clips. C, L, X, Y and Z have no clip yet, so they're skipped.
+  - Words without a clip are fingerspelled from the letter clips. **All 26 letters are covered now.** WLASL never had C, L, X, Y or Z, so those five were added from the ASL THAT alphabet video (1080p, timed from its captions; see `~/Developer/duosign-letters`). C is marked `needs_review`.
+  - Face expressions are smoothed over 5 frames to hide tracking jitter.
   - The avatar stands in a natural arms-down pose instead of a T-pose.
   - Close-up, Full Body and 3D World camera presets.
   - **Motion / Avatar / Skeleton** toggle: "Avatar" is the classic engine, kept as a fallback.
