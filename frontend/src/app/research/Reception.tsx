@@ -25,7 +25,7 @@ export default function Reception() {
 
         <div className="rc-hero">
           <figure className="rc-award">
-            <Image src="/landing/quasar_award.webp" alt="Nana Kwaku Amoako receiving the Outstanding Capstone Project award at Ashesi University's 2026 Quasar Awards" width={1200} height={800} />
+            <Image src="/landing/quasar_award.webp" alt="Nana Kwaku Amoako, wearing a medal and holding the Outstanding Capstone Project certificate, shakes hands with the head of the Computer Science and Information Systems department at Ashesi University's 2026 Quasar Awards" width={1200} height={800} />
             <figcaption>
               <span className="rc-pill"><Trophy size={14} weight="fill" /> May 2026</span>
               <h3>Outstanding Capstone Project, Computer Science &amp; Information Systems</h3>

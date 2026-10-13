@@ -148,7 +148,7 @@ export default function LandingPage() {
           <h2>How the work has been received.</h2>
           <div className="ip-recog-grid">
             <figure className="ip-recog-card ip-recog-award">
-              <Image src="/landing/quasar_award.webp" alt="Nana Kwaku Amoako receiving the Outstanding Capstone Project award at Ashesi University's 2026 Quasar Awards" width={1200} height={800} />
+              <Image src="/landing/quasar_award.webp" alt="Nana Kwaku Amoako, wearing a medal and holding the Outstanding Capstone Project certificate, shakes hands with the head of the Computer Science and Information Systems department at Ashesi University's 2026 Quasar Awards" width={1200} height={800} />
               <figcaption>
                 <span className="ip-pill"><Trophy size={14} weight="fill" /> Award</span>
                 <h3>Outstanding Capstone Project, Computer Science &amp; Information Systems</h3>
